@@ -369,7 +369,7 @@ public class NamespaceHandler extends ElementHandler {
 
     //update scopedIdentifier if status != DRAFT
     if (previousNamespace.getIdentification().getStatus() != Status.DRAFT) {
-      boolean autoCommit = CtxUtil.disableAutoCommit(ctx);
+      final boolean autoCommit = CtxUtil.disableAutoCommit(ctx);
 
       ScopedIdentifier scopedIdentifier = IdentificationHandler.updateNamespaceIdentifier(ctx,
           namespace.getIdentification());
