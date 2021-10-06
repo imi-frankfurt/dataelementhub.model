@@ -1,5 +1,6 @@
 package de.dataelementhub.model.dto.element.section;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.dataelementhub.dal.jooq.enums.ElementType;
 import de.dataelementhub.dal.jooq.enums.Status;
@@ -13,6 +14,7 @@ public class Identification implements Serializable {
 
   private String urn;
   private String namespaceUrn;
+  @JsonIgnore
   private Integer namespaceId;
   private ElementType elementType;
   private Integer identifier;
