@@ -369,6 +369,7 @@ public class NamespaceHandler extends ElementHandler {
 
     //update scopedIdentifier if status != DRAFT
     if (previousNamespace.getIdentification().getStatus() != Status.DRAFT) {
+      final boolean autoCommit = CtxUtil.disableAutoCommit(ctx);
 
       ScopedIdentifier scopedIdentifier = IdentificationHandler.updateNamespaceIdentifier(ctx,
           namespace.getIdentification());
@@ -385,7 +386,10 @@ public class NamespaceHandler extends ElementHandler {
       namespaceGrants.forEach(g -> g.setNamespaceId(newScopedIdentifier.getNamespaceId()));
 
       GrantTypeHandler.setGrantsForNamespace(ctx, namespaceGrants);
+      updateNamespaceIds(ctx, userId, previousNamespace.getIdentification().getNamespaceId(),
+          newScopedIdentifier.getNamespaceId());
 
+      CtxUtil.commitAndSetAutoCommit(ctx, autoCommit);
       return IdentificationHandler.convert(newScopedIdentifier);
     } else {
       DefinitionHandler.updateDefinitions(ctx, userId,
@@ -489,5 +493,17 @@ public class NamespaceHandler extends ElementHandler {
       e.printStackTrace();
     }
     return namespaceMembers;
+  }
+
+  /**
+   * Update the namespace ids in the scoped identifier table when a namespace is updated.
+   */
+  private static int updateNamespaceIds(CloseableDSLContext ctx, int userId, int oldId,
+      int newId) {
+    return ctx.update(SCOPED_IDENTIFIER)
+        .set(SCOPED_IDENTIFIER.NAMESPACE_ID, newId)
+        .where(SCOPED_IDENTIFIER.NAMESPACE_ID.eq(oldId))
+        .and(SCOPED_IDENTIFIER.ELEMENT_TYPE.notEqual(ElementType.NAMESPACE))
+        .execute();
   }
 }
