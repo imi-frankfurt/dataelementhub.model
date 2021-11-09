@@ -5,6 +5,7 @@ import static de.dataelementhub.dal.jooq.Tables.HIERARCHY;
 import static de.dataelementhub.dal.jooq.Tables.USER_NAMESPACE_GRANTS;
 
 import de.dataelementhub.dal.ResourceManager;
+import de.dataelementhub.dal.jooq.enums.ElementType;
 import de.dataelementhub.dal.jooq.enums.GrantType;
 import de.dataelementhub.dal.jooq.tables.Element;
 import java.util.Arrays;
@@ -14,6 +15,8 @@ import org.jooq.CloseableDSLContext;
 import org.jooq.Condition;
 import org.jooq.Record1;
 import org.jooq.SelectConditionStep;
+
+import static de.dataelementhub.dal.jooq.Tables.*;
 
 public class DaoUtil {
 
@@ -62,6 +65,20 @@ public class DaoUtil {
         // TODO: Maybe there is a better way to do this with JOOQ?
         ctx.execute("REFRESH MATERIALIZED VIEW " + view);
       }
+    }
+  }
+
+  /** returns if the user has one of the given grants for a namespace identifier. */
+  public static Boolean checkGrants(Integer namespaceIdentifier, Integer userId, List<GrantType> grantTypes) {
+    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
+      return ctx.fetchExists(ctx.select()
+              .from(USER_NAMESPACE_GRANTS)
+                      .join(SCOPED_IDENTIFIER)
+                      .on(USER_NAMESPACE_GRANTS.NAMESPACE_ID.eq(SCOPED_IDENTIFIER.ELEMENT_ID))
+                      .where(SCOPED_IDENTIFIER.ELEMENT_TYPE.eq(ElementType.NAMESPACE))
+              .and(SCOPED_IDENTIFIER.IDENTIFIER.eq(namespaceIdentifier))
+              .and(USER_NAMESPACE_GRANTS.USER_ID.eq(userId))
+              .and(USER_NAMESPACE_GRANTS.GRANT_TYPE.in(grantTypes)));
     }
   }
 

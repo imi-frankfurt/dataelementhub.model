@@ -86,7 +86,7 @@ public class ElementService {
   /**
    * Get an Element by its urn.
    */
-  public Element read(int userId, String urn) {
+  public static Element read(int userId, String urn) {
     try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
       if (!IdentificationHandler.isUrn(urn)) {
         try {
@@ -345,7 +345,7 @@ public class ElementService {
   /**
    * Get dataElementGroup or record members.
    */
-  public List<Member> readMembers(int userId, String urn) {
+  public static List<Member> readMembers(int userId, String urn) {
     try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
       Identification identification = IdentificationHandler.fromUrn(urn);
       List<Member> members = MemberHandler.get(ctx, identification);
