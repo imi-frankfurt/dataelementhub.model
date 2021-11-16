@@ -20,7 +20,6 @@ public class Namespace {
   private String urn;
   private int identifier;
   private List<Definition> definitions;
-  private Definition definition;
   private int revision;
   private Status status;
 
@@ -34,7 +33,6 @@ public class Namespace {
     this.revision = fullNamespace.getIdentification().getRevision();
     this.status = fullNamespace.getIdentification().getStatus();
     this.definitions = fullNamespace.getDefinitions();
-    this.definition = fullNamespace.getDefinition();
   }
 
 }

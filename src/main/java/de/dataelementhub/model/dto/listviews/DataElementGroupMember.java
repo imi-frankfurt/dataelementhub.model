@@ -18,7 +18,6 @@ import lombok.NoArgsConstructor;
 public class DataElementGroupMember {
   private String urn;
   private List<Definition> definitions;
-  private Definition definition;
 
   /**
    * Construct a listview dto of dataElementGroup member from an element.
@@ -27,7 +26,6 @@ public class DataElementGroupMember {
   public DataElementGroupMember(Element element) {
     this.urn = element.getIdentification().getUrn();
     this.definitions = element.getDefinitions();
-    this.definition = element.getDefinition();
   }
 }
 
