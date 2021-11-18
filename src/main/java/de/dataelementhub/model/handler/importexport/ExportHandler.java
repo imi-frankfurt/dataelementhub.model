@@ -3,6 +3,10 @@ package de.dataelementhub.model.handler.importexport;
 import de.dataelementhub.model.dto.importexport.ExportDto;
 import de.dataelementhub.model.dto.importexport.ImportDto;
 import de.dataelementhub.model.dto.importexport.StagedElement;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.stream.Collectors;
 import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.model.ZipParameters;
 import org.apache.tomcat.util.http.fileupload.FileUtils;
@@ -27,23 +31,30 @@ public class ExportHandler {
 
   /** Export defined Elements as Xml or Json. */
   public static Future<String> export(
-          ExportDto exportDto, int userId, String format, Boolean fullExport, String timestamp) throws Exception {
+          ExportDto exportDto, int userId, String format, Boolean fullExport, String timestamp, String exportDirectory) throws Exception {
     System.setProperty(
         "javax.xml.bind.context.factory", "org.eclipse.persistence.jaxb.JAXBContextFactory");
+    String destination = exportDirectory + userId + "/" + timestamp + "-" + format + "-processing";
     new File(System.getProperty("user.dir") + "/uploads/export").mkdir();
-    new File(System.getProperty("user.dir") + "/uploads/export/" + userId).mkdir();
+    new File(exportDirectory + userId).mkdir();
+    new File(destination).mkdir();
     nonExportable.clear();
     ImportDto importDto = new ImportDto();
     importDto.setLabel(exportDto.getExport());
     List<StagedElement> stagedElements = elementsToStagedElements(exportDto.getElements(), userId, fullExport);
+    List<String> Urns = stagedElements.stream().map(se -> se.getIdentification().getUrn()).collect(
+        Collectors.toList());
+    File exportedElements = new File(destination + "/exportedElements.txt");
     importDto.setStagedElements(stagedElements);
     Future<String> response;
     switch (format.toUpperCase()) {
       case "XML":
-        response = exportXml(userId, importDto, timestamp);
+        response = exportXml(userId, importDto, timestamp, destination);
+        Files.write(exportedElements.toPath(), Urns, Charset.defaultCharset());
         return response;
       case "JSON":
-        response = exportJson(userId, importDto, timestamp);
+        response = exportJson(userId, importDto, timestamp, destination);
+        Files.write(exportedElements.toPath(), Urns, Charset.defaultCharset());
         return response;
       default:
         throw new IllegalArgumentException("Format " + format + " is not defined!");
@@ -51,9 +62,9 @@ public class ExportHandler {
   }
 
   /** Process Xml Exports. */
-  public static Future<String> exportXml(int userId, ImportDto importDto, String timestamp) throws Exception {
+  public static Future<String> exportXml(int userId, ImportDto importDto, String timestamp, String destination) throws Exception {
     try {
-      File file = new File(System.getProperty("user.dir") + "/uploads/export/" + userId + "/file.xml");
+      File file = new File(destination + "/file.xml");
       JAXBContext jaxbContext = JAXBContext.newInstance(ImportDto.class);
       Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
       NamespacePrefixMapper mapper =
@@ -67,8 +78,8 @@ public class ExportHandler {
       jaxbMarshaller.setProperty(JAXBContextProperties.MEDIA_TYPE, "application/xml");
       jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
       jaxbMarshaller.marshal(importDto, file);
-      zip(file.getParent(), file.getParent() + "/" + timestamp + "_export.zip", true);
-      return new AsyncResult<>("DONE");
+      FileHandler.zip(file.getParent(), file.getParent() + "/" + timestamp + ".zip", true);
+      return new AsyncResult<>(file.getParent());
     } catch (JAXBException | IOException e) {
       throw new Exception(e);
     }
@@ -76,9 +87,9 @@ public class ExportHandler {
 
   /** Process Json Exports. */
   public static Future<String> exportJson(
-      int userId, ImportDto importDtoBody, String timestamp) throws Exception {
+      int userId, ImportDto importDtoBody, String timestamp, String destination) throws Exception {
     try {
-      File file = new File(System.getProperty("user.dir") + "/uploads/export/" + userId + "/file.json");
+      File file = new File(destination + "/file.json");
       JAXBContext jaxbContext = JAXBContext.newInstance(ImportDto.class);
       Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
       NamespacePrefixMapper mapper =
@@ -93,47 +104,10 @@ public class ExportHandler {
       jaxbMarshaller.setProperty(JAXBContextProperties.JSON_INCLUDE_ROOT, true);
       jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
       jaxbMarshaller.marshal(importDtoBody, file);
-      zip(file.getParent(), file.getParent() + "/" + timestamp + "_export.zip", false);
-      return new AsyncResult<>("DONE");
+      FileHandler.zip(file.getParent(), file.getParent() + "/" + timestamp + ".zip", false);
+      return new AsyncResult<>(file.getParent());
     } catch (JAXBException | IOException e) {
       throw new Exception(e);
-    }
-  }
-
-  /** returns a list of Json/Xml files in a Directory. */
-  public static List<String> allFilesInFolder(String folder, Boolean xmlExport) {
-    File inputFolder = new File(folder);
-    File[] listOfFiles = inputFolder.listFiles();
-    List<String> filePaths = new ArrayList<>();
-    assert listOfFiles != null;
-    if (xmlExport) {
-      for (File file : listOfFiles) {
-        if (file.isFile() & file.getName().contains(".xml")) {
-          filePaths.add(file.getAbsolutePath());
-        }
-      }
-    } else {
-      for (File file : listOfFiles) {
-        if (file.isFile() & file.getName().contains(".json")) {
-          filePaths.add(file.getAbsolutePath());
-        }
-      }
-    }
-    return filePaths;
-  }
-
-  /** Zip Json/Xml files. */
-  public static void zip(String source, String destination, Boolean xmlExport) throws IOException {
-    List<String> filePaths = allFilesInFolder(source, xmlExport);
-    ZipFile zipFile = new ZipFile(destination);
-    ZipParameters zipParameters = new ZipParameters();
-    for (String path : filePaths) {
-      try {
-        zipFile.addFile(new File(path), zipParameters);
-        FileUtils.forceDelete(new File(path));
-      } catch (IOException e) {
-        throw new IOException(e);
-      }
     }
   }
 }

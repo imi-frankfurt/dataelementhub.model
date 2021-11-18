@@ -3,16 +3,21 @@ package de.dataelementhub.model.handler.element;
 import static de.dataelementhub.dal.jooq.Tables.ELEMENT;
 import static de.dataelementhub.dal.jooq.Tables.IDENTIFIED_ELEMENT;
 
+import de.dataelementhub.dal.ResourceManager;
 import de.dataelementhub.dal.jooq.enums.Status;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
 import de.dataelementhub.dal.jooq.tables.records.IdentifiedElementRecord;
 import de.dataelementhub.model.dto.element.Element;
 import de.dataelementhub.model.dto.element.Namespace;
 import de.dataelementhub.model.dto.element.section.Identification;
+import de.dataelementhub.model.dto.element.section.Member;
 import de.dataelementhub.model.handler.element.section.ConceptAssociationHandler;
 import de.dataelementhub.model.handler.element.section.DefinitionHandler;
 import de.dataelementhub.model.handler.element.section.IdentificationHandler;
+import de.dataelementhub.model.handler.element.section.MemberHandler;
 import de.dataelementhub.model.handler.element.section.SlotHandler;
+import de.dataelementhub.model.handler.element.section.ValueDomainHandler;
+import de.dataelementhub.model.handler.element.section.validation.PermittedValueHandler;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -218,5 +223,54 @@ public abstract class ElementHandler {
       // released or outdated namespace can contain elements in any status
       return false;
     }
+  }
+
+  /**
+   * Get dataElementGroup or record members.
+   */
+  public static List<Member> readMembers(CloseableDSLContext ctx, int userId, String urn) {
+    Identification identification = IdentificationHandler.fromUrn(urn);
+    List<Member> members = MemberHandler.get(ctx, identification);
+    return members;
+  }
+
+  /**
+   * Get a Sub Element by its urn.
+   */
+  public static Element readSubElement(CloseableDSLContext ctx, int userId, String urn) {
+      if (!IdentificationHandler.isUrn(urn)) {
+        try {
+          Namespace namespace = NamespaceHandler.getByIdentifier(ctx, userId,
+              Integer.parseInt(urn));
+          if (namespace == null) {
+            throw new NoSuchElementException();
+          } else {
+            return namespace;
+          }
+        } catch (NumberFormatException e) {
+          throw new NoSuchElementException();
+        }
+      } else {
+        // Read other elements with proper urn
+        Identification identification = IdentificationHandler.fromUrn(urn);
+        if (identification == null) {
+          throw new NoSuchElementException(urn);
+        }
+        switch (identification.getElementType()) {
+          case DATAELEMENT:
+            return DataElementHandler.get(ctx, userId, urn);
+          case DATAELEMENTGROUP:
+            return DataElementGroupHandler.get(ctx, userId, urn);
+          case RECORD:
+            return RecordHandler.get(ctx, userId, urn);
+          case ENUMERATED_VALUE_DOMAIN:
+          case DESCRIBED_VALUE_DOMAIN:
+            return ValueDomainHandler.get(ctx, userId, urn);
+          case PERMISSIBLE_VALUE:
+            return PermittedValueHandler.get(ctx, userId, urn);
+          default:
+            throw new IllegalArgumentException("Element Type is not supported");
+        }
+      }
   }
 }

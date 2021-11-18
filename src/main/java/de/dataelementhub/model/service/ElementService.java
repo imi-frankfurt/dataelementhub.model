@@ -86,42 +86,9 @@ public class ElementService {
   /**
    * Get an Element by its urn.
    */
-  public static Element read(int userId, String urn) {
+  public Element read(int userId, String urn) {
     try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      if (!IdentificationHandler.isUrn(urn)) {
-        try {
-          Namespace namespace = NamespaceHandler.getByIdentifier(ctx, userId,
-              Integer.parseInt(urn));
-          if (namespace == null) {
-            throw new NoSuchElementException();
-          } else {
-            return namespace;
-          }
-        } catch (NumberFormatException e) {
-          throw new NoSuchElementException();
-        }
-      } else {
-        // Read other elements with proper urn
-        Identification identification = IdentificationHandler.fromUrn(urn);
-        if (identification == null) {
-          throw new NoSuchElementException(urn);
-        }
-        switch (identification.getElementType()) {
-          case DATAELEMENT:
-            return DataElementHandler.get(ctx, userId, urn);
-          case DATAELEMENTGROUP:
-            return DataElementGroupHandler.get(ctx, userId, urn);
-          case RECORD:
-            return RecordHandler.get(ctx, userId, urn);
-          case ENUMERATED_VALUE_DOMAIN:
-          case DESCRIBED_VALUE_DOMAIN:
-            return ValueDomainHandler.get(ctx, userId, urn);
-          case PERMISSIBLE_VALUE:
-            return PermittedValueHandler.get(ctx, userId, urn);
-          default:
-            throw new IllegalArgumentException("Element Type is not supported");
-        }
-      }
+      return ElementHandler.readSubElement(ctx, userId, urn);
     }
   }
 
@@ -345,11 +312,9 @@ public class ElementService {
   /**
    * Get dataElementGroup or record members.
    */
-  public static List<Member> readMembers(int userId, String urn) {
+  public List<Member> readMembers(int userId, String urn) {
     try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      Identification identification = IdentificationHandler.fromUrn(urn);
-      List<Member> members = MemberHandler.get(ctx, identification);
-      return members;
+      return ElementHandler.readMembers(ctx, userId, urn);
     } catch (NumberFormatException e) {
       throw new NoSuchElementException();
     }

@@ -14,12 +14,12 @@ import de.dataelementhub.model.dto.element.section.validation.PermittedValue;
 import de.dataelementhub.model.dto.importexport.StagedElement;
 import de.dataelementhub.model.handler.element.DataElementGroupHandler;
 import de.dataelementhub.model.handler.element.DataElementHandler;
+import de.dataelementhub.model.handler.element.ElementHandler;
 import de.dataelementhub.model.handler.element.NamespaceHandler;
 import de.dataelementhub.model.handler.element.RecordHandler;
 import de.dataelementhub.model.handler.element.section.IdentificationHandler;
 import de.dataelementhub.model.handler.element.section.ValueDomainHandler;
 import de.dataelementhub.model.handler.element.section.validation.PermittedValueHandler;
-import de.dataelementhub.model.service.ElementService;
 import org.jooq.CloseableDSLContext;
 
 import java.util.ArrayList;
@@ -132,7 +132,7 @@ public class StagedElementHandler {
                 .map(Member::getElementUrn).collect(Collectors.toList()));
       }
       for (Member member : exportMembers) {
-        Element element = ElementService.read(userId, member.getElementUrn());
+        Element element = ElementHandler.readSubElement(ctx, userId, member.getElementUrn());
         StagedElement stagedElement = new StagedElement();
         stagedElement.setIdentification(element.getIdentification());
         stagedElement.setDefinitions(element.getDefinitions());
@@ -146,7 +146,7 @@ public class StagedElementHandler {
               break;
             case DATAELEMENTGROUP:
             case RECORD:
-              List<Member> members = ElementService.readMembers(userId, element.getIdentification().getUrn());
+              List<Member> members = ElementHandler.readMembers(ctx, userId, element.getIdentification().getUrn());
               List<String> membersUrns = members.stream().map(Member::getElementUrn).collect(Collectors.toList());
               stagedElements.addAll(elementsToStagedElements(membersUrns, userId, fullExport));
               stagedElement.setMembers(members);
