@@ -311,14 +311,15 @@ public class ElementService {
    * Get all Members of a given type from the given Namespace Scoped Identifier Identifier.
    */
   public List<Member> readNamespaceMembers(int userId, Integer namespaceSiIdentifier,
-      List<String> elementTypesString) {
+      List<String> elementTypesString, Boolean hideSubElements) {
     try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
 
       List<ElementType> elementTypes = new ArrayList<>();
       if (elementTypesString != null && !elementTypesString.isEmpty()) {
         elementTypesString.forEach(et -> elementTypes.add(ElementType.valueOf(et.toUpperCase())));
       }
-      return NamespaceHandler.getNamespaceMembers(ctx, userId, namespaceSiIdentifier, elementTypes);
+      return NamespaceHandler.getNamespaceMembers(ctx, userId, namespaceSiIdentifier,
+          elementTypes, hideSubElements);
     } catch (NumberFormatException e) {
       throw new NoSuchElementException();
     }
@@ -328,7 +329,7 @@ public class ElementService {
    * Get Namespace members in listview representation.
    */
   public List<NamespaceMember> getNamespaceMembersListview(int userId,
-      Integer namespaceSiIdentifier, List<String> elementTypesString) {
+      Integer namespaceSiIdentifier, List<String> elementTypesString, Boolean hideSubElements) {
     try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
 
       List<ElementType> elementTypes = new ArrayList<>();
@@ -336,7 +337,7 @@ public class ElementService {
         elementTypesString.forEach(et -> elementTypes.add(ElementType.valueOf(et.toUpperCase())));
       }
       return NamespaceHandler.getNamespaceMembersListview(ctx, userId, namespaceSiIdentifier,
-          elementTypes);
+          elementTypes, hideSubElements);
     } catch (NumberFormatException e) {
       throw new NoSuchElementException();
     }
