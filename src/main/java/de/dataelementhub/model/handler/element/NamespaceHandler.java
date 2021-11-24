@@ -5,6 +5,7 @@ import static de.dataelementhub.dal.jooq.Tables.ELEMENT;
 import static de.dataelementhub.dal.jooq.Tables.IDENTIFIED_ELEMENT;
 import static de.dataelementhub.dal.jooq.Tables.LISTVIEW_ELEMENT;
 import static de.dataelementhub.dal.jooq.Tables.SCOPED_IDENTIFIER;
+import static de.dataelementhub.dal.jooq.Tables.SCOPED_IDENTIFIER_HIERARCHY;
 import static de.dataelementhub.dal.jooq.Tables.SLOT;
 
 import de.dataelementhub.dal.ResourceManager;
@@ -159,7 +160,7 @@ public class NamespaceHandler extends ElementHandler {
    * Get all Namespace Members.
    */
   public static List<Member> getNamespaceMembers(CloseableDSLContext ctx, int userId,
-      Integer namespaceIdentifier, List<ElementType> elementTypes) {
+      Integer namespaceIdentifier, List<ElementType> elementTypes, Boolean hideSubElements) {
 
     if (elementTypes == null || elementTypes.isEmpty()) {
       elementTypes = Arrays
@@ -175,11 +176,24 @@ public class NamespaceHandler extends ElementHandler {
           .fetchOneInto(Integer.class);
       // to check if Namespace is accessible by current user
       getByDatabaseId(ctx, userId, namespaceId);
-      List<ScopedIdentifier> scopedIdentifiers =
-          ctx.selectFrom(SCOPED_IDENTIFIER).where(
-                  SCOPED_IDENTIFIER.NAMESPACE_ID.eq(namespaceId))
-              .and(SCOPED_IDENTIFIER.ELEMENT_TYPE.in(elementTypes))
-              .fetchInto(ScopedIdentifier.class);
+      List<ScopedIdentifier> scopedIdentifiers = new ArrayList<>();
+      if (hideSubElements) {
+        scopedIdentifiers =
+            ctx.selectFrom(SCOPED_IDENTIFIER).where(
+                    SCOPED_IDENTIFIER.NAMESPACE_ID.eq(namespaceId))
+                .and(SCOPED_IDENTIFIER.ELEMENT_TYPE.in(elementTypes))
+                .and(SCOPED_IDENTIFIER.ID.notIn(
+                    ctx.select(SCOPED_IDENTIFIER_HIERARCHY.SUB_ID)
+                        .from(SCOPED_IDENTIFIER_HIERARCHY)))
+                .fetchInto(ScopedIdentifier.class);
+      } else {
+        scopedIdentifiers =
+            ctx.selectFrom(SCOPED_IDENTIFIER).where(
+                    SCOPED_IDENTIFIER.NAMESPACE_ID.eq(namespaceId))
+                .and(SCOPED_IDENTIFIER.ELEMENT_TYPE.in(elementTypes))
+                .fetchInto(ScopedIdentifier.class);
+      }
+
       List<Member> namespaceMembers = new ArrayList<>();
       scopedIdentifiers.forEach(
           (scopedIdentifier) -> {
@@ -431,7 +445,7 @@ public class NamespaceHandler extends ElementHandler {
    */
   public static List<NamespaceMember> getNamespaceMembersListview(CloseableDSLContext ctx,
       int userId,
-      Integer namespaceIdentifier, List<ElementType> elementTypes) {
+      Integer namespaceIdentifier, List<ElementType> elementTypes, Boolean hideSubElements) {
 
     List<NamespaceMember> namespaceMembers = new ArrayList<>();
     if (elementTypes == null || elementTypes.isEmpty()) {
@@ -444,33 +458,66 @@ public class NamespaceHandler extends ElementHandler {
             .addKeys("si_id", "id")
             .newMapper(new TypeReference<Tuple2<ListviewElementRecord, List<DefinitionRecord>>>() {
             });
-    try (ResultSet rs =
-        ctx
-            .select(
-                LISTVIEW_ELEMENT.SI_ID,
-                LISTVIEW_ELEMENT.SI_IDENTIFIER,
-                LISTVIEW_ELEMENT.SI_VERSION,
-                LISTVIEW_ELEMENT.SI_STATUS,
-                LISTVIEW_ELEMENT.ID,
-                LISTVIEW_ELEMENT.ELEMENT_TYPE,
-                LISTVIEW_ELEMENT.VD_DATATYPE,
-                DEFINITION.ID,
-                DEFINITION.LANGUAGE,
-                DEFINITION.DESIGNATION,
-                DEFINITION.DEFINITION_)
-            .from(LISTVIEW_ELEMENT)
-            .leftJoin(DEFINITION).on(DEFINITION.SCOPED_IDENTIFIER_ID.eq(LISTVIEW_ELEMENT.SI_ID))
-            .where(LISTVIEW_ELEMENT.ELEMENT_TYPE.in(elementTypes))
-            .and(LISTVIEW_ELEMENT.SI_NAMESPACE_ID.eq(
-                ctx.select(SCOPED_IDENTIFIER.ID)
-                    .from(SCOPED_IDENTIFIER)
-                    .where(SCOPED_IDENTIFIER.ELEMENT_TYPE.eq(ElementType.NAMESPACE))
-                    .and(SCOPED_IDENTIFIER.IDENTIFIER.eq(namespaceIdentifier))
-                    .orderBy(SCOPED_IDENTIFIER.VERSION.desc())
-                    .limit(1)
-            ))
-            .orderBy(LISTVIEW_ELEMENT.SI_ID).fetchResultSet()) {
-
+    try {
+      ResultSet rs = null;
+        if (hideSubElements) {
+      rs =
+          ctx
+              .select(
+                  LISTVIEW_ELEMENT.SI_ID,
+                  LISTVIEW_ELEMENT.SI_IDENTIFIER,
+                  LISTVIEW_ELEMENT.SI_VERSION,
+                  LISTVIEW_ELEMENT.SI_STATUS,
+                  LISTVIEW_ELEMENT.ID,
+                  LISTVIEW_ELEMENT.ELEMENT_TYPE,
+                  LISTVIEW_ELEMENT.VD_DATATYPE,
+                  DEFINITION.ID,
+                  DEFINITION.LANGUAGE,
+                  DEFINITION.DESIGNATION,
+                  DEFINITION.DEFINITION_)
+              .from(LISTVIEW_ELEMENT)
+              .leftJoin(DEFINITION).on(DEFINITION.SCOPED_IDENTIFIER_ID.eq(LISTVIEW_ELEMENT.SI_ID))
+              .where(LISTVIEW_ELEMENT.ELEMENT_TYPE.in(elementTypes))
+              .and(LISTVIEW_ELEMENT.SI_ID.notIn(
+                  ctx.select(SCOPED_IDENTIFIER_HIERARCHY.SUB_ID)
+                      .from(SCOPED_IDENTIFIER_HIERARCHY)))
+              .and(LISTVIEW_ELEMENT.SI_NAMESPACE_ID.eq(
+                  ctx.select(SCOPED_IDENTIFIER.ID)
+                      .from(SCOPED_IDENTIFIER)
+                      .where(SCOPED_IDENTIFIER.ELEMENT_TYPE.eq(ElementType.NAMESPACE))
+                      .and(SCOPED_IDENTIFIER.IDENTIFIER.eq(namespaceIdentifier))
+                      .orderBy(SCOPED_IDENTIFIER.VERSION.desc())
+                      .limit(1)
+              ))
+              .orderBy(LISTVIEW_ELEMENT.SI_ID).fetchResultSet();
+    } else {
+      rs =
+          ctx
+              .select(
+                  LISTVIEW_ELEMENT.SI_ID,
+                  LISTVIEW_ELEMENT.SI_IDENTIFIER,
+                  LISTVIEW_ELEMENT.SI_VERSION,
+                  LISTVIEW_ELEMENT.SI_STATUS,
+                  LISTVIEW_ELEMENT.ID,
+                  LISTVIEW_ELEMENT.ELEMENT_TYPE,
+                  LISTVIEW_ELEMENT.VD_DATATYPE,
+                  DEFINITION.ID,
+                  DEFINITION.LANGUAGE,
+                  DEFINITION.DESIGNATION,
+                  DEFINITION.DEFINITION_)
+              .from(LISTVIEW_ELEMENT)
+              .leftJoin(DEFINITION).on(DEFINITION.SCOPED_IDENTIFIER_ID.eq(LISTVIEW_ELEMENT.SI_ID))
+              .where(LISTVIEW_ELEMENT.ELEMENT_TYPE.in(elementTypes))
+              .and(LISTVIEW_ELEMENT.SI_NAMESPACE_ID.eq(
+                  ctx.select(SCOPED_IDENTIFIER.ID)
+                      .from(SCOPED_IDENTIFIER)
+                      .where(SCOPED_IDENTIFIER.ELEMENT_TYPE.eq(ElementType.NAMESPACE))
+                      .and(SCOPED_IDENTIFIER.IDENTIFIER.eq(namespaceIdentifier))
+                      .orderBy(SCOPED_IDENTIFIER.VERSION.desc())
+                      .limit(1)
+              ))
+              .orderBy(LISTVIEW_ELEMENT.SI_ID).fetchResultSet();
+    }
       mapper.stream(rs).forEach(t2 -> {
         NamespaceMember nsm = new NamespaceMember();
         nsm.setRevision(t2.v1().getSiVersion());
