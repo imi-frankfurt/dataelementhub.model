@@ -460,8 +460,8 @@ public class NamespaceHandler extends ElementHandler {
             });
     try {
       ResultSet rs = null;
-        if (hideSubElements) {
-      rs =
+      if (hideSubElements) {
+        rs =
           ctx
               .select(
                   LISTVIEW_ELEMENT.SI_ID,
@@ -490,8 +490,8 @@ public class NamespaceHandler extends ElementHandler {
                       .limit(1)
               ))
               .orderBy(LISTVIEW_ELEMENT.SI_ID).fetchResultSet();
-    } else {
-      rs =
+      } else {
+        rs =
           ctx
               .select(
                   LISTVIEW_ELEMENT.SI_ID,
@@ -517,7 +517,7 @@ public class NamespaceHandler extends ElementHandler {
                       .limit(1)
               ))
               .orderBy(LISTVIEW_ELEMENT.SI_ID).fetchResultSet();
-    }
+      }
       mapper.stream(rs).forEach(t2 -> {
         NamespaceMember nsm = new NamespaceMember();
         nsm.setRevision(t2.v1().getSiVersion());
