@@ -68,8 +68,7 @@ public abstract class ElementHandler {
    */
   public static List<Member> readMembers(CloseableDSLContext ctx, int userId, String urn) {
     Identification identification = IdentificationHandler.fromUrn(urn);
-    List<Member> members = MemberHandler.get(ctx, identification);
-    return members;
+    return MemberHandler.get(ctx, identification);
   }
 
   /**

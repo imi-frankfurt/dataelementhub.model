@@ -25,9 +25,9 @@ public class ExportService {
 
   /** returns the import/Export status PROCESSING/DONE/INTERRUPTED/NOT DEFINED.
    **/
-  public ExportInfo exportInfo(String identifier, int userId, String type) {
-    File[] exports = Objects.requireNonNull(new File(System.getProperty("user.dir")
-        + "/uploads/" + type + "/" + userId).listFiles(File::isDirectory));
+  public ExportInfo exportInfo(String identifier, int userId, String exportDirectory) {
+    File[] exports = Objects.requireNonNull(new File(exportDirectory + "/" + userId)
+        .listFiles(File::isDirectory));
     ExportInfo exportInfo = new ExportInfo();
     exportInfo.setStatus("NOT DEFINED");
     for (File export : exports) {

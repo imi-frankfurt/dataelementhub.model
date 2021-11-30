@@ -29,9 +29,9 @@ public class ExportHandler {
       String timestamp, String exportDirectory) {
     System.setProperty(
         "javax.xml.bind.context.factory", "org.eclipse.persistence.jaxb.JAXBContextFactory");
-    String destination = exportDirectory + userId + "/" + timestamp + "-" + format + "-processing";
-    new File(System.getProperty("user.dir") + "/uploads/export").mkdir();
-    new File(exportDirectory + userId).mkdir();
+    String destination = exportDirectory + "/" + userId + "/" + timestamp
+        + "-" + format + "-processing";
+    new File(exportDirectory + "/" + userId).mkdir();
     new File(destination).mkdir();
     nonExportable.clear();
     try {
