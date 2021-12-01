@@ -9,7 +9,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import lombok.Data;
 
 @Data
-@XmlRootElement(name = "import", namespace = "http://dehub.de/StagedElement")
+@XmlRootElement(name = "dehub_data_transfer", namespace = "http://dehub.de/StagedElement")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Export {
   private String label;

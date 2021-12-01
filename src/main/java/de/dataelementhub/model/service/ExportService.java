@@ -49,6 +49,7 @@ public class ExportService {
 
   /** Returns all Exports. */
   public List<ExportInfo> allExports(int userId, String exportDirectory) {
+    new File(exportDirectory + "/" + userId).mkdir();
     File inputFolder = new File(exportDirectory + "/" + userId);
     List<ExportInfo> exportDescriptions = new ArrayList<>();
     List<String> listOfFiles = Arrays.stream(inputFolder.listFiles()).map(File::getName).collect(
