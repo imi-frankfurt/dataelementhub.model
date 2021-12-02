@@ -12,6 +12,7 @@ import de.dataelementhub.dal.ResourceManager;
 import de.dataelementhub.dal.jooq.enums.ElementType;
 import de.dataelementhub.dal.jooq.enums.GrantType;
 import de.dataelementhub.dal.jooq.enums.Status;
+import de.dataelementhub.dal.jooq.tables.pojos.DehubUser;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
 import de.dataelementhub.dal.jooq.tables.pojos.UserNamespaceGrants;
 import de.dataelementhub.dal.jooq.tables.records.DefinitionRecord;
@@ -19,6 +20,7 @@ import de.dataelementhub.dal.jooq.tables.records.IdentifiedElementRecord;
 import de.dataelementhub.dal.jooq.tables.records.ListviewElementRecord;
 import de.dataelementhub.model.CtxUtil;
 import de.dataelementhub.model.DaoUtil;
+import de.dataelementhub.model.dto.DeHubUserPermission;
 import de.dataelementhub.model.dto.element.Namespace;
 import de.dataelementhub.model.dto.element.section.Definition;
 import de.dataelementhub.model.dto.element.section.Identification;
@@ -540,6 +542,23 @@ public class NamespaceHandler extends ElementHandler {
       e.printStackTrace();
     }
     return namespaceMembers;
+  }
+
+  public static List<DeHubUserPermission> getUserAccessForNamespace(CloseableDSLContext ctx,
+      int userId, int namespaceIdentifier) throws IllegalAccessException {
+    // TODO: can anyone read those? Or only admins? If only admins can read - enable the following lines.
+//    if (GrantTypeHandler.getGrantTypeByUserAndNamespaceIdentifier(ctx, userId, namespaceIdentifier)
+//        != GrantType.ADMIN) {
+//      throw new IllegalAccessException("Insufficient rights to manage namespace grants.");
+//    }
+    List<UserNamespaceGrants> userNamespaceGrants = GrantTypeHandler.getGrantsForNamespaceByIdentifier(
+        ctx, namespaceIdentifier);
+    List<DeHubUserPermission> permissions = new ArrayList<>();
+    userNamespaceGrants.forEach(ung -> {
+      DehubUser user = UserHandler.getUserById(ctx, ung.getUserId());
+      permissions.add(new DeHubUserPermission(user.getAuthId(), ung.getGrantType().getLiteral()));
+    });
+    return permissions;
   }
 
   /**

@@ -8,7 +8,9 @@ import de.dataelementhub.dal.jooq.Keys;
 import de.dataelementhub.dal.jooq.enums.GrantType;
 import de.dataelementhub.dal.jooq.tables.pojos.DehubUser;
 import de.dataelementhub.dal.jooq.tables.pojos.UserNamespaceGrants;
+import de.dataelementhub.dal.jooq.tables.records.DehubUserRecord;
 import de.dataelementhub.dal.jooq.tables.records.IdentifiedElementRecord;
+import de.dataelementhub.dal.jooq.tables.records.UserNamespaceGrantsRecord;
 import de.dataelementhub.model.handler.element.NamespaceHandler;
 import org.jooq.CloseableDSLContext;
 
@@ -41,7 +43,9 @@ public class UserHandler {
    * Store a user in the database.
    */
   public static int saveUser(CloseableDSLContext ctx, DehubUser dehubUser) {
-    return ctx.newRecord(DEHUB_USER, dehubUser).store();
+    DehubUserRecord dehubUserRecord = ctx.newRecord(DEHUB_USER, dehubUser);
+    dehubUserRecord.store();
+    return dehubUserRecord.getId();
   }
 
   /**
@@ -88,11 +92,37 @@ public class UserHandler {
     try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
       IdentifiedElementRecord namespaceRecord = NamespaceHandler
           .getLatestNamespaceRecord(ctx, userId, namespaceIdentifier);
-      UserNamespaceGrants userNamespaceGrants = new UserNamespaceGrants();
-      userNamespaceGrants.setUserId(userId);
-      userNamespaceGrants.setNamespaceId(namespaceRecord.getId());
-      userNamespaceGrants.setGrantType(grantType);
-      ctx.newRecord(USER_NAMESPACE_GRANTS, userNamespaceGrants).insert();
+
+      UserNamespaceGrantsRecord userNamespaceGrantsRecord =
+          GrantTypeHandler.getUserNamespaceGrantTypeRecordByUserAndNamespaceId(
+          ctx, userId, namespaceRecord.getId());
+      if (userNamespaceGrantsRecord == null) {
+        UserNamespaceGrants userNamespaceGrants = new UserNamespaceGrants();
+        userNamespaceGrants.setUserId(userId);
+        userNamespaceGrants.setNamespaceId(namespaceRecord.getId());
+        userNamespaceGrants.setGrantType(grantType);
+        ctx.newRecord(USER_NAMESPACE_GRANTS, userNamespaceGrants).insert();
+      } else {
+        ctx.update(USER_NAMESPACE_GRANTS).set(USER_NAMESPACE_GRANTS.GRANT_TYPE, grantType)
+            .where(USER_NAMESPACE_GRANTS.USER_ID.eq(userId))
+            .and(USER_NAMESPACE_GRANTS.NAMESPACE_ID.eq(namespaceRecord.getId()))
+            .execute();
+      }
+    }
+  }
+
+  /**
+   * Revoke user access from a namespace.
+   */
+  public static void removeUserAccessFromNamespace(int userId, int namespaceIdentifier) {
+    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
+      IdentifiedElementRecord namespaceRecord = NamespaceHandler
+          .getLatestNamespaceRecord(ctx, userId, namespaceIdentifier);
+
+      ctx.deleteFrom(USER_NAMESPACE_GRANTS)
+          .where(USER_NAMESPACE_GRANTS.USER_ID.eq(userId))
+          .and(USER_NAMESPACE_GRANTS.NAMESPACE_ID.eq(namespaceRecord.getId()))
+          .execute();
     }
   }
 }

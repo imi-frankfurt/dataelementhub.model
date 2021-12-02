@@ -9,6 +9,8 @@ import de.dataelementhub.dal.jooq.enums.ElementType;
 import de.dataelementhub.dal.jooq.enums.GrantType;
 import de.dataelementhub.dal.jooq.enums.Status;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
+import de.dataelementhub.dal.jooq.tables.pojos.UserNamespaceGrants;
+import de.dataelementhub.model.dto.DeHubUserPermission;
 import de.dataelementhub.model.dto.element.DataElement;
 import de.dataelementhub.model.dto.element.DataElementGroup;
 import de.dataelementhub.model.dto.element.Element;
@@ -353,6 +355,16 @@ public class ElementService {
       return members;
     } catch (NumberFormatException e) {
       throw new NoSuchElementException();
+    }
+  }
+
+  /**
+   * Read the list of users that have access to a given namespace
+   */
+  public List<DeHubUserPermission> readUserAccessList(int userId, int namespaceIdentifier)
+      throws IllegalAccessException {
+    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
+      return NamespaceHandler.getUserAccessForNamespace(ctx, userId, namespaceIdentifier);
     }
   }
 

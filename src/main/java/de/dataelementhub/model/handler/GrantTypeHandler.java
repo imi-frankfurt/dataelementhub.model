@@ -6,6 +6,7 @@ import static de.dataelementhub.dal.jooq.Tables.USER_NAMESPACE_GRANTS;
 import de.dataelementhub.dal.jooq.enums.ElementType;
 import de.dataelementhub.dal.jooq.enums.GrantType;
 import de.dataelementhub.dal.jooq.tables.pojos.UserNamespaceGrants;
+import de.dataelementhub.dal.jooq.tables.records.UserNamespaceGrantsRecord;
 import de.dataelementhub.model.handler.element.section.IdentificationHandler;
 import java.util.List;
 import org.jooq.CloseableDSLContext;
@@ -28,6 +29,7 @@ public class GrantTypeHandler {
 
     return getHighestGrantType(grantTypes);
   }
+
 
 
   /**
@@ -56,13 +58,27 @@ public class GrantTypeHandler {
   }
 
   /**
+   * Returns grant record of the given user and namespace.
+   * Namespace is given by its id.
+   */
+  public static UserNamespaceGrantsRecord getUserNamespaceGrantTypeRecordByUserAndNamespaceId(CloseableDSLContext ctx,
+      int userId, int namespaceId) {
+
+    return
+        ctx.selectFrom(USER_NAMESPACE_GRANTS)
+            .where(USER_NAMESPACE_GRANTS.USER_ID.eq(userId))
+            .and(USER_NAMESPACE_GRANTS.NAMESPACE_ID.eq(namespaceId))
+            .fetchOne();
+  }
+
+  /**
    * Returns all grants for a given namespace.
    * Namespace is given by its identifier.
    */
   public static List<UserNamespaceGrants> getGrantsForNamespaceByIdentifier(CloseableDSLContext ctx,
       int namespaceSiIdentifier) {
     return
-        ctx.select(USER_NAMESPACE_GRANTS.GRANT_TYPE).from(USER_NAMESPACE_GRANTS)
+        ctx.select(USER_NAMESPACE_GRANTS.fields()).from(USER_NAMESPACE_GRANTS)
             .leftJoin(SCOPED_IDENTIFIER)
             .on(USER_NAMESPACE_GRANTS.NAMESPACE_ID.eq(SCOPED_IDENTIFIER.NAMESPACE_ID))
             .where(SCOPED_IDENTIFIER.IDENTIFIER.eq(namespaceSiIdentifier))
