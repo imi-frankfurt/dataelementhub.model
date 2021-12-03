@@ -2,8 +2,8 @@ package de.dataelementhub.model.handler.element;
 
 import static de.dataelementhub.dal.jooq.Tables.ELEMENT;
 
+import de.dataelementhub.dal.jooq.enums.AccessLevelType;
 import de.dataelementhub.dal.jooq.enums.ElementType;
-import de.dataelementhub.dal.jooq.enums.GrantType;
 import de.dataelementhub.dal.jooq.enums.Status;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
 import de.dataelementhub.dal.jooq.tables.records.IdentifiedElementRecord;
@@ -14,7 +14,7 @@ import de.dataelementhub.model.dto.element.Element;
 import de.dataelementhub.model.dto.element.Namespace;
 import de.dataelementhub.model.dto.element.section.Identification;
 import de.dataelementhub.model.dto.element.section.ValueDomain;
-import de.dataelementhub.model.handler.GrantTypeHandler;
+import de.dataelementhub.model.handler.AccessLevelHandler;
 import de.dataelementhub.model.handler.element.section.ConceptAssociationHandler;
 import de.dataelementhub.model.handler.element.section.DefinitionHandler;
 import de.dataelementhub.model.handler.element.section.IdentificationHandler;
@@ -34,10 +34,10 @@ public class DataElementHandler extends ElementHandler {
       throws IllegalAccessException {
 
     // Check if the user has the right to write to the namespace
-    GrantType grantType = GrantTypeHandler
-        .getGrantTypeByUserAndNamespaceUrn(ctx, userId,
+    AccessLevelType accessLevel = AccessLevelHandler
+        .getAccessLevelByUserAndNamespaceUrn(ctx, userId,
             dataElement.getIdentification().getNamespaceUrn());
-    if (!DaoUtil.WRITE_ACCESS_GRANTS.contains(grantType)) {
+    if (!DaoUtil.WRITE_ACCESS_TYPES.contains(accessLevel)) {
       throw new IllegalAccessException("User has no write access to namespace.");
     }
 

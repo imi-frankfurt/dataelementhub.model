@@ -9,12 +9,12 @@ import static de.dataelementhub.dal.jooq.Tables.SCOPED_IDENTIFIER_HIERARCHY;
 import static de.dataelementhub.dal.jooq.Tables.SLOT;
 
 import de.dataelementhub.dal.ResourceManager;
+import de.dataelementhub.dal.jooq.enums.AccessLevelType;
 import de.dataelementhub.dal.jooq.enums.ElementType;
-import de.dataelementhub.dal.jooq.enums.GrantType;
 import de.dataelementhub.dal.jooq.enums.Status;
 import de.dataelementhub.dal.jooq.tables.pojos.DehubUser;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
-import de.dataelementhub.dal.jooq.tables.pojos.UserNamespaceGrants;
+import de.dataelementhub.dal.jooq.tables.pojos.UserNamespaceAccess;
 import de.dataelementhub.dal.jooq.tables.records.DefinitionRecord;
 import de.dataelementhub.dal.jooq.tables.records.IdentifiedElementRecord;
 import de.dataelementhub.dal.jooq.tables.records.ListviewElementRecord;
@@ -26,7 +26,7 @@ import de.dataelementhub.model.dto.element.section.Definition;
 import de.dataelementhub.model.dto.element.section.Identification;
 import de.dataelementhub.model.dto.element.section.Member;
 import de.dataelementhub.model.dto.listviews.NamespaceMember;
-import de.dataelementhub.model.handler.GrantTypeHandler;
+import de.dataelementhub.model.handler.AccessLevelHandler;
 import de.dataelementhub.model.handler.UserHandler;
 import de.dataelementhub.model.handler.element.section.DefinitionHandler;
 import de.dataelementhub.model.handler.element.section.IdentificationHandler;
@@ -82,7 +82,7 @@ public class NamespaceHandler extends ElementHandler {
 
     // Creator of the namespace gets admin rights by default
     UserHandler
-        .setUserAccessToNamespace(userId, scopedIdentifier.getIdentifier(), GrantType.ADMIN);
+        .setUserAccessToNamespace(userId, scopedIdentifier.getIdentifier(), AccessLevelType.ADMIN);
 
     return scopedIdentifier;
   }
@@ -341,39 +341,39 @@ public class NamespaceHandler extends ElementHandler {
 
   /**
    * Returns a list of namespaces which the user can explicitly read (as defined in the
-   * "user_namespace_grants" table).
+   * "user_namespace_access" table).
    */
   public static List<Namespace> getExplicitlyReadableNamespaces(CloseableDSLContext ctx,
       int userId) {
-    return getNamespacesByGrantType(ctx, userId, GrantType.READ);
+    return getNamespacesByAccessLevel(ctx, userId, AccessLevelType.READ);
   }
 
   /**
    * Returns all writable namespaces (which are not hidden or which are writable for the user as
-   * defined in the "user_namespace_grants" table.
+   * defined in the "user_namespace_access" table.
    */
   public static List<Namespace> getWritableNamespaces(CloseableDSLContext ctx, int userId) {
-    return getNamespacesByGrantType(ctx, userId, GrantType.WRITE);
+    return getNamespacesByAccessLevel(ctx, userId, AccessLevelType.WRITE);
   }
 
   /**
    * Returns a list of namespaces which the user has admin access to (as defined in the
-   * "user_namespace_grants" table).
+   * "user_namespace_access" table).
    */
   public static List<Namespace> getAdministrableNamespaces(CloseableDSLContext ctx, int userId) {
-    return getNamespacesByGrantType(ctx, userId, GrantType.ADMIN);
+    return getNamespacesByAccessLevel(ctx, userId, AccessLevelType.ADMIN);
   }
 
   /**
    * Returns a list of namespaces the user has the given access type to.
    *
-   * @param grantType "READ", "WRITE" or "ADMIN"
+   * @param accessLevel "READ", "WRITE" or "ADMIN"
    */
-  public static List<Namespace> getNamespacesByGrantType(
-      CloseableDSLContext ctx, int userId, GrantType grantType) {
+  public static List<Namespace> getNamespacesByAccessLevel(
+      CloseableDSLContext ctx, int userId, AccessLevelType accessLevel) {
     SelectConditionStep<Record> query = getNamespacesQuery(ctx);
     query.and(ELEMENT.ID.in(DaoUtil
-        .getUserNamespaceGrantsQuery(ctx, userId, Collections.singletonList(grantType))));
+        .getUserNamespaceAccessQuery(ctx, userId, Collections.singletonList(accessLevel))));
     return fetchNamespaceQuery(query);
   }
 
@@ -392,16 +392,16 @@ public class NamespaceHandler extends ElementHandler {
       namespace.setIdentification(IdentificationHandler.convert(scopedIdentifier));
       namespace.getIdentification().setNamespaceId(NamespaceHandler.getNamespaceIdByUrn(
           previousNamespace.getIdentification().getNamespaceUrn()));
-      List<UserNamespaceGrants> namespaceGrants = GrantTypeHandler
-          .getGrantsForNamespaceById(ctx, previousNamespace.getIdentification().getNamespaceId());
+      List<UserNamespaceAccess> namespaceAccess = AccessLevelHandler
+          .getAccessForNamespaceById(ctx, previousNamespace.getIdentification().getNamespaceId());
 
       delete(ctx, userId, previousNamespace.getIdentification().getUrn());
       ScopedIdentifier newScopedIdentifier = create(ctx, userId, namespace);
       IdentificationHandler.convert(newScopedIdentifier);
 
-      namespaceGrants.forEach(g -> g.setNamespaceId(newScopedIdentifier.getNamespaceId()));
+      namespaceAccess.forEach(g -> g.setNamespaceId(newScopedIdentifier.getNamespaceId()));
 
-      GrantTypeHandler.setGrantsForNamespace(ctx, namespaceGrants);
+      AccessLevelHandler.setAccessForNamespace(ctx, namespaceAccess);
       updateNamespaceIds(ctx, userId, previousNamespace.getIdentification().getNamespaceId(),
           newScopedIdentifier.getNamespaceId());
 
@@ -546,17 +546,16 @@ public class NamespaceHandler extends ElementHandler {
 
   public static List<DeHubUserPermission> getUserAccessForNamespace(CloseableDSLContext ctx,
       int userId, int namespaceIdentifier) throws IllegalAccessException {
-    // TODO: can anyone read those? Or only admins? If only admins can read - enable the following lines.
-//    if (GrantTypeHandler.getGrantTypeByUserAndNamespaceIdentifier(ctx, userId, namespaceIdentifier)
-//        != GrantType.ADMIN) {
-//      throw new IllegalAccessException("Insufficient rights to manage namespace grants.");
-//    }
-    List<UserNamespaceGrants> userNamespaceGrants = GrantTypeHandler.getGrantsForNamespaceByIdentifier(
+    if (AccessLevelHandler.getAccessLevelByUserAndNamespaceIdentifier(ctx, userId, namespaceIdentifier)
+        != AccessLevelType.ADMIN) {
+      throw new IllegalAccessException("Insufficient rights to manage namespace grants.");
+    }
+    List<UserNamespaceAccess> userNamespaceAccess = AccessLevelHandler.getAccessForNamespaceByIdentifier(
         ctx, namespaceIdentifier);
     List<DeHubUserPermission> permissions = new ArrayList<>();
-    userNamespaceGrants.forEach(ung -> {
-      DehubUser user = UserHandler.getUserById(ctx, ung.getUserId());
-      permissions.add(new DeHubUserPermission(user.getAuthId(), ung.getGrantType().getLiteral()));
+    userNamespaceAccess.forEach(una -> {
+      DehubUser user = UserHandler.getUserById(ctx, una.getUserId());
+      permissions.add(new DeHubUserPermission(user.getAuthId(), una.getAccessLevel().getLiteral()));
     });
     return permissions;
   }

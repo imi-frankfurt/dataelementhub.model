@@ -10,5 +10,5 @@ import lombok.EqualsAndHashCode;
 public class DeHubUserPermission {
 
   private String userAuthId;
-  private String grantType;
+  private String accessLevel;
 }
