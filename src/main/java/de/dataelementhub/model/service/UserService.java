@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 public class UserService {
 
   /**
-   * Give a user access to a namespace
+   * Give a user access to a namespace.
    */
   public void grantAccessToNamespace(int executingUserId, int namespaceIdentifier,
       List<DeHubUserPermission> userPermissions) throws IllegalAccessException {

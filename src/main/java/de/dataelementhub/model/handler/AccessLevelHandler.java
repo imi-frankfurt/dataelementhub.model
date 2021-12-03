@@ -14,26 +14,23 @@ import org.jooq.CloseableDSLContext;
 public class AccessLevelHandler {
 
   /**
-   * Returns the highest access level of the given user and namespace.
+   * Returns the access level of the given user and namespace.
    * Namespace is given by its identifier.
    */
   public static AccessLevelType getAccessLevelByUserAndNamespaceIdentifier(CloseableDSLContext ctx,
       int userId, int namespaceSiIdentifier) {
-    List<AccessLevelType> accessLevels =
-        ctx.select(USER_NAMESPACE_ACCESS.ACCESS_LEVEL).from(USER_NAMESPACE_ACCESS)
-            .leftJoin(SCOPED_IDENTIFIER)
-            .on(USER_NAMESPACE_ACCESS.NAMESPACE_ID.eq(SCOPED_IDENTIFIER.NAMESPACE_ID))
-            .where(SCOPED_IDENTIFIER.IDENTIFIER.eq(namespaceSiIdentifier))
-            .and(SCOPED_IDENTIFIER.ELEMENT_TYPE.eq(ElementType.NAMESPACE))
-            .and(USER_NAMESPACE_ACCESS.USER_ID.eq(userId)).fetchInto(AccessLevelType.class);
-
-    return getHighestAccessLevel(accessLevels);
+    return ctx.select(USER_NAMESPACE_ACCESS.ACCESS_LEVEL).from(USER_NAMESPACE_ACCESS)
+        .leftJoin(SCOPED_IDENTIFIER)
+        .on(USER_NAMESPACE_ACCESS.NAMESPACE_ID.eq(SCOPED_IDENTIFIER.NAMESPACE_ID))
+        .where(SCOPED_IDENTIFIER.IDENTIFIER.eq(namespaceSiIdentifier))
+        .and(SCOPED_IDENTIFIER.ELEMENT_TYPE.eq(ElementType.NAMESPACE))
+        .and(USER_NAMESPACE_ACCESS.USER_ID.eq(userId)).fetchOneInto(AccessLevelType.class);
   }
 
 
 
   /**
-   * Returns the highest access level of the given user and namespace.
+   * Returns the access level of the given user and namespace.
    * Namespace is given by its urn.
    */
   public static AccessLevelType getAccessLevelByUserAndNamespaceUrn(CloseableDSLContext ctx,
@@ -44,25 +41,22 @@ public class AccessLevelHandler {
   }
 
   /**
-   * Returns the highest access level of the given user and namespace.
+   * Returns the access level of the given user and namespace.
    * Namespace is given by its database id.
    */
   public static AccessLevelType getAccessLevelByUserAndNamespaceId(CloseableDSLContext ctx,
       int userId, int namespaceId) {
-    List<AccessLevelType> accessLevels =
-        ctx.select(USER_NAMESPACE_ACCESS.ACCESS_LEVEL).from(USER_NAMESPACE_ACCESS)
-            .where(USER_NAMESPACE_ACCESS.NAMESPACE_ID.eq(namespaceId))
-            .and(USER_NAMESPACE_ACCESS.USER_ID.eq(userId)).fetchInto(AccessLevelType.class);
-
-    return getHighestAccessLevel(accessLevels);
+    return ctx.select(USER_NAMESPACE_ACCESS.ACCESS_LEVEL).from(USER_NAMESPACE_ACCESS)
+        .where(USER_NAMESPACE_ACCESS.NAMESPACE_ID.eq(namespaceId))
+        .and(USER_NAMESPACE_ACCESS.USER_ID.eq(userId)).fetchOneInto(AccessLevelType.class);
   }
 
   /**
    * Returns access record of the given user and namespace.
    * Namespace is given by its id.
    */
-  public static UserNamespaceAccessRecord getUserNamespaceAccessTypeRecordByUserAndNamespaceId(CloseableDSLContext ctx,
-      int userId, int namespaceId) {
+  public static UserNamespaceAccessRecord getUserNamespaceAccessTypeRecordByUserAndNamespaceId(
+      CloseableDSLContext ctx, int userId, int namespaceId) {
 
     return
         ctx.selectFrom(USER_NAMESPACE_ACCESS)
@@ -108,20 +102,5 @@ public class AccessLevelHandler {
             USER_NAMESPACE_ACCESS.NAMESPACE_ID, USER_NAMESPACE_ACCESS.ACCESS_LEVEL)
         .values(al.getUserId(), al.getNamespaceId(), al.getAccessLevel()).onConflictDoNothing()
         .execute());
-  }
-
-  private static AccessLevelType getHighestAccessLevel(List<AccessLevelType> accessLevels) {
-    AccessLevelType highestAccessLevel = null;
-    for (AccessLevelType accessLevel : accessLevels) {
-      if (accessLevel.equals(AccessLevelType.ADMIN)) {
-        highestAccessLevel = accessLevel;
-        break;
-      } else if (accessLevel.equals(AccessLevelType.WRITE)) {
-        highestAccessLevel = accessLevel;
-      } else if (accessLevel == AccessLevelType.READ && highestAccessLevel == null) {
-        highestAccessLevel = accessLevel;
-      }
-    }
-    return highestAccessLevel;
   }
 }

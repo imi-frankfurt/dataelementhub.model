@@ -544,14 +544,17 @@ public class NamespaceHandler extends ElementHandler {
     return namespaceMembers;
   }
 
+  /**
+   * Read the users permissions for a given namespace (by namespace identifier).
+   */
   public static List<DeHubUserPermission> getUserAccessForNamespace(CloseableDSLContext ctx,
       int userId, int namespaceIdentifier) throws IllegalAccessException {
-    if (AccessLevelHandler.getAccessLevelByUserAndNamespaceIdentifier(ctx, userId, namespaceIdentifier)
-        != AccessLevelType.ADMIN) {
+    if (AccessLevelHandler.getAccessLevelByUserAndNamespaceIdentifier(ctx, userId,
+        namespaceIdentifier) != AccessLevelType.ADMIN) {
       throw new IllegalAccessException("Insufficient rights to manage namespace grants.");
     }
-    List<UserNamespaceAccess> userNamespaceAccess = AccessLevelHandler.getAccessForNamespaceByIdentifier(
-        ctx, namespaceIdentifier);
+    List<UserNamespaceAccess> userNamespaceAccess = AccessLevelHandler
+        .getAccessForNamespaceByIdentifier(ctx, namespaceIdentifier);
     List<DeHubUserPermission> permissions = new ArrayList<>();
     userNamespaceAccess.forEach(una -> {
       DehubUser user = UserHandler.getUserById(ctx, una.getUserId());

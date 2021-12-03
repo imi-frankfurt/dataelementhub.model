@@ -266,8 +266,8 @@ public class ElementService {
   /**
    * Get all Namespaces a user has the given access right to.
    */
-  public Map<AccessLevelType, List<Namespace>> readNamespaces(int userId, AccessLevelType accessLevel)
-      throws IllegalAccessException {
+  public Map<AccessLevelType, List<Namespace>> readNamespaces(int userId,
+      AccessLevelType accessLevel) throws IllegalAccessException {
     Map<AccessLevelType, List<Namespace>> namespaceMap = new HashMap<>();
 
     try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
@@ -358,7 +358,7 @@ public class ElementService {
   }
 
   /**
-   * Read the list of users that have access to a given namespace
+   * Read the list of users that have access to a given namespace.
    */
   public List<DeHubUserPermission> readUserAccessList(int userId, int namespaceIdentifier)
       throws IllegalAccessException {
