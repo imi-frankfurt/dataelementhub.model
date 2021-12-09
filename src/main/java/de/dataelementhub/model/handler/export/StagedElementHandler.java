@@ -7,7 +7,7 @@ import de.dataelementhub.model.dto.element.Element;
 import de.dataelementhub.model.dto.element.section.Member;
 import de.dataelementhub.model.dto.element.section.ValueDomain;
 import de.dataelementhub.model.dto.element.section.validation.PermittedValue;
-import de.dataelementhub.model.dto.export.StagedElement;
+import de.dataelementhub.model.dto.element.StagedElement;
 import de.dataelementhub.model.handler.element.ElementHandler;
 import de.dataelementhub.model.handler.element.NamespaceHandler;
 import de.dataelementhub.model.handler.element.section.IdentificationHandler;

@@ -4,7 +4,7 @@ import static de.dataelementhub.model.handler.export.StagedElementHandler.elemen
 
 import de.dataelementhub.model.dto.export.Export;
 import de.dataelementhub.model.dto.export.ExportRequest;
-import de.dataelementhub.model.dto.export.StagedElement;
+import de.dataelementhub.model.dto.element.StagedElement;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
