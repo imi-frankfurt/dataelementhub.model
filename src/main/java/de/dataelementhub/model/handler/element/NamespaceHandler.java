@@ -172,7 +172,8 @@ public class NamespaceHandler extends ElementHandler {
           .and(SCOPED_IDENTIFIER.IDENTIFIER.equal(namespaceIdentifier))
           .and(SCOPED_IDENTIFIER.VERSION.equal(
               ctx.select(DSL.max(SCOPED_IDENTIFIER.VERSION)).from(SCOPED_IDENTIFIER)
-                  .where(SCOPED_IDENTIFIER.IDENTIFIER.equal(namespaceIdentifier))))
+                  .where(SCOPED_IDENTIFIER.IDENTIFIER.equal(namespaceIdentifier))
+                  .and(SCOPED_IDENTIFIER.ELEMENT_TYPE.equal(ElementType.NAMESPACE))))
           .fetchOneInto(Integer.class);
       // to check if Namespace is accessible by current user
       getByDatabaseId(ctx, userId, namespaceId);
