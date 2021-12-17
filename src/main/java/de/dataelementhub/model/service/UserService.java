@@ -62,6 +62,9 @@ public class UserService {
         throw new IllegalAccessException("Insufficient rights to manage namespace grants.");
       }
       DehubUser user = UserHandler.getUserByIdentity(ctx, userAuthId);
+      if (executingUserId == user.getId()) {
+        throw new IllegalArgumentException("You can not remove your own access.");
+      }
       UserHandler.removeUserAccessFromNamespace(user.getId(), namespaceIdentifier);
     }
   }
