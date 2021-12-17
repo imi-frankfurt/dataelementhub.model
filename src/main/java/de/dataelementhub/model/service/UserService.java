@@ -47,4 +47,19 @@ public class UserService {
     }
   }
 
+  /**
+   * Remove a users access to a namespace.
+   */
+  public void revokeAccessToNamespace(int executingUserId, int namespaceIdentifier,
+      String userAuthId) throws IllegalAccessException {
+    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
+      if (AccessLevelHandler.getAccessLevelByUserAndNamespaceIdentifier(ctx, executingUserId,
+          namespaceIdentifier) != AccessLevelType.ADMIN) {
+        throw new IllegalAccessException("Insufficient rights to manage namespace grants.");
+      }
+      DehubUser user = UserHandler.getUserByIdentity(ctx, userAuthId);
+      UserHandler.removeUserAccessFromNamespace(user.getId(), namespaceIdentifier);
+    }
+  }
+
 }
