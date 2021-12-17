@@ -12,6 +12,7 @@ import de.dataelementhub.dal.jooq.tables.records.DehubUserRecord;
 import de.dataelementhub.dal.jooq.tables.records.IdentifiedElementRecord;
 import de.dataelementhub.dal.jooq.tables.records.UserNamespaceAccessRecord;
 import de.dataelementhub.model.handler.element.NamespaceHandler;
+import java.util.List;
 import org.jooq.CloseableDSLContext;
 
 public class UserHandler {
@@ -27,6 +28,17 @@ public class UserHandler {
     }
     try {
       return ctx.fetchOne(DEHUB_USER, DEHUB_USER.AUTH_ID.equal(identity)).into(DehubUser.class);
+    } catch (NullPointerException npe) {
+      return null;
+    }
+  }
+
+  /**
+   * Get a list of users by auth ids.
+   */
+  public static List<DehubUser> getUsersByIdentity(CloseableDSLContext ctx, List<String> identity) {
+    try {
+      return ctx.fetch(DEHUB_USER, DEHUB_USER.AUTH_ID.in(identity)).into(DehubUser.class);
     } catch (NullPointerException npe) {
       return null;
     }
