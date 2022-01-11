@@ -15,6 +15,7 @@ import lombok.NoArgsConstructor;
 @JsonInclude(Include.NON_NULL)
 public class StagedElement {
   private String stagedElementId;
+  private String elementUrn;
   private ElementType elementType;
   private String designation;
 }

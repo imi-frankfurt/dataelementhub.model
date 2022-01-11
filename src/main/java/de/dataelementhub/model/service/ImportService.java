@@ -1,34 +1,40 @@
 package de.dataelementhub.model.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import static de.dataelementhub.dal.jooq.Tables.IMPORT;
+import static de.dataelementhub.dal.jooq.Tables.SCOPED_IDENTIFIER;
+import static de.dataelementhub.dal.jooq.Tables.STAGING;
+import static org.jooq.impl.DSL.count;
+
 import de.dataelementhub.dal.ResourceManager;
+import de.dataelementhub.dal.jooq.enums.GrantType;
 import de.dataelementhub.dal.jooq.enums.ProcessStatus;
 import de.dataelementhub.dal.jooq.tables.records.ImportRecord;
+import de.dataelementhub.model.DaoUtil;
 import de.dataelementhub.model.dto.importdto.ImportInfo;
 import de.dataelementhub.model.dto.listviews.StagedElement;
 import de.dataelementhub.model.handler.element.NamespaceHandler;
 import de.dataelementhub.model.handler.element.section.IdentificationHandler;
 import de.dataelementhub.model.handler.importhandler.ImportHandler;
+import de.dataelementhub.model.handler.importhandler.StagedElementHandler;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Objects;
-import java.util.concurrent.Future;
 import org.jooq.CloseableDSLContext;
-import org.jooq.Record1;
-import org.jooq.RecordType;
+import org.jooq.Record;
+import org.jooq.Record2;
+import org.jooq.Result;
+import org.jooq.impl.SQLDataType;
 import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-
-import static de.dataelementhub.dal.jooq.Tables.IMPORT;
-import static de.dataelementhub.dal.jooq.Tables.STAGING;
 
 @Service
 public class ImportService {
@@ -46,20 +52,55 @@ public class ImportService {
     }
   }
 
+  /**
+   * Convert stagedElements to Drafts.
+   **/
+  @Async
+  public void convertToDraft(
+      List<String> stagedElementsIds, int userId, int importId) throws
+      IllegalAccessException {
+    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
+      if (!ctx.fetchExists(ctx.selectFrom(IMPORT).where(IMPORT.CREATED_BY.eq(userId)
+          .or(IMPORT.NAMESPACE_ID.in(DaoUtil.getUserNamespaceGrantsQuery(ctx, userId, Collections
+              .singletonList(GrantType.ADMIN))))).and(IMPORT.ID.eq(importId)))) {
+        throw new IllegalAccessException();
+      }
+      ImportHandler.convertToDrafts(ctx, importId, userId, stagedElementsIds);
+    }
+  }
+
+  /** Check user grants then delete staged import. */
+  public void deleteStagedImport(int userId, int importId) throws IllegalAccessException,
+      NoSuchElementException {
+    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
+      boolean importExists = ctx.fetchExists(ctx.selectFrom(IMPORT).where(IMPORT.ID.eq(importId)));
+      if (!importExists) {
+        throw new NoSuchElementException();
+      }
+      Integer namespaceIdentifier = ctx.select().from(IMPORT).leftJoin(SCOPED_IDENTIFIER)
+          .on(IMPORT.NAMESPACE_ID.eq(SCOPED_IDENTIFIER.ELEMENT_ID))
+          .where(IMPORT.ID.eq(importId)).fetchOne().getValue(SCOPED_IDENTIFIER.IDENTIFIER);
+      if (ctx.fetchExists(ctx.selectFrom(IMPORT).where(IMPORT.CREATED_BY.eq(userId)
+          .or(IMPORT.NAMESPACE_ID.in(DaoUtil.getUserNamespaceGrantsQuery(ctx, userId, Collections
+              .singletonList(GrantType.ADMIN))))).and(IMPORT.ID.eq(importId)))) {
+        ctx.deleteFrom(IMPORT).where(IMPORT.ID.eq(importId)).execute();
+        ctx.deleteFrom(STAGING).where(STAGING.IMPORT_ID.eq(importId)).execute();
+      } else {
+        throw new IllegalAccessException();
+      }
+    }
+  }
+
   /** Generate importId. */
   public int generateImportId(String namespaceUrn, int userId, List<MultipartFile> files,
-      String importDirectory, String timestamp) {
+      String importDirectory, String timestamp) throws IOException {
     try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
       String destination = importDirectory + "/" + userId + "/" + timestamp;
       new File(importDirectory + "/" + userId).mkdir();
       new File(destination).mkdir();
       for (MultipartFile file : files) {
         Path fileNameAndPath = Paths.get(destination, file.getOriginalFilename());
-        try {
-          Files.write(fileNameAndPath, file.getBytes());
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
+        Files.write(fileNameAndPath, file.getBytes());
       }
       int namespaceId = IdentificationHandler
           .getScopedIdentifier(ctx, namespaceUrn).getNamespaceId();
@@ -77,14 +118,34 @@ public class ImportService {
   public List<ImportInfo> allImports(int userId) {
     List<ImportInfo> importInfoList = new ArrayList<>();
     try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      ctx.selectFrom(IMPORT).where(IMPORT.CREATED_BY.eq(userId)).fetch().forEach(
+      List<ImportRecord> imports = ctx.selectFrom(IMPORT).where(IMPORT.CREATED_BY.eq(userId)
+          .or(IMPORT.NAMESPACE_ID.in(DaoUtil.getUserNamespaceGrantsQuery(ctx, userId, Collections
+              .singletonList(GrantType.ADMIN))))).fetch();
+      imports.forEach(
           importRecord -> {
             ImportInfo importInfo = new ImportInfo();
+            double conversionProcess;
+            double stagingProcess;
+            try {
+              Record2<Double, Double> rt = ctx.select(count(STAGING.SCOPED_IDENTIFIER_ID).cast(
+                          SQLDataType.DOUBLE).as("notNull"),
+                      count().cast(
+                          SQLDataType.DOUBLE).as("all")).from(STAGING)
+                  .where(STAGING.IMPORT_ID.eq(importRecord.getId())).fetchOne();
+              conversionProcess = rt.value1() / rt.value2();
+              stagingProcess = rt.value2() / importRecord.getNumberOfElements();
+            } catch (Exception e) {
+              stagingProcess = (double) 0;
+              conversionProcess = (double) 0;
+            }
+            String namespaceUrn = NamespaceHandler
+                .getNamespaceUrnById(ctx, importRecord.getNamespaceId());
             importInfo.setId(importRecord.getId());
             importInfo.setStatus(importRecord.getStatus());
-            importInfo.setNamespaceUrn(NamespaceHandler
-                .getNamespaceUrnById(importRecord.getNamespaceId()));
+            importInfo.setNamespaceUrn(namespaceUrn);
             importInfo.setTimestamp(Timestamp.valueOf(importRecord.getCreatedAt()));
+            importInfo.setConverted(conversionProcess);
+            importInfo.setStaged(stagingProcess);
             importInfoList.add(importInfo);
           }
       );
@@ -93,18 +154,51 @@ public class ImportService {
   }
 
   /** returns the import status PROCESSING/DONE/INTERRUPTED/NOT DEFINED. */
-  public ProcessStatus checkStatus(String identifier, int userId) {
+  public ImportInfo getImportInfo(String identifier, int userId) {
+    ImportInfo importInfo = new ImportInfo();
     try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      return Objects.requireNonNull(
+      ImportRecord importRecord = Objects.requireNonNull(
           ctx.selectFrom(IMPORT).where(IMPORT.ID.eq(Integer.valueOf(identifier)))
-              .and(IMPORT.CREATED_BY.eq(userId)).fetchOne()).getStatus();
+              .and(IMPORT.CREATED_BY.eq(userId)).fetchOne());
+      double conversionProcess;
+      double stagingProcess;
+      try {
+        Record2<Double, Double> rt = ctx.select(count(STAGING.SCOPED_IDENTIFIER_ID).cast(
+                    SQLDataType.DOUBLE).as("notNull"),
+                count().cast(
+                    SQLDataType.DOUBLE).as("all")).from(STAGING)
+            .where(STAGING.IMPORT_ID.eq(importRecord.getId())).fetchOne();
+        conversionProcess = rt.value1() / rt.value2();
+        stagingProcess = rt.value2() / importRecord.getNumberOfElements();
+      } catch (Exception e) {
+        stagingProcess = (double) 0;
+        conversionProcess = (double) 0;
+      }
+      importInfo.setId(importRecord.getId());
+      importInfo.setStatus(importRecord.getStatus());
+      importInfo.setNamespaceUrn(NamespaceHandler
+          .getNamespaceUrnById(importRecord.getNamespaceId()));
+      importInfo.setConverted(conversionProcess);
+      importInfo.setStaged(stagingProcess);
+      importInfo.setTimestamp(Timestamp.valueOf(importRecord.getCreatedAt()));
+      return importInfo;
     }
   }
 
-  /** . */
-  public List<StagedElement> getImportMembersListView(int importId, int userId, Boolean hideSubElements) {
-    List<StagedElement> stagedElements;
+  /** Get Import members. */
+  public List<StagedElement> getImportMembersListView(int importId, int userId,
+      Boolean hideSubElements) throws IllegalAccessException, NoSuchElementException {
+    List<StagedElement> stagedElements = new ArrayList<>();
+    Result<Record> stagingRecords;
     try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
+      if (!ctx.fetchExists(ctx.selectFrom(IMPORT).where(IMPORT.ID.eq(importId)))) {
+        throw new NoSuchElementException();
+      }
+      if (!ctx.fetchExists(ctx.selectFrom(IMPORT).where(IMPORT.CREATED_BY.eq(userId)
+          .or(IMPORT.NAMESPACE_ID.in(DaoUtil.getUserNamespaceGrantsQuery(ctx, userId, Collections
+              .singletonList(GrantType.ADMIN))))).and(IMPORT.ID.eq(importId)))) {
+        throw new IllegalAccessException();
+      }
       if (hideSubElements) {
         List<String> subElements = new ArrayList<>();
         for (String s : ctx.select(STAGING.MEMBERS)
@@ -113,60 +207,61 @@ public class ImportService {
           String[] split = s.split(";");
           subElements.addAll(List.of(split));
         }
-        stagedElements = ctx
-            .select(STAGING.STAGED_ELEMENT_ID, STAGING.DESIGNATION, STAGING.ELEMENT_TYPE)
+        stagingRecords = ctx
+            .select()
             .from(STAGING).where(STAGING.IMPORT_ID.eq(importId))
             .and(String.valueOf(ctx.fetchExists(ctx.selectFrom(IMPORT)
                 .where(IMPORT.ID.eq(importId)).and(IMPORT.CREATED_BY.eq(userId)))))
             .and(STAGING.STAGED_ELEMENT_ID.notIn(subElements))
-            .fetch().into(StagedElement.class);
+            .fetch();
       } else {
-        stagedElements = ctx
-            .select(STAGING.STAGED_ELEMENT_ID, STAGING.DESIGNATION, STAGING.ELEMENT_TYPE)
+        stagingRecords = ctx
+            .select()
             .from(STAGING).where(STAGING.IMPORT_ID.eq(importId))
             .and(String.valueOf(ctx.fetchExists(ctx.selectFrom(IMPORT)
                 .where(IMPORT.ID.eq(importId)).and(IMPORT.CREATED_BY.eq(userId)))))
-            .fetch().into(StagedElement.class);
+            .fetch();
+      }
+      for (Record sr : stagingRecords) {
+        StagedElement stagedElement = new StagedElement();
+        stagedElement.setStagedElementId(sr.getValue(STAGING.STAGED_ELEMENT_ID));
+        if (sr.getValue(STAGING.SCOPED_IDENTIFIER_ID) != null) {
+          stagedElement.setElementUrn(IdentificationHandler
+              .toUrn(ctx, sr.getValue(STAGING.SCOPED_IDENTIFIER_ID)));
+        }
+        stagedElement.setElementType(sr.getValue(STAGING.ELEMENT_TYPE));
+        stagedElement.setDesignation(sr.getValue(STAGING.DESIGNATION));
+        stagedElements.add(stagedElement);
       }
     }
     return stagedElements;
   }
 
-  /** . */
-  public List<StagedElement> getStagedElementMembers(int importId, int userId, String stagedElementId) {
+  /** Get StagedElement Members. */
+  public List<StagedElement> getStagedElementMembers(int importId, int userId,
+      String stagedElementId) throws IllegalAccessException {
     List<StagedElement> stagedElementMembers;
     try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      List<String> stagedElementMembersIds = List.of(ctx.select(STAGING.MEMBERS)
-          .from(STAGING)
-          .where(STAGING.IMPORT_ID.eq(importId))
-          .and(STAGING.STAGED_ELEMENT_ID.eq(stagedElementId)).fetchOne().into(String.class)
-          .split(";"));
-      stagedElementMembers = ctx
-          .select(STAGING.STAGED_ELEMENT_ID, STAGING.DESIGNATION, STAGING.ELEMENT_TYPE)
-          .from(STAGING).where(STAGING.IMPORT_ID.eq(importId))
-          .and(String.valueOf(ctx.fetchExists(ctx.selectFrom(IMPORT)
-              .where(IMPORT.ID.eq(importId)).and(IMPORT.CREATED_BY.eq(userId)))))
-          .and(STAGING.STAGED_ELEMENT_ID.in(stagedElementMembersIds))
-          .fetch().into(StagedElement.class);
+      if (!ctx.fetchExists(ctx.selectFrom(IMPORT).where(IMPORT.CREATED_BY.eq(userId)
+          .or(IMPORT.NAMESPACE_ID.in(DaoUtil.getUserNamespaceGrantsQuery(ctx, userId, Collections
+              .singletonList(GrantType.ADMIN))))).and(IMPORT.ID.eq(importId)))) {
+        throw new IllegalAccessException();
+      }
+      return StagedElementHandler.getStagedElementMembers(ctx, importId, userId, stagedElementId);
     }
-    return stagedElementMembers;
   }
 
-  /** .
-   * @return*/
+  /** Get StagedElement by ID from specified Import. */
   public de.dataelementhub.model.dto.element.StagedElement getStagedElement(
-      int importId, int userId, String stagedElementId) throws JsonProcessingException {
+      int importId, int userId, String stagedElementId)
+      throws IllegalAccessException {
     try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      String stagedElementAsString = String.valueOf(ctx.select(STAGING.DATA)
-          .from(STAGING)
-          .where(STAGING.IMPORT_ID.eq(importId))
-          .and(STAGING.STAGED_ELEMENT_ID.eq(stagedElementId))
-          .and(String.valueOf(ctx.fetchExists(ctx.selectFrom(IMPORT)
-              .where(IMPORT.ID.eq(importId)).and(IMPORT.CREATED_BY.eq(userId)))))
-          .fetchOneInto(String.class));
-      return stagedElementAsString != null ?
-          new ObjectMapper().readValue(stagedElementAsString,
-          de.dataelementhub.model.dto.element.StagedElement.class) : null;
+      if (!ctx.fetchExists(ctx.selectFrom(IMPORT).where(IMPORT.CREATED_BY.eq(userId)
+          .or(IMPORT.NAMESPACE_ID.in(DaoUtil.getUserNamespaceGrantsQuery(ctx, userId, Collections
+              .singletonList(GrantType.ADMIN))))).and(IMPORT.ID.eq(importId)))) {
+        throw new IllegalAccessException();
+      }
+      return StagedElementHandler.getStagedElement(ctx, importId, userId, stagedElementId);
     }
   }
 

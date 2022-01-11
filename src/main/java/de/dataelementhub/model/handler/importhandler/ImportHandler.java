@@ -1,26 +1,26 @@
 package de.dataelementhub.model.handler.importhandler;
 
 import static de.dataelementhub.dal.jooq.Tables.IMPORT;
+import static de.dataelementhub.dal.jooq.Tables.SCOPED_IDENTIFIER;
 import static de.dataelementhub.dal.jooq.Tables.STAGING;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.dataelementhub.dal.jooq.enums.ElementType;
 import de.dataelementhub.dal.jooq.enums.ProcessStatus;
+import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
 import de.dataelementhub.model.dto.element.StagedElement;
 import de.dataelementhub.model.dto.element.section.Member;
 import de.dataelementhub.model.dto.importdto.ImportDto;
+import de.dataelementhub.model.handler.element.section.IdentificationHandler;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
@@ -37,7 +37,6 @@ import org.everit.json.schema.loader.SchemaLoader;
 import org.jooq.CloseableDSLContext;
 import org.json.JSONObject;
 import org.json.JSONTokener;
-import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.web.multipart.MultipartFile;
 
 public class ImportHandler {
@@ -56,7 +55,11 @@ public class ImportHandler {
         unzip(fileNameAndPath.toString(), destination);
         allFilesInFolder(ctx, destination, importId);
       } catch (Exception e) {
-        e.printStackTrace();
+        ctx.update(IMPORT)
+            .set(IMPORT.STATUS, ProcessStatus.INTERRUPTED)
+            .set(IMPORT.LABEL, e.getMessage())
+            .where(IMPORT.ID.eq(importId))
+            .execute();
       }
     }
   }
@@ -85,7 +88,7 @@ public class ImportHandler {
     if (fileToImport.contains(".xml")) {
       importXml(ctx, fileToImport, importId);
     } else if (fileToImport.contains(".json")) {
-       importJson(ctx, fileToImport, importId);
+      importJson(ctx, fileToImport, importId);
     }
   }
 
@@ -118,7 +121,12 @@ public class ImportHandler {
   }
 
   /** Convert stagedElements to elements and save them. */
-  public static void saveElements(CloseableDSLContext ctx, List<StagedElement> stagedElements, int importId) {
+  public static void saveElements(
+      CloseableDSLContext ctx, List<StagedElement> stagedElements, int importId) {
+    ctx.update(IMPORT)
+        .set(IMPORT.NUMBER_OF_ELEMENTS, stagedElements.size())
+        .where(IMPORT.ID.eq(importId))
+        .execute();
     stagedElements
         .forEach(
             (stagedElement -> {
@@ -130,43 +138,28 @@ public class ImportHandler {
                     .set(STAGING.DATA, new ObjectMapper().writeValueAsString(stagedElement))
                     .set(STAGING.ELEMENT_TYPE, stagedElement.getIdentification().getElementType())
                     .set(STAGING.DESIGNATION, stagedElement.getDefinitions()
-                        .size() > 0 ? stagedElement.getDefinitions().get(0).getDesignation() :
-                        stagedElement.getIdentification().getElementType().toString())
+                        .size() > 0 ? stagedElement.getDefinitions().get(0).getDesignation() : "")
                     .set(STAGING.IMPORT_ID, importId)
                     .set(STAGING.STAGED_ELEMENT_ID, stagedElement.getIdentification().getUrn())
                     .set(STAGING.MEMBERS, membersAsString)
                     .execute();
+                ctx.update(IMPORT)
+                    .set(IMPORT.STATUS, ProcessStatus.COMPLETED)
+                    .where(IMPORT.ID.eq(importId))
+                    .execute();
               } catch (JsonProcessingException e) {
-                e.printStackTrace();
+                ctx.update(IMPORT)
+                    .set(IMPORT.STATUS, ProcessStatus.INTERRUPTED)
+                    .set(IMPORT.LABEL, e.getMessage())
+                    .where(IMPORT.ID.eq(importId))
+                    .execute();
               }
             }));
-    ctx.update(IMPORT)
-        .set(IMPORT.STATUS, ProcessStatus.DONE)
-        .where(IMPORT.ID.eq(importId))
-        .execute();
   }
 
   /** returns JSON file as String. */
   public static String readFileAsString(String file) throws Exception {
     return new String(Files.readAllBytes(Paths.get(file)));
-  }
-
-  /** Defines which elements should be imported first. */
-  public static Integer elementTypeOrder(ElementType elementType) {
-    switch (elementType) {
-      case PERMISSIBLE_VALUE:
-        return 1;
-      case ENUMERATED_VALUE_DOMAIN:
-      case DESCRIBED_VALUE_DOMAIN:
-        return 2;
-      case DATAELEMENT:
-        return 3;
-      case DATAELEMENTGROUP:
-      case RECORD:
-        return 4;
-      default:
-        throw new IllegalArgumentException("Element Type is not supported");
-    }
   }
 
   /** File validation against XSD/JSON Schema. */
@@ -192,5 +185,29 @@ public class ImportHandler {
       org.everit.json.schema.Schema schema = SchemaLoader.load(jsonSchema);
       schema.validate(jsonSubject);
     }
+  }
+
+  /** Convert StagedElements to drafts. */
+  public static void convertToDrafts(CloseableDSLContext ctx, int importId, int userId,
+      List<String> stagedElementsIds) {
+    Integer namespaceId = Objects.requireNonNull(
+            ctx.select().from(IMPORT).where(IMPORT.ID.eq(importId)).fetchOne())
+        .getValue(IMPORT.NAMESPACE_ID);
+    ScopedIdentifier scopedIdentifier = ctx.selectFrom(SCOPED_IDENTIFIER)
+        .where(SCOPED_IDENTIFIER.ELEMENT_ID.eq(namespaceId))
+        .and(SCOPED_IDENTIFIER.ELEMENT_TYPE.eq(ElementType.NAMESPACE))
+        .fetchOneInto(ScopedIdentifier.class);
+    String namespaceUrn = IdentificationHandler.toUrn(scopedIdentifier);
+    stagedElementsIds.forEach(stagedElementId -> {
+      StagedElement stagedElement = null;
+      stagedElement = StagedElementHandler.getStagedElement(ctx, importId,
+          userId, stagedElementId);
+      try {
+        StagedElementHandler.stagedElementToElement(ctx, stagedElement, namespaceUrn,
+            userId, importId);
+      } catch (IllegalAccessException e) {
+        throw new IllegalArgumentException();
+      }
+    });
   }
 }

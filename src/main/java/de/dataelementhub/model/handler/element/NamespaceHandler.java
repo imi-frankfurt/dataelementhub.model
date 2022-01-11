@@ -119,6 +119,19 @@ public class NamespaceHandler extends ElementHandler {
   }
 
   /**
+   * Get the namespace urn for a given namespace id (database id).
+   */
+  public static String getNamespaceUrnById(CloseableDSLContext ctx, int namespaceId) {
+    ScopedIdentifier scopedIdentifier = ctx.selectFrom(SCOPED_IDENTIFIER)
+        .where(SCOPED_IDENTIFIER.NAMESPACE_ID.eq(namespaceId))
+        .and(SCOPED_IDENTIFIER.ELEMENT_TYPE.eq(ElementType.NAMESPACE))
+        .orderBy(SCOPED_IDENTIFIER.VERSION.desc()).limit(1)
+        .fetchOneInto(ScopedIdentifier.class);
+    return "urn:" + scopedIdentifier.getNamespaceId() + ":namespace:"
+        + scopedIdentifier.getIdentifier() + ":" + scopedIdentifier.getVersion();
+  }
+
+  /**
    * Get a Namespace.
    */
   public static Namespace getByIdentifier(CloseableDSLContext ctx, int userId,

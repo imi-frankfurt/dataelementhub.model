@@ -102,6 +102,15 @@ public class IdentificationHandler {
   }
 
   /**
+   * Returns the specified scoped identifier.
+   */
+  public static ScopedIdentifier getScopedIdentifier(CloseableDSLContext ctx,
+      Integer scopedIdentifierId) {
+    return ctx.selectFrom(SCOPED_IDENTIFIER)
+        .where(SCOPED_IDENTIFIER.ID.eq(scopedIdentifierId)).fetchOne().into(ScopedIdentifier.class);
+  }
+
+  /**
    * Create a new ScopedIdentifier of DataElementHub DAL with a given Identification of
    * DataElementHub Model.
    */
@@ -252,6 +261,24 @@ public class IdentificationHandler {
           .newRecord(SCOPED_IDENTIFIER, scopedIdentifier);
       return ctx.select(Routines.urn(scopedIdentifierRecord)).fetchOneInto(String.class);
     }
+  }
+
+  /**
+   * Accept scopedIdentifier and return Urn.
+   */
+  public static String toUrn(CloseableDSLContext ctx, ScopedIdentifier scopedIdentifier) {
+    ScopedIdentifierRecord scopedIdentifierRecord = ctx
+        .newRecord(SCOPED_IDENTIFIER, scopedIdentifier);
+    return ctx.select(Routines.urn(scopedIdentifierRecord)).fetchOneInto(String.class);
+  }
+
+  /**
+   * Accept scopedIdentifier ID and return Urn.
+   */
+  public static String toUrn(CloseableDSLContext ctx, int scopedIdentifierId) {
+    ScopedIdentifier scopedIdentifier = ctx.selectFrom(SCOPED_IDENTIFIER)
+        .where(SCOPED_IDENTIFIER.ID.eq(scopedIdentifierId)).fetchOneInto(ScopedIdentifier.class);
+    return toUrn(ctx, scopedIdentifier);
   }
 
   /**

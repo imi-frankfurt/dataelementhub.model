@@ -10,4 +10,6 @@ public class ImportInfo {
   private String namespaceUrn;
   private ProcessStatus status;
   private Timestamp timestamp;
+  private Double staged;
+  private Double converted;
 }
