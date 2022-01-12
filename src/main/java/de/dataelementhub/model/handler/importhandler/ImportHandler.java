@@ -3,15 +3,19 @@ package de.dataelementhub.model.handler.importhandler;
 import static de.dataelementhub.dal.jooq.Tables.IMPORT;
 import static de.dataelementhub.dal.jooq.Tables.SCOPED_IDENTIFIER;
 import static de.dataelementhub.dal.jooq.Tables.STAGING;
+import static org.jooq.impl.DSL.count;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.dataelementhub.dal.jooq.enums.ElementType;
 import de.dataelementhub.dal.jooq.enums.ProcessStatus;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
+import de.dataelementhub.dal.jooq.tables.records.ImportRecord;
 import de.dataelementhub.model.dto.element.StagedElement;
 import de.dataelementhub.model.dto.element.section.Member;
 import de.dataelementhub.model.dto.importdto.ImportDto;
+import de.dataelementhub.model.dto.importdto.ImportInfo;
+import de.dataelementhub.model.handler.element.NamespaceHandler;
 import de.dataelementhub.model.handler.element.section.IdentificationHandler;
 import java.io.File;
 import java.io.FileInputStream;
@@ -19,6 +23,7 @@ import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -35,6 +40,8 @@ import net.lingala.zip4j.exception.ZipException;
 import org.eclipse.persistence.jaxb.JAXBContextProperties;
 import org.everit.json.schema.loader.SchemaLoader;
 import org.jooq.CloseableDSLContext;
+import org.jooq.Record2;
+import org.jooq.impl.SQLDataType;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 import org.springframework.web.multipart.MultipartFile;
@@ -209,5 +216,33 @@ public class ImportHandler {
         throw new IllegalArgumentException();
       }
     });
+  }
+
+  /** Convert an importRecord to importInfo. */
+  public static ImportInfo importRecordToImportInfo(
+      CloseableDSLContext ctx, ImportRecord importRecord) {
+    ImportInfo importInfo = new ImportInfo();
+    double conversionProcess;
+    double stagingProcess;
+    try {
+      Record2<Double, Double> rt = ctx.select(count(STAGING.SCOPED_IDENTIFIER_ID).cast(
+                  SQLDataType.DOUBLE).as("notNull"),
+              count().cast(
+                  SQLDataType.DOUBLE).as("all")).from(STAGING)
+          .where(STAGING.IMPORT_ID.eq(importRecord.getId())).fetchOne();
+      conversionProcess = rt.value1() / rt.value2();
+      stagingProcess = rt.value2() / importRecord.getNumberOfElements();
+    } catch (Exception e) {
+      stagingProcess = (double) 0;
+      conversionProcess = (double) 0;
+    }
+    importInfo.setId(importRecord.getId());
+    importInfo.setStatus(importRecord.getStatus());
+    importInfo.setNamespaceUrn(NamespaceHandler
+        .getNamespaceUrnById(importRecord.getNamespaceId()));
+    importInfo.setConverted(conversionProcess);
+    importInfo.setStaged(stagingProcess);
+    importInfo.setTimestamp(Timestamp.valueOf(importRecord.getCreatedAt()));
+    return importInfo;
   }
 }

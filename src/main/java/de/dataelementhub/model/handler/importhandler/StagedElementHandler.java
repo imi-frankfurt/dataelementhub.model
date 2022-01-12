@@ -49,21 +49,7 @@ public class StagedElementHandler {
             .where(IMPORT.ID.eq(importId)).and(IMPORT.CREATED_BY.eq(userId)))))
         .and(STAGING.STAGED_ELEMENT_ID.in(stagedElementMembersIds))
         .fetch();
-    List<de.dataelementhub.model.dto.listviews.StagedElement> stagedElementMembers =
-        new ArrayList<>();
-    for (org.jooq.Record sr : stagingRecords) {
-      de.dataelementhub.model.dto.listviews.StagedElement stagedElement =
-          new de.dataelementhub.model.dto.listviews.StagedElement();
-      stagedElement.setStagedElementId(sr.getValue(STAGING.STAGED_ELEMENT_ID));
-      if (sr.getValue(STAGING.SCOPED_IDENTIFIER_ID) != null) {
-        stagedElement.setElementUrn(IdentificationHandler
-            .toUrn(ctx, sr.getValue(STAGING.SCOPED_IDENTIFIER_ID)));
-      }
-      stagedElement.setElementType(sr.getValue(STAGING.ELEMENT_TYPE));
-      stagedElement.setDesignation(sr.getValue(STAGING.DESIGNATION));
-      stagedElementMembers.add(stagedElement);
-    }
-    return stagedElementMembers;
+    return stagingRecordsToStagedElements(ctx, stagingRecords);
   }
 
   /** Get stagedElement by ID. */
@@ -233,5 +219,25 @@ public class StagedElementHandler {
         .where(STAGING.IMPORT_ID.eq(importId))
         .and(STAGING.STAGED_ELEMENT_ID.eq(stagedElementId))
         .execute();
+  }
+
+  /** Convert a list of stagingRecords to list of stagedElements as Listview. */
+  public static List<de.dataelementhub.model.dto.listviews.StagedElement>
+  stagingRecordsToStagedElements(CloseableDSLContext ctx, Result<org.jooq.Record> stagingRecords) {
+    List<de.dataelementhub.model.dto.listviews.StagedElement> stagedElements = new ArrayList<>();
+    for (org.jooq.Record sr : stagingRecords) {
+      de.dataelementhub.model.dto.listviews.StagedElement stagedElement =
+          new de.dataelementhub.model.dto.listviews.StagedElement();
+      stagedElement.setStagedElementId(sr.getValue(STAGING.STAGED_ELEMENT_ID));
+      stagedElement.setElementUrn(null);
+      if (sr.getValue(STAGING.SCOPED_IDENTIFIER_ID) != null) {
+        stagedElement.setElementUrn(IdentificationHandler
+            .toUrn(ctx, sr.getValue(STAGING.SCOPED_IDENTIFIER_ID)));
+      }
+      stagedElement.setElementType(sr.getValue(STAGING.ELEMENT_TYPE));
+      stagedElement.setDesignation(sr.getValue(STAGING.DESIGNATION));
+      stagedElements.add(stagedElement);
+    }
+    return stagedElements;
   }
 }
