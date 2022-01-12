@@ -5,10 +5,11 @@ import static de.dataelementhub.dal.jooq.Routines.getSlotByUrn;
 import static de.dataelementhub.dal.jooq.Routines.getValueDomainScopedIdentifierByDataelementUrn;
 
 import de.dataelementhub.dal.ResourceManager;
+import de.dataelementhub.dal.jooq.enums.AccessLevelType;
 import de.dataelementhub.dal.jooq.enums.ElementType;
-import de.dataelementhub.dal.jooq.enums.GrantType;
 import de.dataelementhub.dal.jooq.enums.Status;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
+import de.dataelementhub.model.dto.DeHubUserPermission;
 import de.dataelementhub.model.dto.element.DataElement;
 import de.dataelementhub.model.dto.element.DataElementGroup;
 import de.dataelementhub.model.dto.element.Element;
@@ -226,13 +227,13 @@ public class ElementService {
   /**
    * Get all Namespaces a user has access to.
    */
-  public Map<GrantType, List<Namespace>> readNamespaces(int userId) {
-    Map<GrantType, List<Namespace>> namespaceMap = new HashMap<>();
+  public Map<AccessLevelType, List<Namespace>> readNamespaces(int userId) {
+    Map<AccessLevelType, List<Namespace>> namespaceMap = new HashMap<>();
 
     try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
       if (userId < 0) {
         // Unauthorized user can only get read access on public (as in "non-hidden") namespaces
-        namespaceMap.put(GrantType.READ, NamespaceHandler.getPublicNamespaces(ctx));
+        namespaceMap.put(AccessLevelType.READ, NamespaceHandler.getPublicNamespaces(ctx));
       } else {
         List<Namespace> publicNamespaces = NamespaceHandler.getPublicNamespaces(ctx);
         List<Namespace> readableNamespaces = NamespaceHandler
@@ -253,9 +254,9 @@ public class ElementService {
           readableNamespaces.add(pn);
         }
 
-        namespaceMap.put(GrantType.READ, readableNamespaces);
-        namespaceMap.put(GrantType.WRITE, writableNamespaces);
-        namespaceMap.put(GrantType.ADMIN, adminNamespaces);
+        namespaceMap.put(AccessLevelType.READ, readableNamespaces);
+        namespaceMap.put(AccessLevelType.WRITE, writableNamespaces);
+        namespaceMap.put(AccessLevelType.ADMIN, adminNamespaces);
       }
     }
 
@@ -265,24 +266,24 @@ public class ElementService {
   /**
    * Get all Namespaces a user has the given access right to.
    */
-  public Map<GrantType, List<Namespace>> readNamespaces(int userId, GrantType grantType)
-      throws IllegalAccessException {
-    Map<GrantType, List<Namespace>> namespaceMap = new HashMap<>();
+  public Map<AccessLevelType, List<Namespace>> readNamespaces(int userId,
+      AccessLevelType accessLevel) throws IllegalAccessException {
+    Map<AccessLevelType, List<Namespace>> namespaceMap = new HashMap<>();
 
     try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
       if (userId < 0) {
-        if (grantType != GrantType.READ) {
+        if (accessLevel != AccessLevelType.READ) {
           throw new IllegalAccessException("User not logged in");
         }
         // Unauthorized user can only get read access on public (as in "non-hidden") namespaces
-        namespaceMap.put(GrantType.READ, NamespaceHandler.getPublicNamespaces(ctx));
+        namespaceMap.put(AccessLevelType.READ, NamespaceHandler.getPublicNamespaces(ctx));
       } else {
-        switch (grantType) {
+        switch (accessLevel) {
           case ADMIN:
-            namespaceMap.put(grantType, NamespaceHandler.getAdministrableNamespaces(ctx, userId));
+            namespaceMap.put(accessLevel, NamespaceHandler.getAdministrableNamespaces(ctx, userId));
             break;
           case WRITE:
-            namespaceMap.put(grantType, NamespaceHandler.getWritableNamespaces(ctx, userId));
+            namespaceMap.put(accessLevel, NamespaceHandler.getWritableNamespaces(ctx, userId));
             break;
           case READ:
           default:
@@ -298,7 +299,7 @@ public class ElementService {
               }
               readableNamespaces.add(pn);
             }
-            namespaceMap.put(grantType, readableNamespaces);
+            namespaceMap.put(accessLevel, readableNamespaces);
             break;
         }
       }
@@ -353,6 +354,16 @@ public class ElementService {
       return members;
     } catch (NumberFormatException e) {
       throw new NoSuchElementException();
+    }
+  }
+
+  /**
+   * Read the list of users that have access to a given namespace.
+   */
+  public List<DeHubUserPermission> readUserAccessList(int userId, int namespaceIdentifier)
+      throws IllegalAccessException {
+    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
+      return NamespaceHandler.getUserAccessForNamespace(ctx, userId, namespaceIdentifier);
     }
   }
 
