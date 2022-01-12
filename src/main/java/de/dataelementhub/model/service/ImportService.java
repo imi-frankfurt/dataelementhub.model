@@ -5,7 +5,7 @@ import static de.dataelementhub.dal.jooq.Tables.SCOPED_IDENTIFIER;
 import static de.dataelementhub.dal.jooq.Tables.STAGING;
 
 import de.dataelementhub.dal.ResourceManager;
-import de.dataelementhub.dal.jooq.enums.GrantType;
+import de.dataelementhub.dal.jooq.enums.AccessLevelType;
 import de.dataelementhub.dal.jooq.enums.ProcessStatus;
 import de.dataelementhub.dal.jooq.tables.records.ImportRecord;
 import de.dataelementhub.model.DaoUtil;
@@ -112,8 +112,8 @@ public class ImportService {
     List<ImportInfo> importInfoList = new ArrayList<>();
     try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
       List<ImportRecord> imports = ctx.selectFrom(IMPORT).where(IMPORT.CREATED_BY.eq(userId)
-          .or(IMPORT.NAMESPACE_ID.in(DaoUtil.getUserNamespaceGrantsQuery(ctx, userId,
-              allowedGrantTypes())))).fetch();
+          .or(IMPORT.NAMESPACE_ID.in(DaoUtil.getUserNamespaceAccessQuery(ctx, userId,
+              allowedAccessLevelTypes())))).fetch();
       imports.forEach(
           importRecord -> {
             ImportInfo importInfo = ImportHandler.importRecordToImportInfo(ctx, importRecord);
@@ -125,13 +125,20 @@ public class ImportService {
   }
 
   /** Get import info by ID. */
-  public ImportInfo getImportInfo(String identifier, int userId) {
+  public ImportInfo getImportInfo(int importId, int userId)
+      throws IllegalAccessException, NoSuchElementException {
     try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
+      if (!importExists(ctx, importId)) {
+        throw new NoSuchElementException();
+      }
+      if (!importAccessGranted(ctx, importId, userId)) {
+        throw new IllegalAccessException();
+      }
       ImportRecord importRecord = Objects.requireNonNull(
-          ctx.selectFrom(IMPORT).where(IMPORT.ID.eq(Integer.valueOf(identifier)))
+          ctx.selectFrom(IMPORT).where(IMPORT.ID.eq(importId))
               .and(IMPORT.CREATED_BY.eq(userId)
-                  .or(IMPORT.NAMESPACE_ID.in(DaoUtil.getUserNamespaceGrantsQuery(ctx, userId,
-                      allowedGrantTypes())))).fetchOne());
+                  .or(IMPORT.NAMESPACE_ID.in(DaoUtil.getUserNamespaceAccessQuery(ctx, userId,
+                      allowedAccessLevelTypes())))).fetchOne());
       return ImportHandler.importRecordToImportInfo(ctx, importRecord);
     }
   }
@@ -219,15 +226,15 @@ public class ImportService {
   /** Check if user is allowed to access an import. */
   private boolean importAccessGranted(CloseableDSLContext ctx, int importId, int userId) {
     return ctx.fetchExists(ctx.selectFrom(IMPORT).where(IMPORT.CREATED_BY.eq(userId)
-        .or(IMPORT.NAMESPACE_ID.in(DaoUtil.getUserNamespaceGrantsQuery(ctx, userId,
-            allowedGrantTypes())))).and(IMPORT.ID.eq(importId)));
+        .or(IMPORT.NAMESPACE_ID.in(DaoUtil.getUserNamespaceAccessQuery(ctx, userId,
+            allowedAccessLevelTypes())))).and(IMPORT.ID.eq(importId)));
   }
 
   /** Return grantTypes that allowed to access an import. */
-  private List<GrantType> allowedGrantTypes() {
-    List<GrantType> grantTypes = new ArrayList<>();
-    grantTypes.add(GrantType.ADMIN);
-    grantTypes.add(GrantType.WRITE);
+  private List<AccessLevelType> allowedAccessLevelTypes() {
+    List<AccessLevelType> grantTypes = new ArrayList<>();
+    grantTypes.add(AccessLevelType.ADMIN);
+    grantTypes.add(AccessLevelType.WRITE);
     return grantTypes;
   }
 }
