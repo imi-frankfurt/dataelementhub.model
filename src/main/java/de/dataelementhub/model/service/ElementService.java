@@ -3,12 +3,14 @@ package de.dataelementhub.model.service;
 import static de.dataelementhub.dal.jooq.Routines.getDefinitionByUrn;
 import static de.dataelementhub.dal.jooq.Routines.getSlotByUrn;
 import static de.dataelementhub.dal.jooq.Routines.getValueDomainScopedIdentifierByDataelementUrn;
+import static de.dataelementhub.dal.jooq.tables.ScopedIdentifierHierarchy.SCOPED_IDENTIFIER_HIERARCHY;
 
 import de.dataelementhub.dal.ResourceManager;
 import de.dataelementhub.dal.jooq.enums.AccessLevelType;
 import de.dataelementhub.dal.jooq.enums.ElementType;
 import de.dataelementhub.dal.jooq.enums.Status;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
+import de.dataelementhub.model.DaoUtil;
 import de.dataelementhub.model.dto.DeHubUserPermission;
 import de.dataelementhub.model.dto.element.DataElement;
 import de.dataelementhub.model.dto.element.DataElementGroup;
@@ -23,6 +25,7 @@ import de.dataelementhub.model.dto.element.section.Slot;
 import de.dataelementhub.model.dto.element.section.ValueDomain;
 import de.dataelementhub.model.dto.element.section.validation.PermittedValue;
 import de.dataelementhub.model.dto.listviews.NamespaceMember;
+import de.dataelementhub.model.handler.AccessLevelHandler;
 import de.dataelementhub.model.handler.ElementRelationHandler;
 import de.dataelementhub.model.handler.element.DataElementGroupHandler;
 import de.dataelementhub.model.handler.element.DataElementHandler;
@@ -443,6 +446,31 @@ public class ElementService {
         }
       } else {
         throw new IllegalStateException("Namespace is not released. Element can not be released.");
+      }
+    }
+  }
+
+  /**
+   * Update dataElementGroup or record members and return urn.
+   * If changes acquired return the new urn otherwise return the old one.
+   */
+  public String updateMembers(int userId, String urn)
+      throws IllegalAccessException, IllegalArgumentException {
+    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
+      ScopedIdentifier scopedIdentifier = IdentificationHandler.getScopedIdentifier(ctx, urn);
+      AccessLevelType accessLevel = AccessLevelHandler
+          .getAccessLevelByUserAndNamespaceId(ctx, userId, scopedIdentifier.getNamespaceId());
+      if (!DaoUtil.WRITE_ACCESS_TYPES.contains(accessLevel)) {
+        throw new IllegalAccessException("User has no write access to namespace.");
+      }
+      switch (scopedIdentifier.getElementType()) {
+        case DATAELEMENTGROUP:
+          return DataElementGroupHandler.updateMembers(ctx, userId, scopedIdentifier).getUrn();
+        case RECORD:
+          return RecordHandler.updateMembers(ctx, userId, scopedIdentifier).getUrn();
+        default:
+          throw new IllegalArgumentException("Element Type is not supported. "
+              + "Only dataELementGroup and record are accepted!");
       }
     }
   }

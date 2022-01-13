@@ -7,6 +7,7 @@ import de.dataelementhub.dal.jooq.enums.Status;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
 import de.dataelementhub.dal.jooq.tables.records.IdentifiedElementRecord;
 import de.dataelementhub.model.CtxUtil;
+import de.dataelementhub.model.dto.element.DataElementGroup;
 import de.dataelementhub.model.dto.element.Element;
 import de.dataelementhub.model.dto.element.Record;
 import de.dataelementhub.model.dto.element.section.Identification;
@@ -102,6 +103,31 @@ public class RecordHandler extends ElementHandler {
     delete(ctx, userId, previousRecord.getIdentification().getUrn());
     create(ctx, userId, record);
 
+    return record.getIdentification();
+  }
+
+  /**
+   * Update record members.
+   * If changes acquired return the new identification otherwise return the old identification.
+   */
+  public static Identification updateMembers(CloseableDSLContext ctx, int userId,
+      ScopedIdentifier scopedIdentifier) {
+    Identification identification = IdentificationHandler.convert(scopedIdentifier);
+    Record record = get(ctx, userId, identification.getUrn());
+    if (MemberHandler.newMemberVersionExists(ctx, scopedIdentifier)) {
+      if (record.getIdentification().getStatus() != Status.DRAFT) {
+        ScopedIdentifier newsScopedIdentifier =
+            IdentificationHandler.update(ctx, userId, identification,
+                scopedIdentifier.getElementId());
+        record.setIdentification(IdentificationHandler
+            .convert(newsScopedIdentifier));
+        record.getIdentification()
+            .setNamespaceId(scopedIdentifier.getNamespaceId());
+      }
+      delete(ctx, userId, identification.getUrn());
+      ScopedIdentifier si = create(ctx, userId, record);
+      MemberHandler.updateMembers(ctx, si);
+    }
     return record.getIdentification();
   }
 }
