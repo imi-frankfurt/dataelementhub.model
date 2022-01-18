@@ -452,7 +452,8 @@ public class ElementService {
 
   /**
    * Update dataElementGroup or record members and return urn.
-   * If at least one member has new version return the new urn otherwise return the old one.
+   *
+   * @return the new urn if at least one member has new version - otherwise return the old one.
    */
   public String updateMembers(int userId, String urn)
       throws IllegalAccessException, IllegalArgumentException {
