@@ -2,8 +2,8 @@ package de.dataelementhub.model;
 
 import static de.dataelementhub.dal.jooq.Tables.ELEMENT;
 import static de.dataelementhub.dal.jooq.Tables.HIERARCHY;
-import static de.dataelementhub.dal.jooq.Tables.USER_NAMESPACE_ACCESS;
 import static de.dataelementhub.dal.jooq.Tables.SCOPED_IDENTIFIER;
+import static de.dataelementhub.dal.jooq.Tables.USER_NAMESPACE_ACCESS;
 
 import de.dataelementhub.dal.ResourceManager;
 import de.dataelementhub.dal.jooq.enums.AccessLevelType;
@@ -68,9 +68,12 @@ public class DaoUtil {
     }
   }
 
-  /** returns if the user has one of the given grants for a namespace identifier. */
-  public static Boolean checkGrants(Integer namespaceIdentifier, Integer userId,
-      List<AccessLevelType> grantTypes) {
+  /**
+   * Check if an access level is granted.
+   * @return true if user has the specified accessLevel otherwise false.
+   * */
+  public static Boolean accessLevelGranted(Integer namespaceIdentifier, Integer userId,
+      List<AccessLevelType> accessLevels) {
     try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
       return ctx.fetchExists(ctx.select()
           .from(USER_NAMESPACE_ACCESS)
@@ -79,7 +82,7 @@ public class DaoUtil {
           .where(SCOPED_IDENTIFIER.ELEMENT_TYPE.eq(ElementType.NAMESPACE))
           .and(SCOPED_IDENTIFIER.IDENTIFIER.eq(namespaceIdentifier))
           .and(USER_NAMESPACE_ACCESS.USER_ID.eq(userId))
-          .and(USER_NAMESPACE_ACCESS.ACCESS_LEVEL.in(grantTypes)));
+          .and(USER_NAMESPACE_ACCESS.ACCESS_LEVEL.in(accessLevels)));
     }
   }
 

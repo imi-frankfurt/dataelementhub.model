@@ -3,6 +3,7 @@ package de.dataelementhub.model.service;
 import static de.dataelementhub.dal.jooq.Tables.IMPORT;
 import static de.dataelementhub.dal.jooq.Tables.SCOPED_IDENTIFIER;
 import static de.dataelementhub.dal.jooq.Tables.STAGING;
+import static de.dataelementhub.model.DaoUtil.WRITE_ACCESS_TYPES;
 
 import de.dataelementhub.dal.ResourceManager;
 import de.dataelementhub.dal.jooq.enums.AccessLevelType;
@@ -88,8 +89,8 @@ public class ImportService {
   public int generateImportId(String namespaceUrn, int userId, List<MultipartFile> files,
       String importDirectory, String timestamp) throws IOException {
     try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      String destination = importDirectory + "/" + userId + "/" + timestamp;
-      new File(importDirectory + "/" + userId).mkdir();
+      String destination = importDirectory + File.separator + userId + File.separator + timestamp;
+      new File(importDirectory + File.separator + userId).mkdir();
       new File(destination).mkdir();
       for (MultipartFile file : files) {
         Path fileNameAndPath = Paths.get(destination, file.getOriginalFilename());
@@ -108,7 +109,7 @@ public class ImportService {
   }
 
   /** Returns all Imports. */
-  public List<ImportInfo> allImports(int userId) {
+  public List<ImportInfo> listAllImports(int userId) {
     List<ImportInfo> importInfoList = new ArrayList<>();
     try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
       List<ImportRecord> imports = ctx.selectFrom(IMPORT).where(IMPORT.CREATED_BY.eq(userId)
@@ -232,9 +233,6 @@ public class ImportService {
 
   /** Return grantTypes that allowed to access an import. */
   private List<AccessLevelType> allowedAccessLevelTypes() {
-    List<AccessLevelType> grantTypes = new ArrayList<>();
-    grantTypes.add(AccessLevelType.ADMIN);
-    grantTypes.add(AccessLevelType.WRITE);
-    return grantTypes;
+    return WRITE_ACCESS_TYPES;
   }
 }

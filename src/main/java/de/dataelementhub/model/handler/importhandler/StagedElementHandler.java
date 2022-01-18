@@ -223,7 +223,8 @@ public class StagedElementHandler {
 
   /** Convert a list of stagingRecords to list of stagedElements as Listview. */
   public static List<de.dataelementhub.model.dto.listviews.StagedElement>
-  stagingRecordsToStagedElements(CloseableDSLContext ctx, Result<org.jooq.Record> stagingRecords) {
+      stagingRecordsToStagedElements(CloseableDSLContext ctx,
+      Result<org.jooq.Record> stagingRecords) {
     List<de.dataelementhub.model.dto.listviews.StagedElement> stagedElements = new ArrayList<>();
     for (org.jooq.Record sr : stagingRecords) {
       de.dataelementhub.model.dto.listviews.StagedElement stagedElement =

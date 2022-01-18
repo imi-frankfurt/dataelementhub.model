@@ -44,6 +44,7 @@ import org.jooq.Record2;
 import org.jooq.impl.SQLDataType;
 import org.json.JSONObject;
 import org.json.JSONTokener;
+import org.springframework.http.MediaType;
 import org.springframework.web.multipart.MultipartFile;
 
 public class ImportHandler {
@@ -53,8 +54,8 @@ public class ImportHandler {
       CloseableDSLContext ctx, List<MultipartFile> files,
       String importDirectory, int userId,
       int importId, String timestamp) {
-    String destination = importDirectory + "/" + userId + "/" + timestamp;
-    new File(importDirectory + "/" + userId).mkdir();
+    String destination = importDirectory + File.separator + userId + File.separator + timestamp;
+    new File(importDirectory + File.separator + userId).mkdir();
     new File(destination).mkdir();
     for (MultipartFile file : files) {
       Path fileNameAndPath = Paths.get(destination, file.getOriginalFilename());
@@ -63,7 +64,7 @@ public class ImportHandler {
         allFilesInFolder(ctx, destination, importId);
       } catch (Exception e) {
         ctx.update(IMPORT)
-            .set(IMPORT.STATUS, ProcessStatus.INTERRUPTED)
+            .set(IMPORT.STATUS, ProcessStatus.ABORTED)
             .set(IMPORT.LABEL, e.getMessage())
             .where(IMPORT.ID.eq(importId))
             .execute();
@@ -120,7 +121,8 @@ public class ImportHandler {
     validateAgainstSchema(fileToImport);
     JAXBContext jaxbContext = JAXBContext.newInstance(ImportDto.class);
     Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
-    jaxbUnmarshaller.setProperty(JAXBContextProperties.MEDIA_TYPE, "application/json");
+    jaxbUnmarshaller.setProperty(JAXBContextProperties.MEDIA_TYPE,
+        MediaType.APPLICATION_JSON_VALUE);
     jaxbUnmarshaller.setProperty(JAXBContextProperties.JSON_INCLUDE_ROOT, true);
     StreamSource json = new StreamSource(new StringReader(readFileAsString(fileToImport)));
     ImportDto importDtoBody = jaxbUnmarshaller.unmarshal(json, ImportDto.class).getValue();
@@ -156,7 +158,7 @@ public class ImportHandler {
                     .execute();
               } catch (JsonProcessingException e) {
                 ctx.update(IMPORT)
-                    .set(IMPORT.STATUS, ProcessStatus.INTERRUPTED)
+                    .set(IMPORT.STATUS, ProcessStatus.ABORTED)
                     .set(IMPORT.LABEL, e.getMessage())
                     .where(IMPORT.ID.eq(importId))
                     .execute();
@@ -175,7 +177,8 @@ public class ImportHandler {
       File schemaFile =
           new File(
               System.getProperty("user.dir")
-                  + "/src/main/resources/schema/StagingImport.xsd");
+                  + "/src/main/resources/schema/StagingImport.xsd"
+                  .replace('/', File.separatorChar));
       Source xmlFile = new StreamSource(new File(fileToValidate));
       SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
       Schema schema = schemaFactory.newSchema(schemaFile);
@@ -187,7 +190,8 @@ public class ImportHandler {
               new JSONTokener(
                   new FileInputStream(
                       System.getProperty("user.dir")
-                          + "/src/main/resources/schema/StagingImport.json")));
+                          + "/src/main/resources/schema/StagingImport.json"
+                          .replace('/', File.separatorChar))));
       JSONObject jsonSubject = new JSONObject(new JSONTokener(new FileInputStream(fileToValidate)));
       org.everit.json.schema.Schema schema = SchemaLoader.load(jsonSchema);
       schema.validate(jsonSubject);
@@ -225,13 +229,16 @@ public class ImportHandler {
     double conversionProcess;
     double stagingProcess;
     try {
-      Record2<Double, Double> rt = ctx.select(count(STAGING.SCOPED_IDENTIFIER_ID).cast(
+      Record2<Double, Double> countNotNullEntriesAndAllEntries =
+          ctx.select(count(STAGING.SCOPED_IDENTIFIER_ID).cast(
                   SQLDataType.DOUBLE).as("notNull"),
               count().cast(
                   SQLDataType.DOUBLE).as("all")).from(STAGING)
           .where(STAGING.IMPORT_ID.eq(importRecord.getId())).fetchOne();
-      conversionProcess = rt.value1() / rt.value2();
-      stagingProcess = rt.value2() / importRecord.getNumberOfElements();
+      conversionProcess =
+          countNotNullEntriesAndAllEntries.value1() / countNotNullEntriesAndAllEntries.value2();
+      stagingProcess =
+          countNotNullEntriesAndAllEntries.value2() / importRecord.getNumberOfElements();
     } catch (Exception e) {
       stagingProcess = (double) 0;
       conversionProcess = (double) 0;
