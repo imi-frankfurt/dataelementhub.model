@@ -108,7 +108,8 @@ public class RecordHandler extends ElementHandler {
 
   /**
    * Update record members.
-   * If changes acquired return the new identification otherwise return the old identification.
+   * If at least one member has new version
+   * return the new record identification otherwise return the old identification.
    */
   public static Identification updateMembers(CloseableDSLContext ctx, int userId,
       ScopedIdentifier scopedIdentifier) {
