@@ -102,4 +102,30 @@ public class DataElementGroupHandler extends ElementHandler {
     return dataElementGroup.getIdentification();
   }
 
+  /**
+   * Update dataElementGroup members.
+   *
+   * @return the new dataElementGroup identification if at least one member has new version -
+   * otherwise the old identification is returned
+   */
+  public static Identification updateMembers(CloseableDSLContext ctx, int userId,
+      ScopedIdentifier scopedIdentifier) {
+    Identification identification = IdentificationHandler.convert(scopedIdentifier);
+    DataElementGroup dataElementGroup = get(ctx, userId, identification.getUrn());
+    if (MemberHandler.newMemberVersionExists(ctx, scopedIdentifier)) {
+      if (dataElementGroup.getIdentification().getStatus() != Status.DRAFT) {
+        ScopedIdentifier newsScopedIdentifier =
+            IdentificationHandler.update(ctx, userId, identification,
+                scopedIdentifier.getElementId());
+        dataElementGroup.setIdentification(IdentificationHandler
+            .convert(newsScopedIdentifier));
+        dataElementGroup.getIdentification()
+            .setNamespaceId(scopedIdentifier.getNamespaceId());
+      }
+      delete(ctx, userId, identification.getUrn());
+      ScopedIdentifier si = create(ctx, userId, dataElementGroup);
+      MemberHandler.updateMembers(ctx, si);
+    }
+    return dataElementGroup.getIdentification();
+  }
 }
