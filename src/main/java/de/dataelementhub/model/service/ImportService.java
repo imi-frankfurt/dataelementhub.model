@@ -41,10 +41,10 @@ public class ImportService {
   @Async
   public void importService(
       List<MultipartFile> file, String importDirectory, int userId,
-      int importId, String timestamp) {
+      int importId) {
     try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
       ImportHandler.importFiles(ctx, file, importDirectory,
-          userId, importId, timestamp);
+          userId, importId);
     }
   }
 
@@ -87,15 +87,8 @@ public class ImportService {
 
   /** Generate importId. */
   public int generateImportId(String namespaceUrn, int userId, List<MultipartFile> files,
-      String importDirectory, String timestamp) throws IOException {
+      String importDirectory) throws IOException {
     try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      String destination = importDirectory + File.separator + userId + File.separator + timestamp;
-      new File(importDirectory + File.separator + userId).mkdir();
-      new File(destination).mkdir();
-      for (MultipartFile file : files) {
-        Path fileNameAndPath = Paths.get(destination, file.getOriginalFilename());
-        Files.write(fileNameAndPath, file.getBytes());
-      }
       int namespaceId = IdentificationHandler
           .getScopedIdentifier(ctx, namespaceUrn).getNamespaceId();
       ImportRecord importIdRecord = ctx.insertInto(IMPORT)
@@ -104,7 +97,15 @@ public class ImportService {
           .set(IMPORT.CREATED_BY, userId)
           .returning(IMPORT.ID)
           .fetchOne();
-      return importIdRecord != null ? importIdRecord.getId() : -1;
+      int importId = importIdRecord != null ? importIdRecord.getId() : -1;
+      String destination = importDirectory + File.separator + userId + File.separator + importId;
+      new File(importDirectory + File.separator + userId).mkdir();
+      new File(destination).mkdir();
+      for (MultipartFile file : files) {
+        Path fileNameAndPath = Paths.get(destination, file.getOriginalFilename());
+        Files.write(fileNameAndPath, file.getBytes());
+      }
+      return importId;
     }
   }
 

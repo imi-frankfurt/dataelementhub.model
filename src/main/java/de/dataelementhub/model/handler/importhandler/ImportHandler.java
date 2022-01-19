@@ -52,9 +52,8 @@ public class ImportHandler {
   /** Unzip received file and handle importing its content. */
   public static void importFiles(
       CloseableDSLContext ctx, List<MultipartFile> files,
-      String importDirectory, int userId,
-      int importId, String timestamp) {
-    String destination = importDirectory + File.separator + userId + File.separator + timestamp;
+      String importDirectory, int userId, int importId) {
+    String destination = importDirectory + File.separator + userId + File.separator + importId;
     new File(importDirectory + File.separator + userId).mkdir();
     new File(destination).mkdir();
     for (MultipartFile file : files) {
