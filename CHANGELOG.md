@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.0.0] - UNRELEASED
 ### Added
+- Method to enable importing elements to a staging area
+- Method to retrieve all imports
+- Method to get import status by ID
+- Method to get all import members
+- Method to get an imported element by id
+- Method to get all members of a stagedElement by id
+- Method to enable converting the stagedElements to drafts
+- Method to delete an import by id
 ### Changed
 ### Deprecated
 ### Removed

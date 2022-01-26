@@ -2,9 +2,9 @@ package de.dataelementhub.model.handler.export;
 
 import static de.dataelementhub.model.handler.export.StagedElementHandler.elementsToStagedElements;
 
+import de.dataelementhub.model.dto.element.StagedElement;
 import de.dataelementhub.model.dto.export.Export;
 import de.dataelementhub.model.dto.export.ExportRequest;
-import de.dataelementhub.model.dto.export.StagedElement;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Files;

@@ -4,10 +4,10 @@ import de.dataelementhub.dal.ResourceManager;
 import de.dataelementhub.dal.jooq.enums.Status;
 import de.dataelementhub.model.dto.element.DataElement;
 import de.dataelementhub.model.dto.element.Element;
+import de.dataelementhub.model.dto.element.StagedElement;
 import de.dataelementhub.model.dto.element.section.Member;
 import de.dataelementhub.model.dto.element.section.ValueDomain;
 import de.dataelementhub.model.dto.element.section.validation.PermittedValue;
-import de.dataelementhub.model.dto.export.StagedElement;
 import de.dataelementhub.model.handler.element.ElementHandler;
 import de.dataelementhub.model.handler.element.NamespaceHandler;
 import de.dataelementhub.model.handler.element.section.IdentificationHandler;
@@ -20,7 +20,9 @@ import org.jooq.CloseableDSLContext;
 public class StagedElementHandler {
 
 
-  /** Converts dehub elements to StagedElements. **/
+  /**
+   * Converts dehub elements to StagedElements.
+   **/
   public static List<StagedElement> elementsToStagedElements(
       List<String> elementUrns, int userId, Boolean fullExport) {
     try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
@@ -30,10 +32,10 @@ public class StagedElementHandler {
         if (elementUrn.toLowerCase().contains("namespace")) {
           String[] parts = elementUrn.split(":");
           List<Member> namespaceMembers =
-                  NamespaceHandler.getNamespaceMembers(ctx, userId, Integer.valueOf(parts[1]),
-                      null, true);
+              NamespaceHandler.getNamespaceMembers(ctx, userId, Integer.valueOf(parts[1]),
+                  null, true);
           exportMembers.addAll(namespaceMembers);
-        } else  {
+        } else {
           Member member = new Member();
           member.setElementUrn(elementUrn);
           member.setStatus(IdentificationHandler.fromUrn(elementUrn).getStatus());
@@ -42,7 +44,7 @@ public class StagedElementHandler {
       }
       if (!fullExport) {
         exportMembers = exportMembers.stream()
-                .filter(member -> member.getStatus().equals(Status.RELEASED))
+            .filter(member -> member.getStatus().equals(Status.RELEASED))
             .collect(Collectors.toList());
         de.dataelementhub.model.handler.export.ExportHandler.nonExportable
             .addAll(exportMembers.stream()
@@ -61,7 +63,7 @@ public class StagedElementHandler {
             stagedElement.setConceptAssociations(((DataElement) element).getConceptAssociations());
             stagedElement.setValueDomainUrn(((DataElement) element).getValueDomainUrn());
             stagedElements.addAll(elementsToStagedElements(
-                    Collections.singletonList(stagedElement.getValueDomainUrn()),
+                Collections.singletonList(stagedElement.getValueDomainUrn()),
                 userId, fullExport));
             break;
           case DATAELEMENTGROUP:

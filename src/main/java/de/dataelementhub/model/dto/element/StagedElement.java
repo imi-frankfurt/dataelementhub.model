@@ -1,4 +1,4 @@
-package de.dataelementhub.model.dto.export;
+package de.dataelementhub.model.dto.element;
 
 import de.dataelementhub.model.dto.element.section.ConceptAssociation;
 import de.dataelementhub.model.dto.element.section.Definition;
@@ -9,6 +9,7 @@ import de.dataelementhub.model.dto.element.section.validation.Datetime;
 import de.dataelementhub.model.dto.element.section.validation.Numeric;
 import de.dataelementhub.model.dto.element.section.validation.PermittedValue;
 import de.dataelementhub.model.dto.element.section.validation.Text;
+import java.io.Serializable;
 import java.util.List;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
