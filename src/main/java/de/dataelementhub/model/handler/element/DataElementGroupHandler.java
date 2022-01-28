@@ -106,7 +106,7 @@ public class DataElementGroupHandler extends ElementHandler {
    * Update dataElementGroup members.
    *
    * @return the new dataElementGroup identification if at least one member has new version -
-   * otherwise the old identification is returned
+   *     otherwise the old identification is returned
    */
   public static Identification updateMembers(CloseableDSLContext ctx, int userId,
       ScopedIdentifier scopedIdentifier) {
