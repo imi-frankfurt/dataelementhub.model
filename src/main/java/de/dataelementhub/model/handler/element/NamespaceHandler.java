@@ -198,9 +198,12 @@ public class NamespaceHandler extends ElementHandler {
             ctx.selectFrom(SCOPED_IDENTIFIER).where(
                     SCOPED_IDENTIFIER.NAMESPACE_ID.eq(namespaceId))
                 .and(SCOPED_IDENTIFIER.ELEMENT_TYPE.in(elementTypes))
-                .and(SCOPED_IDENTIFIER.ID.notIn(
-                    ctx.select(SCOPED_IDENTIFIER_HIERARCHY.SUB_ID)
-                        .from(SCOPED_IDENTIFIER_HIERARCHY)))
+                .andNotExists(ctx.select(SCOPED_IDENTIFIER_HIERARCHY.SUB_ID)
+                    .from(SCOPED_IDENTIFIER_HIERARCHY)
+                    .where(SCOPED_IDENTIFIER_HIERARCHY.SUB_ID.eq(SCOPED_IDENTIFIER.ID))
+                    .andNotExists(ctx.select(SCOPED_IDENTIFIER.ID).from(SCOPED_IDENTIFIER)
+                        .where(SCOPED_IDENTIFIER.ID.eq(SCOPED_IDENTIFIER_HIERARCHY.SUPER_ID))
+                        .and(SCOPED_IDENTIFIER.STATUS.eq(Status.OUTDATED))))
                 .fetchInto(ScopedIdentifier.class);
       } else {
         scopedIdentifiers =
@@ -494,9 +497,12 @@ public class NamespaceHandler extends ElementHandler {
               .from(LISTVIEW_ELEMENT)
               .leftJoin(DEFINITION).on(DEFINITION.SCOPED_IDENTIFIER_ID.eq(LISTVIEW_ELEMENT.SI_ID))
               .where(LISTVIEW_ELEMENT.ELEMENT_TYPE.in(elementTypes))
-              .and(LISTVIEW_ELEMENT.SI_ID.notIn(
-                  ctx.select(SCOPED_IDENTIFIER_HIERARCHY.SUB_ID)
-                      .from(SCOPED_IDENTIFIER_HIERARCHY)))
+              .andNotExists(ctx.select(SCOPED_IDENTIFIER_HIERARCHY.SUB_ID)
+                  .from(SCOPED_IDENTIFIER_HIERARCHY)
+                  .where(SCOPED_IDENTIFIER_HIERARCHY.SUB_ID.eq(LISTVIEW_ELEMENT.SI_ID))
+                  .andNotExists(ctx.select(SCOPED_IDENTIFIER.ID).from(SCOPED_IDENTIFIER)
+                      .where(SCOPED_IDENTIFIER.ID.eq(SCOPED_IDENTIFIER_HIERARCHY.SUPER_ID))
+                      .and(SCOPED_IDENTIFIER.STATUS.eq(Status.OUTDATED))))
               .and(LISTVIEW_ELEMENT.SI_NAMESPACE_ID.eq(
                   ctx.select(SCOPED_IDENTIFIER.ID)
                       .from(SCOPED_IDENTIFIER)
