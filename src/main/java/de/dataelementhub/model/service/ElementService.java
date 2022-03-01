@@ -3,7 +3,6 @@ package de.dataelementhub.model.service;
 import static de.dataelementhub.dal.jooq.Routines.getDefinitionByUrn;
 import static de.dataelementhub.dal.jooq.Routines.getSlotByUrn;
 import static de.dataelementhub.dal.jooq.Routines.getValueDomainScopedIdentifierByDataelementUrn;
-import static de.dataelementhub.dal.jooq.tables.ScopedIdentifierHierarchy.SCOPED_IDENTIFIER_HIERARCHY;
 
 import de.dataelementhub.dal.ResourceManager;
 import de.dataelementhub.dal.jooq.enums.AccessLevelType;
@@ -15,6 +14,7 @@ import de.dataelementhub.model.dto.DeHubUserPermission;
 import de.dataelementhub.model.dto.element.DataElement;
 import de.dataelementhub.model.dto.element.DataElementGroup;
 import de.dataelementhub.model.dto.element.Element;
+import de.dataelementhub.model.dto.element.ElementPath;
 import de.dataelementhub.model.dto.element.Namespace;
 import de.dataelementhub.model.dto.element.Record;
 import de.dataelementhub.model.dto.element.section.ConceptAssociation;
@@ -30,6 +30,7 @@ import de.dataelementhub.model.handler.ElementRelationHandler;
 import de.dataelementhub.model.handler.element.DataElementGroupHandler;
 import de.dataelementhub.model.handler.element.DataElementHandler;
 import de.dataelementhub.model.handler.element.ElementHandler;
+import de.dataelementhub.model.handler.element.ElementPathHandler;
 import de.dataelementhub.model.handler.element.NamespaceHandler;
 import de.dataelementhub.model.handler.element.RecordHandler;
 import de.dataelementhub.model.handler.element.section.ConceptAssociationHandler;
@@ -473,6 +474,16 @@ public class ElementService {
           throw new IllegalArgumentException("Element Type is not supported. "
               + "Only dataELementGroup and record are accepted!");
       }
+    }
+  }
+
+  /**
+   * Get all available paths for a given element.
+   */
+  public List<ElementPath> getElementPaths(int userId, String urn, String languages)
+      throws IllegalArgumentException {
+    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
+      return ElementPathHandler.getElementPaths(ctx, userId, urn, languages);
     }
   }
 }

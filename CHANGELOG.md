@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Method to get all members of a stagedElement by id
 - Method to enable converting the stagedElements to drafts
 - Method to delete an import by id
+- Method to return all available paths for a given element
 ### Changed
 ### Deprecated
 ### Removed
