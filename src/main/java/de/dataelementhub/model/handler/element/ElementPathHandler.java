@@ -3,6 +3,7 @@ package de.dataelementhub.model.handler.element;
 import static de.dataelementhub.dal.jooq.Tables.SCOPED_IDENTIFIER;
 import static de.dataelementhub.dal.jooq.Tables.SCOPED_IDENTIFIER_HIERARCHY;
 
+import de.dataelementhub.dal.jooq.enums.Status;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
 import de.dataelementhub.model.DaoUtil;
 import de.dataelementhub.model.dto.element.Element;
@@ -13,6 +14,7 @@ import de.dataelementhub.model.handler.element.section.IdentificationHandler;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.jooq.CloseableDSLContext;
 
 public class ElementPathHandler {
@@ -50,7 +52,8 @@ public class ElementPathHandler {
       } else {
         urn = partialPath;
       }
-      List<ScopedIdentifier> parentScopedIdentifiers = getParentScopedIdentifiers(ctx,urn);
+      List<ScopedIdentifier> parentScopedIdentifiers = getParentScopedIdentifiers(ctx,urn)
+          .stream().filter(p -> p.getStatus() != Status.OUTDATED).collect(Collectors.toList());;
       partialPaths.remove(partialPath);
       if (parentScopedIdentifiers.size() > 0) {
         for (ScopedIdentifier parentScopedIdentifier : parentScopedIdentifiers) {

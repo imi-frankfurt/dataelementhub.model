@@ -481,8 +481,11 @@ public class ElementService {
    * Get all available paths for a given element.
    */
   public List<ElementPath> getElementPaths(int userId, String urn, String languages)
-      throws IllegalArgumentException {
+      throws IllegalArgumentException, IllegalStateException {
     try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
+      if (IdentificationHandler.getScopedIdentifier(ctx, urn).getStatus() == Status.OUTDATED) {
+        throw new IllegalStateException(urn + " is OUTDATED.");
+      }
       return ElementPathHandler.getElementPaths(ctx, userId, urn, languages);
     }
   }
