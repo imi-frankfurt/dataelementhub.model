@@ -4,7 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.0] - UNRELEASED
+## [2.0.1] - UNRELEASED
+### Added
+### Changed
+### Deprecated
+### Removed
+### Fixed
+### Security
+
+## [2.0.0] - 2021-03-03
 ### Added
 - Method to enable importing elements to a staging area
 - Method to retrieve all imports
@@ -14,7 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Method to get all members of a stagedElement by id
 - Method to enable converting the stagedElements to drafts
 - Method to delete an import by id
+- Method to update the members of dataElementGroup/record
 ### Changed
+- Separate namespaceService from elementService
 ### Deprecated
 ### Removed
 ### Fixed
