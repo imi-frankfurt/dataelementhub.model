@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 ### Security
 
-## [2.0.0] - 2021-03-03
+## [2.0.0] - 2022-03-03
 ### Added
 - Method to enable importing elements to a staging area
 - Method to retrieve all imports
