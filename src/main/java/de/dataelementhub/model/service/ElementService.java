@@ -3,7 +3,6 @@ package de.dataelementhub.model.service;
 import static de.dataelementhub.dal.jooq.Routines.getDefinitionByUrn;
 import static de.dataelementhub.dal.jooq.Routines.getSlotByUrn;
 import static de.dataelementhub.dal.jooq.Routines.getValueDomainScopedIdentifierByDataelementUrn;
-import static de.dataelementhub.dal.jooq.tables.ScopedIdentifierHierarchy.SCOPED_IDENTIFIER_HIERARCHY;
 
 import de.dataelementhub.dal.ResourceManager;
 import de.dataelementhub.dal.jooq.enums.AccessLevelType;
@@ -11,11 +10,9 @@ import de.dataelementhub.dal.jooq.enums.ElementType;
 import de.dataelementhub.dal.jooq.enums.Status;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
 import de.dataelementhub.model.DaoUtil;
-import de.dataelementhub.model.dto.DeHubUserPermission;
 import de.dataelementhub.model.dto.element.DataElement;
 import de.dataelementhub.model.dto.element.DataElementGroup;
 import de.dataelementhub.model.dto.element.Element;
-import de.dataelementhub.model.dto.element.Namespace;
 import de.dataelementhub.model.dto.element.Record;
 import de.dataelementhub.model.dto.element.section.ConceptAssociation;
 import de.dataelementhub.model.dto.element.section.Definition;
@@ -24,13 +21,11 @@ import de.dataelementhub.model.dto.element.section.Member;
 import de.dataelementhub.model.dto.element.section.Slot;
 import de.dataelementhub.model.dto.element.section.ValueDomain;
 import de.dataelementhub.model.dto.element.section.validation.PermittedValue;
-import de.dataelementhub.model.dto.listviews.NamespaceMember;
 import de.dataelementhub.model.handler.AccessLevelHandler;
 import de.dataelementhub.model.handler.ElementRelationHandler;
 import de.dataelementhub.model.handler.element.DataElementGroupHandler;
 import de.dataelementhub.model.handler.element.DataElementHandler;
 import de.dataelementhub.model.handler.element.ElementHandler;
-import de.dataelementhub.model.handler.element.NamespaceHandler;
 import de.dataelementhub.model.handler.element.RecordHandler;
 import de.dataelementhub.model.handler.element.section.ConceptAssociationHandler;
 import de.dataelementhub.model.handler.element.section.DefinitionHandler;
@@ -40,9 +35,7 @@ import de.dataelementhub.model.handler.element.section.SlotHandler;
 import de.dataelementhub.model.handler.element.section.ValueDomainHandler;
 import de.dataelementhub.model.handler.element.section.validation.PermittedValueHandler;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
 import org.jooq.CloseableDSLContext;
 import org.springframework.stereotype.Service;
@@ -68,8 +61,6 @@ public class ElementService {
         }
       }
       switch (element.getIdentification().getElementType()) {
-        case NAMESPACE:
-          return NamespaceHandler.create(ctx, userId, (Namespace) element);
         case DATAELEMENT:
           return DataElementHandler.create(ctx, userId, (DataElement) element);
         case DATAELEMENTGROUP:
@@ -92,39 +83,24 @@ public class ElementService {
    */
   public Element read(int userId, String urn) {
     try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      if (!IdentificationHandler.isUrn(urn)) {
-        try {
-          Namespace namespace = NamespaceHandler.getByIdentifier(ctx, userId,
-              Integer.parseInt(urn));
-          if (namespace == null) {
-            throw new NoSuchElementException();
-          } else {
-            return namespace;
-          }
-        } catch (NumberFormatException e) {
-          throw new NoSuchElementException();
-        }
-      } else {
-        // Read other elements with proper urn
-        Identification identification = IdentificationHandler.fromUrn(urn);
-        if (identification == null) {
-          throw new NoSuchElementException(urn);
-        }
-        switch (identification.getElementType()) {
-          case DATAELEMENT:
-            return DataElementHandler.get(ctx, userId, urn);
-          case DATAELEMENTGROUP:
-            return DataElementGroupHandler.get(ctx, userId, urn);
-          case RECORD:
-            return RecordHandler.get(ctx, userId, urn);
-          case ENUMERATED_VALUE_DOMAIN:
-          case DESCRIBED_VALUE_DOMAIN:
-            return ValueDomainHandler.get(ctx, userId, urn);
-          case PERMISSIBLE_VALUE:
-            return PermittedValueHandler.get(ctx, userId, urn);
-          default:
-            throw new IllegalArgumentException("Element Type is not supported");
-        }
+      Identification identification = IdentificationHandler.fromUrn(urn);
+      if (identification == null) {
+        throw new NoSuchElementException(urn);
+      }
+      switch (identification.getElementType()) {
+        case DATAELEMENT:
+          return DataElementHandler.get(ctx, userId, urn);
+        case DATAELEMENTGROUP:
+          return DataElementGroupHandler.get(ctx, userId, urn);
+        case RECORD:
+          return RecordHandler.get(ctx, userId, urn);
+        case ENUMERATED_VALUE_DOMAIN:
+        case DESCRIBED_VALUE_DOMAIN:
+          return ValueDomainHandler.get(ctx, userId, urn);
+        case PERMISSIBLE_VALUE:
+          return PermittedValueHandler.get(ctx, userId, urn);
+        default:
+          throw new IllegalArgumentException("Element Type is not supported");
       }
     }
   }
@@ -228,126 +204,6 @@ public class ElementService {
   }
 
   /**
-   * Get all Namespaces a user has access to.
-   */
-  public Map<AccessLevelType, List<Namespace>> readNamespaces(int userId) {
-    Map<AccessLevelType, List<Namespace>> namespaceMap = new HashMap<>();
-
-    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      if (userId < 0) {
-        // Unauthorized user can only get read access on public (as in "non-hidden") namespaces
-        namespaceMap.put(AccessLevelType.READ, NamespaceHandler.getPublicNamespaces(ctx));
-      } else {
-        List<Namespace> publicNamespaces = NamespaceHandler.getPublicNamespaces(ctx);
-        List<Namespace> readableNamespaces = NamespaceHandler
-            .getExplicitlyReadableNamespaces(ctx, userId);
-        List<Namespace> writableNamespaces = NamespaceHandler.getWritableNamespaces(ctx, userId);
-        List<Namespace> adminNamespaces = NamespaceHandler.getAdministrableNamespaces(ctx, userId);
-
-        // Add public namespaces that are not in any other list to the readable list
-        for (Namespace pn : publicNamespaces) {
-          if (readableNamespaces.stream().anyMatch(
-              ns -> ns.getIdentification().getUrn().equals(pn.getIdentification().getUrn()))
-              || writableNamespaces.stream().anyMatch(
-                ns -> ns.getIdentification().getUrn().equals(pn.getIdentification().getUrn()))
-              || adminNamespaces.stream().anyMatch(
-                ns -> ns.getIdentification().getUrn().equals(pn.getIdentification().getUrn()))) {
-            continue;
-          }
-          readableNamespaces.add(pn);
-        }
-
-        namespaceMap.put(AccessLevelType.READ, readableNamespaces);
-        namespaceMap.put(AccessLevelType.WRITE, writableNamespaces);
-        namespaceMap.put(AccessLevelType.ADMIN, adminNamespaces);
-      }
-    }
-
-    return namespaceMap;
-  }
-
-  /**
-   * Get all Namespaces a user has the given access right to.
-   */
-  public Map<AccessLevelType, List<Namespace>> readNamespaces(int userId,
-      AccessLevelType accessLevel) throws IllegalAccessException {
-    Map<AccessLevelType, List<Namespace>> namespaceMap = new HashMap<>();
-
-    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      if (userId < 0) {
-        if (accessLevel != AccessLevelType.READ) {
-          throw new IllegalAccessException("User not logged in");
-        }
-        // Unauthorized user can only get read access on public (as in "non-hidden") namespaces
-        namespaceMap.put(AccessLevelType.READ, NamespaceHandler.getPublicNamespaces(ctx));
-      } else {
-        switch (accessLevel) {
-          case ADMIN:
-            namespaceMap.put(accessLevel, NamespaceHandler.getAdministrableNamespaces(ctx, userId));
-            break;
-          case WRITE:
-            namespaceMap.put(accessLevel, NamespaceHandler.getWritableNamespaces(ctx, userId));
-            break;
-          case READ:
-          default:
-            List<Namespace> publicNamespaces = NamespaceHandler.getPublicNamespaces(ctx);
-            List<Namespace> readableNamespaces = NamespaceHandler
-                .getExplicitlyReadableNamespaces(ctx, userId);
-
-            // Add public namespaces that are not in any other list to the readable list
-            for (Namespace pn : publicNamespaces) {
-              if (readableNamespaces.stream().anyMatch(
-                  ns -> ns.getIdentification().getUrn().equals(pn.getIdentification().getUrn()))) {
-                continue;
-              }
-              readableNamespaces.add(pn);
-            }
-            namespaceMap.put(accessLevel, readableNamespaces);
-            break;
-        }
-      }
-    }
-
-    return namespaceMap;
-  }
-
-  /**
-   * Get all Members of a given type from the given Namespace Scoped Identifier Identifier.
-   */
-  public List<Member> readNamespaceMembers(int userId, Integer namespaceSiIdentifier,
-      List<String> elementTypesString, Boolean hideSubElements) {
-    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-
-      List<ElementType> elementTypes = new ArrayList<>();
-      if (elementTypesString != null && !elementTypesString.isEmpty()) {
-        elementTypesString.forEach(et -> elementTypes.add(ElementType.valueOf(et.toUpperCase())));
-      }
-      return NamespaceHandler.getNamespaceMembers(ctx, userId, namespaceSiIdentifier,
-          elementTypes, hideSubElements);
-    } catch (NumberFormatException e) {
-      throw new NoSuchElementException();
-    }
-  }
-
-  /**
-   * Get Namespace members in listview representation.
-   */
-  public List<NamespaceMember> getNamespaceMembersListview(int userId,
-      Integer namespaceSiIdentifier, List<String> elementTypesString, Boolean hideSubElements) {
-    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-
-      List<ElementType> elementTypes = new ArrayList<>();
-      if (elementTypesString != null && !elementTypesString.isEmpty()) {
-        elementTypesString.forEach(et -> elementTypes.add(ElementType.valueOf(et.toUpperCase())));
-      }
-      return NamespaceHandler.getNamespaceMembersListview(ctx, userId, namespaceSiIdentifier,
-          elementTypes, hideSubElements);
-    } catch (NumberFormatException e) {
-      throw new NoSuchElementException();
-    }
-  }
-
-  /**
    * Get dataElementGroup or record members.
    */
   public List<Member> readMembers(int userId, String urn) {
@@ -357,16 +213,6 @@ public class ElementService {
       return members;
     } catch (NumberFormatException e) {
       throw new NoSuchElementException();
-    }
-  }
-
-  /**
-   * Read the list of users that have access to a given namespace.
-   */
-  public List<DeHubUserPermission> readUserAccessList(int userId, int namespaceIdentifier)
-      throws IllegalAccessException {
-    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      return NamespaceHandler.getUserAccessForNamespace(ctx, userId, namespaceIdentifier);
     }
   }
 
@@ -383,8 +229,6 @@ public class ElementService {
         }
       }
       switch (element.getIdentification().getElementType()) {
-        case NAMESPACE:
-          return NamespaceHandler.update(ctx, userId, (Namespace) element);
         case DATAELEMENT:
           return DataElementHandler.update(ctx, userId, (DataElement) element);
         case DATAELEMENTGROUP:
@@ -407,15 +251,11 @@ public class ElementService {
    */
   public void delete(int userId, String urn) {
     try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      if (!IdentificationHandler.isUrn(urn)) {
-        throw new IllegalArgumentException();
-      } else {
-        Identification identification = IdentificationHandler.fromUrn(urn);
-        if (identification == null) {
-          throw new NoSuchElementException(urn);
-        }
-        ElementHandler.delete(ctx, userId, urn);
+      Identification identification = IdentificationHandler.fromUrn(urn);
+      if (identification == null) {
+        throw new NoSuchElementException(urn);
       }
+      ElementHandler.delete(ctx, userId, urn);
     }
   }
 
@@ -428,7 +268,6 @@ public class ElementService {
     try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
       if (IdentificationHandler.canBeReleased(ctx, userId, identification)) {
         switch (identification.getElementType()) {
-          case NAMESPACE:
           case DATAELEMENT:
             IdentificationHandler.updateStatus(ctx, userId, identification, Status.RELEASED);
             break;
