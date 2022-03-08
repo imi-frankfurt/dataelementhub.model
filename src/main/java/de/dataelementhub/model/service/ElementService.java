@@ -14,7 +14,6 @@ import de.dataelementhub.model.dto.DeHubUserPermission;
 import de.dataelementhub.model.dto.element.DataElement;
 import de.dataelementhub.model.dto.element.DataElementGroup;
 import de.dataelementhub.model.dto.element.Element;
-import de.dataelementhub.model.dto.element.ElementPath;
 import de.dataelementhub.model.dto.element.Namespace;
 import de.dataelementhub.model.dto.element.Record;
 import de.dataelementhub.model.dto.element.section.ConceptAssociation;
@@ -25,6 +24,7 @@ import de.dataelementhub.model.dto.element.section.Slot;
 import de.dataelementhub.model.dto.element.section.ValueDomain;
 import de.dataelementhub.model.dto.element.section.validation.PermittedValue;
 import de.dataelementhub.model.dto.listviews.NamespaceMember;
+import de.dataelementhub.model.dto.listviews.SimplifiedElementIdentification;
 import de.dataelementhub.model.handler.AccessLevelHandler;
 import de.dataelementhub.model.handler.ElementRelationHandler;
 import de.dataelementhub.model.handler.element.DataElementGroupHandler;
@@ -480,7 +480,8 @@ public class ElementService {
   /**
    * Get all available paths for a given element.
    */
-  public List<ElementPath> getElementPaths(int userId, String urn, String languages)
+  public List<List<SimplifiedElementIdentification>> getElementPaths(
+      int userId, String urn, String languages)
       throws IllegalArgumentException, IllegalStateException {
     try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
       if (IdentificationHandler.getScopedIdentifier(ctx, urn).getStatus() == Status.OUTDATED) {

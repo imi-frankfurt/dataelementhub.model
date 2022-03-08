@@ -3,12 +3,13 @@ package de.dataelementhub.model.handler.element;
 import static de.dataelementhub.dal.jooq.Tables.SCOPED_IDENTIFIER;
 import static de.dataelementhub.dal.jooq.Tables.SCOPED_IDENTIFIER_HIERARCHY;
 
+import de.dataelementhub.dal.jooq.enums.ElementType;
 import de.dataelementhub.dal.jooq.enums.Status;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
 import de.dataelementhub.model.DaoUtil;
 import de.dataelementhub.model.dto.element.Element;
-import de.dataelementhub.model.dto.element.ElementPath;
 import de.dataelementhub.model.dto.element.section.Identification;
+import de.dataelementhub.model.dto.listviews.SimplifiedElementIdentification;
 import de.dataelementhub.model.handler.element.section.DefinitionHandler;
 import de.dataelementhub.model.handler.element.section.IdentificationHandler;
 import java.util.ArrayList;
@@ -22,15 +23,21 @@ public class ElementPathHandler {
   /**
    * Get all available paths for a given element.
    */
-  public static List<ElementPath> getElementPaths(CloseableDSLContext ctx,
-      int userId, String urn, String languages) {
-    List<ElementPath> elementPaths = new ArrayList<>();
-    List<String> pathUrnsList = completePaths(ctx, userId, Collections.singletonList(urn));
-    List<String> pathDesignationsList = getDesignations(ctx, pathUrnsList, languages);
+  public static List<List<SimplifiedElementIdentification>> getElementPaths(
+      CloseableDSLContext ctx, int userId, String urn, String languages) {
+    List<List<SimplifiedElementIdentification>> elementPaths = new ArrayList<>();
+    List<List<String>> pathUrnsList = completePaths(ctx, userId,
+        Collections.singletonList(Collections.singletonList(urn)));
+    List<List<String>> pathDesignationsList = getDesignations(ctx, pathUrnsList, languages);
     for (int i = 0; i < pathUrnsList.size(); i++) {
-      ElementPath elementPath = new ElementPath();
-      elementPath.setUrns(pathUrnsList.get(i));
-      elementPath.setDesignations(pathDesignationsList.get(i));
+      List<SimplifiedElementIdentification> elementPath = new ArrayList<>();
+      for (int e = 0; e < pathUrnsList.get(i).size(); e++) {
+        SimplifiedElementIdentification simplifiedElementIdentification =
+            new SimplifiedElementIdentification();
+        simplifiedElementIdentification.setUrn(pathUrnsList.get(i).get(e));
+        simplifiedElementIdentification.setDesignation(pathDesignationsList.get(i).get(e));
+        elementPath.add(simplifiedElementIdentification);
+      }
       elementPaths.add(elementPath);
     }
     return elementPaths;
@@ -39,70 +46,77 @@ public class ElementPathHandler {
   /**
    * Complete a given path until the namespace.
    */
-  public static List<String> completePaths(CloseableDSLContext ctx, int userId,
-      List<String> startPartialPaths) {
-    List<String> partialPaths = new ArrayList<String>(startPartialPaths);
+  public static List<List<String>> completePaths(CloseableDSLContext ctx, int userId,
+      List<List<String>> startPartialPaths) {
+    List<List<String>> partialPaths = new ArrayList<List<String>>(startPartialPaths);
     for (int i = 0; i < partialPaths.size(); i++) {
-      String partialPath = partialPaths.get(i);
-      String urn;
-      if (partialPath.toLowerCase().contains("namespace")) {
+      List<String> partialPath = partialPaths.get(i);
+      if (partialPath.stream().anyMatch(n ->
+          n.toUpperCase().contains(ElementType.NAMESPACE.getLiteral()))) {
         continue;
-      } else if (partialPath.contains("/")) {
-        urn = partialPath.split("/")[0];
-      } else {
-        urn = partialPath;
       }
-      List<ScopedIdentifier> parentScopedIdentifiers = getParentScopedIdentifiers(ctx,urn)
-          .stream().filter(p -> p.getStatus() != Status.OUTDATED).collect(Collectors.toList());;
+      List<ScopedIdentifier> parentScopedIdentifiers = getParentScopedIdentifiers(ctx,
+          partialPath.get(0)).stream().filter(p ->
+          p.getStatus() != Status.OUTDATED).collect(Collectors.toList());
       partialPaths.remove(partialPath);
       if (parentScopedIdentifiers.size() > 0) {
         for (ScopedIdentifier parentScopedIdentifier : parentScopedIdentifiers) {
           String parentUrn = IdentificationHandler.toUrn(ctx, parentScopedIdentifier);
-          partialPaths.add(parentUrn + "/" + partialPath);
+          List<String> newPartialPath = new ArrayList<>();
+          newPartialPath.add(parentUrn);
+          newPartialPath.addAll(partialPath);
+          partialPaths.add(newPartialPath);
         }
       } else {
         Identification namespaceIdentification = IdentificationHandler
-            .getNamespaceIdentification(ctx, urn);
+            .getNamespaceIdentification(ctx, partialPath.get(0));
         if (!DaoUtil.accessLevelGranted(namespaceIdentification.getIdentifier(),
             userId, DaoUtil.READ_ACCESS_TYPES)) {
           partialPaths.remove(partialPath);
         } else {
-          partialPaths.add(namespaceIdentification.getNamespaceUrn() + "/" + partialPath);
+          List<String> newPartialPath = new ArrayList<>();
+          newPartialPath.add(namespaceIdentification.getNamespaceUrn());
+          newPartialPath.addAll(partialPath);
+          partialPaths.add(newPartialPath);
         }
       }
     }
-    boolean pathsCompleted = partialPaths.stream().allMatch(n -> n.contains("namespace"));
-    if (!pathsCompleted) {
+    if (!pathsCompleted(partialPaths)) {
       partialPaths = completePaths(ctx, userId, partialPaths);
     }
     return partialPaths;
   }
 
   /**
+   * Return true if all paths are completed and reached the namespace otherwise return false.
+   */
+  public static boolean pathsCompleted(List<List<String>> paths) {
+    for (List<String> path : paths) {
+      if (path.stream().anyMatch(n ->
+          n.toUpperCase().contains(ElementType.NAMESPACE.getLiteral()))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
    * Get the designations for all urns in a path.
    */
-  public static List<String> getDesignations(CloseableDSLContext ctx,
-      List<String> paths, String languages) {
-    List<String> pathDesignationsList = new ArrayList<>();
-    for (String path : paths) {
-      String[] pathUrns = path.split("/");
-      String pathDesignations = "";
-      for (int i = 0; i < pathUrns.length; i++) {
-        if (i == pathUrns.length - 1) {
-          ScopedIdentifier scopedIdentifier =
-              IdentificationHandler.getScopedIdentifier(ctx, pathUrns[i]);
-          pathDesignations =
-              pathDesignations + getDesignation(ctx, scopedIdentifier.getId(), languages);
-        } else {
-          ScopedIdentifier scopedIdentifier =
-              IdentificationHandler.getScopedIdentifier(ctx, pathUrns[i]);
-          pathDesignations = pathDesignations
-              + getDesignation(ctx, scopedIdentifier.getId(), languages) + "/";
-        }
+  public static List<List<String>> getDesignations(CloseableDSLContext ctx,
+      List<List<String>> paths, String languages) {
+    List<List<String>> allDesignations = new ArrayList<>();
+    for (int pathIndex = 0; pathIndex < paths.size(); pathIndex++) {
+      List<String> pathDesignations = new ArrayList<>();
+      for (int urnIndex = 0; urnIndex < paths.get(pathIndex).size(); urnIndex++) {
+        String urn = paths.get(pathIndex).get(urnIndex);
+        ScopedIdentifier scopedIdentifier =
+            IdentificationHandler.getScopedIdentifier(ctx, urn);
+        pathDesignations.add(getDesignation(ctx, scopedIdentifier.getId(), languages));
       }
-      pathDesignationsList.add(pathDesignations);
+      allDesignations.add(pathDesignations);
     }
-    return pathDesignationsList;
+    return allDesignations;
   }
 
   /**
@@ -121,14 +135,12 @@ public class ElementPathHandler {
    */
   public static List<ScopedIdentifier> getParentScopedIdentifiers(
       CloseableDSLContext ctx, String urn) {
-    int scopedIdentifierId = IdentificationHandler.getScopedIdentifier(ctx, urn).getId();
-    List<ScopedIdentifier> parentElements =
-        ctx.select()
+    return ctx.select()
         .from(SCOPED_IDENTIFIER_HIERARCHY)
         .leftJoin(SCOPED_IDENTIFIER)
         .on(SCOPED_IDENTIFIER.ID.eq(SCOPED_IDENTIFIER_HIERARCHY.SUPER_ID))
-        .where(SCOPED_IDENTIFIER_HIERARCHY.SUB_ID.eq(scopedIdentifierId))
+        .where(SCOPED_IDENTIFIER_HIERARCHY.SUB_ID
+            .eq(IdentificationHandler.getScopedIdentifier(ctx, urn).getId()))
         .fetchInto(ScopedIdentifier.class);
-    return parentElements;
   }
 }

@@ -1,4 +1,4 @@
-package de.dataelementhub.model.dto.element;
+package de.dataelementhub.model.dto.listviews;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -8,7 +8,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @EqualsAndHashCode
 @JsonInclude(Include.NON_NULL)
-public class ElementPath {
-  private String urns;
-  private String designations;
+public class SimplifiedElementIdentification {
+  private String urn;
+  private String designation;
 }
