@@ -256,7 +256,7 @@
                 "title": "urn",
                 "description": "",
                 "type": "string",
-                "pattern": "permittedvalue|PERMITTEDVALUE"
+                "pattern": "(?i)permittedvalue"
               },
               "conceptAssociations": {
                 "$ref": "#/definitions/conceptAssociations"
