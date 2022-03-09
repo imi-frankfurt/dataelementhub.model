@@ -442,4 +442,15 @@ public class IdentificationHandler {
     identification.setRevision(null);
     return identification;
   }
+
+  /**
+   * Returns namespaces identification for a given elementUrn.
+   */
+  public static Identification getNamespaceIdentification(CloseableDSLContext ctx, String urn) {
+    int namespaceId = getScopedIdentifier(ctx, urn).getNamespaceId();
+    return convert(ctx.selectFrom(SCOPED_IDENTIFIER)
+        .where(SCOPED_IDENTIFIER.ELEMENT_TYPE.eq(ElementType.NAMESPACE))
+        .and(SCOPED_IDENTIFIER.NAMESPACE_ID.eq(namespaceId))
+        .fetchOneInto(ScopedIdentifier.class));
+  }
 }

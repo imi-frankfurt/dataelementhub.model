@@ -143,7 +143,7 @@ public abstract class ElementHandler {
     identification.setStatus(identifiedElementRecord.getSiStatus());
     element.setIdentification(identification);
     element.setDefinitions(DefinitionHandler
-        .get(ctx, identifiedElementRecord.getId(), identifiedElementRecord.getSiId()));
+        .get(ctx, identifiedElementRecord.getSiId()));
     element.setSlots(SlotHandler.get(ctx, identification));
     return element;
   }

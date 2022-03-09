@@ -15,12 +15,11 @@ public class DefinitionHandler {
   /**
    * Get all definitions for a scoped identifier.
    */
-  public static List<Definition> get(CloseableDSLContext ctx, int elementId,
+  public static List<Definition> get(CloseableDSLContext ctx,
       int scopedIdentifierId) {
     List<DefinitionRecord> definitionRecords =
         ctx.fetch(DEFINITION,
-            DEFINITION.SCOPED_IDENTIFIER_ID.equal(scopedIdentifierId)
-                .and(DEFINITION.ELEMENT_ID.equal(elementId)));
+            DEFINITION.SCOPED_IDENTIFIER_ID.equal(scopedIdentifierId));
 
     List<de.dataelementhub.dal.jooq.tables.pojos.Definition> definitions =
         definitionRecords.stream()

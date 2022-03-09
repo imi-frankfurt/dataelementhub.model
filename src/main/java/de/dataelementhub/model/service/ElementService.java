@@ -21,11 +21,13 @@ import de.dataelementhub.model.dto.element.section.Member;
 import de.dataelementhub.model.dto.element.section.Slot;
 import de.dataelementhub.model.dto.element.section.ValueDomain;
 import de.dataelementhub.model.dto.element.section.validation.PermittedValue;
+import de.dataelementhub.model.dto.listviews.SimplifiedElementIdentification;
 import de.dataelementhub.model.handler.AccessLevelHandler;
 import de.dataelementhub.model.handler.ElementRelationHandler;
 import de.dataelementhub.model.handler.element.DataElementGroupHandler;
 import de.dataelementhub.model.handler.element.DataElementHandler;
 import de.dataelementhub.model.handler.element.ElementHandler;
+import de.dataelementhub.model.handler.element.ElementPathHandler;
 import de.dataelementhub.model.handler.element.RecordHandler;
 import de.dataelementhub.model.handler.element.section.ConceptAssociationHandler;
 import de.dataelementhub.model.handler.element.section.DefinitionHandler;
@@ -312,6 +314,20 @@ public class ElementService {
           throw new IllegalArgumentException("Element Type is not supported. "
               + "Only dataELementGroup and record are accepted!");
       }
+    }
+  }
+
+  /**
+   * Get all available paths for a given element.
+   */
+  public List<List<SimplifiedElementIdentification>> getElementPaths(
+      int userId, String urn, String languages)
+      throws IllegalArgumentException, IllegalStateException {
+    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
+      if (IdentificationHandler.getScopedIdentifier(ctx, urn).getStatus() == Status.OUTDATED) {
+        throw new IllegalStateException(urn + " is OUTDATED.");
+      }
+      return ElementPathHandler.getElementPaths(ctx, userId, urn, languages);
     }
   }
 }
