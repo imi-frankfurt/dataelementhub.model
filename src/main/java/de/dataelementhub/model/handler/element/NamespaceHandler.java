@@ -406,13 +406,17 @@ public class NamespaceHandler extends ElementHandler {
 
       ScopedIdentifier scopedIdentifier = IdentificationHandler.updateNamespaceIdentifier(ctx,
           namespace.getIdentification());
-      namespace.setIdentification(IdentificationHandler.convert(scopedIdentifier));
-      namespace.getIdentification().setNamespaceId(NamespaceHandler.getNamespaceIdByUrn(
+      Identification newIdentification = IdentificationHandler.convert(scopedIdentifier);
+      newIdentification.setNamespaceId(NamespaceHandler.getNamespaceIdByUrn(
           previousNamespace.getIdentification().getNamespaceUrn()));
+      Boolean newHideNamespace = namespace.getIdentification().getHideNamespace();
+      newIdentification.setHideNamespace(newHideNamespace != null ? newHideNamespace :
+          previousNamespace.getIdentification().getHideNamespace());
       List<UserNamespaceAccess> namespaceAccess = AccessLevelHandler
           .getAccessForNamespaceById(ctx, previousNamespace.getIdentification().getNamespaceId());
 
       delete(ctx, userId, previousNamespace.getIdentification().getUrn());
+      namespace.setIdentification(newIdentification);
       ScopedIdentifier newScopedIdentifier = create(ctx, userId, namespace);
       IdentificationHandler.convert(newScopedIdentifier);
 
