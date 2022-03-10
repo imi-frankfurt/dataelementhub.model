@@ -6,7 +6,11 @@ import static de.dataelementhub.dal.jooq.Tables.STAGING;
 import static org.jooq.impl.DSL.count;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.networknt.schema.JsonSchema;
+import com.networknt.schema.JsonSchemaFactory;
+import com.networknt.schema.SpecVersion.VersionFlag;
 import de.dataelementhub.dal.jooq.enums.ElementType;
 import de.dataelementhub.dal.jooq.enums.ProcessStatus;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
@@ -18,8 +22,8 @@ import de.dataelementhub.model.dto.importdto.ImportInfo;
 import de.dataelementhub.model.handler.element.NamespaceHandler;
 import de.dataelementhub.model.handler.element.section.IdentificationHandler;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.StringReader;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -38,12 +42,9 @@ import javax.xml.validation.Validator;
 import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import org.eclipse.persistence.jaxb.JAXBContextProperties;
-import org.everit.json.schema.loader.SchemaLoader;
 import org.jooq.CloseableDSLContext;
 import org.jooq.Record2;
 import org.jooq.impl.SQLDataType;
-import org.json.JSONObject;
-import org.json.JSONTokener;
 import org.springframework.http.MediaType;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -184,16 +185,16 @@ public class ImportHandler {
       Validator validator = schema.newValidator();
       validator.validate(xmlFile);
     } else if (fileToValidate.contains(".json")) {
-      JSONObject jsonSchema =
-          new JSONObject(
-              new JSONTokener(
-                  new FileInputStream(
-                      System.getProperty("user.dir")
-                          + "/src/main/resources/schema/StagingImport.json"
-                          .replace('/', File.separatorChar))));
-      JSONObject jsonSubject = new JSONObject(new JSONTokener(new FileInputStream(fileToValidate)));
-      org.everit.json.schema.Schema schema = SchemaLoader.load(jsonSchema);
-      schema.validate(jsonSubject);
+      URI jsonSchemaUri =
+          new File(
+              System.getProperty("user.dir")
+                  + "/src/main/resources/schema/StagingImport.json"
+                  .replace('/', File.separatorChar)).toURI();
+      ObjectMapper mapper = new ObjectMapper();
+      JsonSchemaFactory factory = JsonSchemaFactory.getInstance(VersionFlag.V7);
+      JsonSchema schema = factory.getSchema(jsonSchemaUri);
+      JsonNode jsonNode = mapper.valueToTree(new StreamSource(new File(fileToValidate)));
+      schema.validate(jsonNode);
     }
   }
 
