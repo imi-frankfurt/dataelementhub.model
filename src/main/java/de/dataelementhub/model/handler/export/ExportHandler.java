@@ -27,7 +27,7 @@ public class ExportHandler {
   public static final String EXPORTED_ELEMENTS_FILENAME = "exportedElements.txt";
   public static final String SUFFIX_PROCESSING = "-processing";
   public static final String SUFFIX_DONE = "-done";
-  public static final String SUFFIX_INTERRUPTED = "-interrupted";
+  public static final String SUFFIX_ABORTED = "-aborted";
   public static final String NAMESPACE_PREFIX_MAPPER = "com.sun.xml.bind.namespacePrefixMapper";
   public static List<String> nonExportable = new ArrayList<>();
   public static float exportProgress = 0;
@@ -61,7 +61,7 @@ public class ExportHandler {
     } catch (Exception e) {
       File processedFile = new File(destination);
       File newFile =
-          new File(destination.replace(SUFFIX_PROCESSING, SUFFIX_INTERRUPTED));
+          new File(destination.replace(SUFFIX_PROCESSING, SUFFIX_ABORTED));
       processedFile.renameTo(newFile);
     }
   }
