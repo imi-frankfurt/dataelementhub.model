@@ -2,11 +2,12 @@ package de.dataelementhub.model.dto.export;
 
 import java.sql.Timestamp;
 import lombok.Data;
+import org.springframework.http.MediaType;
 
 @Data
 public class ExportInfo {
   private String id;
-  private String format;
+  private MediaType mediaType;
   private String status;
   private float progress;
   private Timestamp timestamp;
