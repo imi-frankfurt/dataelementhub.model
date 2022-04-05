@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -18,16 +19,16 @@ public class ExportService {
 
   /** Generates an Export file for defined elements. */
   @Async
-  public void exportService(ExportRequest exportRequest, int userId, String format,
+  public void exportService(ExportRequest exportRequest, int userId, MediaType mediaType,
       Boolean fullExport, String timestamp, String exportDirectory) {
-    ExportHandler.export(exportRequest, userId, format, fullExport, timestamp, exportDirectory);
+    ExportHandler.export(exportRequest, userId, mediaType, fullExport, timestamp, exportDirectory);
   }
 
   /** returns the import/Export status PROCESSING/DONE/INTERRUPTED/NOT DEFINED.
    **/
   public ExportInfo exportInfo(String identifier, int userId, String exportDirectory) {
-    new File(exportDirectory + "/" + userId).mkdir();
-    File[] exports = Objects.requireNonNull(new File(exportDirectory + "/" + userId)
+    new File(exportDirectory + File.separator + userId).mkdir();
+    File[] exports = Objects.requireNonNull(new File(exportDirectory + File.separator + userId)
         .listFiles(File::isDirectory));
     ExportInfo exportInfo = new ExportInfo();
     exportInfo.setStatus("NOT DEFINED");
@@ -40,7 +41,7 @@ public class ExportService {
         exportInfo.setId(itemParts[0]);
         exportInfo.setStatus(itemParts[2].toUpperCase());
         exportInfo.setTimestamp(timestamp);
-        exportInfo.setFormat(itemParts[1].toUpperCase());
+        exportInfo.setMediaType(MediaType.parseMediaType("application/" + itemParts[1]));
         exportInfo.setProgress(itemParts[2].equalsIgnoreCase("DONE")
             ? 1 : ExportHandler.exportProgress);
       }
@@ -50,8 +51,8 @@ public class ExportService {
 
   /** Returns all Exports. */
   public List<ExportInfo> allExports(int userId, String exportDirectory) {
-    new File(exportDirectory + "/" + userId).mkdir();
-    File inputFolder = new File(exportDirectory + "/" + userId);
+    new File(exportDirectory + File.separator + userId).mkdir();
+    File inputFolder = new File(exportDirectory + File.separator + userId);
     List<ExportInfo> exportDescriptions = new ArrayList<>();
     List<String> listOfFiles = Arrays.stream(inputFolder.listFiles()).map(File::getName).collect(
         Collectors.toList());
@@ -64,7 +65,7 @@ public class ExportService {
       exportInfo.setId(itemParts[0]);
       exportInfo.setStatus(itemParts[2].toUpperCase());
       exportInfo.setTimestamp(timestamp);
-      exportInfo.setFormat(itemParts[1].toUpperCase());
+      exportInfo.setMediaType(MediaType.parseMediaType("application/" + itemParts[1]));
       exportDescriptions.add(exportInfo);
       exportInfo.setProgress(itemParts[2].equalsIgnoreCase("DONE")
           ? 1 : ExportHandler.exportProgress);
