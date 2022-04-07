@@ -1,7 +1,7 @@
 package de.dataelementhub.model.service;
 
-import de.dataelementhub.model.dto.export.ExportInfo;
-import de.dataelementhub.model.dto.export.ExportRequest;
+import de.dataelementhub.model.dto.datatransfer.ExportInfo;
+import de.dataelementhub.model.dto.datatransfer.ExportRequest;
 import de.dataelementhub.model.handler.export.ExportHandler;
 import java.io.File;
 import java.sql.Timestamp;

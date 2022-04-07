@@ -1,4 +1,4 @@
-package de.dataelementhub.model.dto.export;
+package de.dataelementhub.model.dto.datatransfer;
 
 import java.sql.Timestamp;
 import lombok.Data;

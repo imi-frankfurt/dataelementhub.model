@@ -11,10 +11,10 @@ import de.dataelementhub.dal.jooq.enums.ElementType;
 import de.dataelementhub.dal.jooq.enums.ProcessStatus;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
 import de.dataelementhub.dal.jooq.tables.records.ImportRecord;
+import de.dataelementhub.model.dto.datatransfer.DataTransfer;
+import de.dataelementhub.model.dto.datatransfer.ImportInfo;
 import de.dataelementhub.model.dto.element.StagedElement;
 import de.dataelementhub.model.dto.element.section.Member;
-import de.dataelementhub.model.dto.importdto.ImportDto;
-import de.dataelementhub.model.dto.importdto.ImportInfo;
 import de.dataelementhub.model.handler.element.NamespaceHandler;
 import de.dataelementhub.model.handler.element.section.IdentificationHandler;
 import java.io.File;
@@ -99,10 +99,10 @@ public class ImportHandler {
       CloseableDSLContext ctx, String fileToImport, int importId)
       throws Exception {
     File file = new File(fileToImport);
-    JAXBContext jaxbContext = JAXBContext.newInstance(ImportDto.class);
+    JAXBContext jaxbContext = JAXBContext.newInstance(DataTransfer.class);
     Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
-    ImportDto importDtoBody = (ImportDto) jaxbUnmarshaller.unmarshal(file);
-    saveElements(ctx, importDtoBody.getStagedElements(), importId);
+    DataTransfer dataTransfer = (DataTransfer) jaxbUnmarshaller.unmarshal(file);
+    saveElements(ctx, dataTransfer.getStagedElements(), importId);
   }
 
   /** handles importing json file. */
@@ -111,14 +111,14 @@ public class ImportHandler {
       throws Exception {
     System.setProperty(
         "javax.xml.bind.context.factory", "org.eclipse.persistence.jaxb.JAXBContextFactory");
-    JAXBContext jaxbContext = JAXBContext.newInstance(ImportDto.class);
+    JAXBContext jaxbContext = JAXBContext.newInstance(DataTransfer.class);
     Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
     jaxbUnmarshaller.setProperty(JAXBContextProperties.MEDIA_TYPE,
         MediaType.APPLICATION_JSON_VALUE);
     jaxbUnmarshaller.setProperty(JAXBContextProperties.JSON_INCLUDE_ROOT, true);
     StreamSource json = new StreamSource(new StringReader(readFileAsString(fileToImport)));
-    ImportDto importDtoBody = jaxbUnmarshaller.unmarshal(json, ImportDto.class).getValue();
-    saveElements(ctx, importDtoBody.getStagedElements(), importId);
+    DataTransfer dataTransfer = jaxbUnmarshaller.unmarshal(json, DataTransfer.class).getValue();
+    saveElements(ctx, dataTransfer.getStagedElements(), importId);
   }
 
   /** Convert stagedElements to elements and save them. */

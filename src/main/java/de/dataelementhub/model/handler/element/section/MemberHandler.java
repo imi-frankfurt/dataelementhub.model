@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import org.jooq.CloseableDSLContext;
-import org.springframework.context.annotation.ScannedGenericBeanDefinition;
 
 public class MemberHandler {
 
