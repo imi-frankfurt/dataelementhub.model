@@ -36,15 +36,35 @@ import org.springframework.web.multipart.MultipartFile;
 public class ImportService {
 
   /**
-   * Accept zip file and import its content (xml/json).
+   * Execute an import.
+   **/
+  public void execute(List<MultipartFile> files, String importDirectory, int userId, int importId)
+      throws IOException {
+    String destination = ImportHandler.createImportDirectory(importDirectory, userId, importId);
+    for (MultipartFile file : files) {
+      Path fileNameAndPath = Paths.get(destination, file.getOriginalFilename());
+      ImportHandler.unzip(fileNameAndPath.toString(), destination);
+      File[] allFilesInFolder = ImportHandler.getAllFilesInFolder(destination);
+      ImportHandler.validateAllFilesInFolder(allFilesInFolder);
+      importToStagingArea(allFilesInFolder, importId);
+    }
+  }
+
+  /**
+   * Save stagedElements to the staging area.
    **/
   @Async
-  public void importService(
-      List<MultipartFile> file, String importDirectory, int userId,
-      int importId) {
+  public void importToStagingArea(File[] allFilesInFolder, int importId) {
     try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      ImportHandler.importFiles(ctx, file, importDirectory,
-          userId, importId);
+      try {
+        ImportHandler.startImportAccordingToFileType(ctx, importId, allFilesInFolder);
+      } catch (Exception e) {
+        ctx.update(IMPORT)
+            .set(IMPORT.STATUS, ProcessStatus.ABORTED)
+            .set(IMPORT.LABEL, e.getMessage())
+            .where(IMPORT.ID.eq(importId))
+            .execute();
+      }
     }
   }
 

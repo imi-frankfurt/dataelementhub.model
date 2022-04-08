@@ -19,9 +19,9 @@ import de.dataelementhub.model.handler.element.NamespaceHandler;
 import de.dataelementhub.model.handler.element.section.IdentificationHandler;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.StringReader;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.util.List;
@@ -45,30 +45,15 @@ import org.jooq.impl.SQLDataType;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 import org.springframework.http.MediaType;
-import org.springframework.web.multipart.MultipartFile;
 
 public class ImportHandler {
 
-  /** Unzip received file and handle importing its content. */
-  public static void importFiles(
-      CloseableDSLContext ctx, List<MultipartFile> files,
-      String importDirectory, int userId, int importId) {
+  /** Create import directory and return it. */
+  public static String createImportDirectory(String importDirectory, int userId, int importId) {
     String destination = importDirectory + File.separator + userId + File.separator + importId;
     new File(importDirectory + File.separator + userId).mkdir();
     new File(destination).mkdir();
-    for (MultipartFile file : files) {
-      Path fileNameAndPath = Paths.get(destination, file.getOriginalFilename());
-      try {
-        unzip(fileNameAndPath.toString(), destination);
-        allFilesInFolder(ctx, destination, importId);
-      } catch (Exception e) {
-        ctx.update(IMPORT)
-            .set(IMPORT.STATUS, ProcessStatus.ABORTED)
-            .set(IMPORT.LABEL, e.getMessage())
-            .where(IMPORT.ID.eq(importId))
-            .execute();
-      }
-    }
+    return destination;
   }
 
   /** Unzip to defined directory. */
@@ -77,25 +62,35 @@ public class ImportHandler {
     zipFile.extractAll(destination);
   }
 
-  /** list all files inside a defined directory. */
-  public static void allFilesInFolder(CloseableDSLContext ctx, String folder, int importId)
-      throws Exception {
+  /** list all files inside a defined directory.*/
+  public static File[] getAllFilesInFolder(String folder) {
     File inputFolder = new File(folder);
     File[] listOfFiles = inputFolder.listFiles();
-    for (File file : Objects.requireNonNull(listOfFiles)) {
-      if (file.isFile() && !file.getName().contains(".zip")) {
-        importType(ctx, file.getAbsolutePath(), importId);
+    return listOfFiles;
+  }
+
+  /** Validate all files in a folder against schema and throw an exception
+   * in case the files are not valid.*/
+  public static void validateAllFilesInFolder(File[] allFilesInFolder) throws IOException {
+    for (File file : Objects.requireNonNull(allFilesInFolder)) {
+      if (file.isFile() && file.getName().contains(".json") || file.getName().contains(".xml")) {
+        validateAgainstSchema(file.getAbsolutePath());
       }
     }
   }
 
-  /** detect file type (xml/json) then handle importing it. */
-  public static void importType(CloseableDSLContext ctx, String fileToImport,
-      int importId) throws Exception {
-    if (fileToImport.contains(".xml")) {
-      importXml(ctx, fileToImport, importId);
-    } else if (fileToImport.contains(".json")) {
-      importJson(ctx, fileToImport, importId);
+  /** Detect file type (xml/json) then handle importing it.*/
+  public static void startImportAccordingToFileType(
+      CloseableDSLContext ctx, int importId, File[] allFilesInFolder) throws Exception {
+    for (File file : Objects.requireNonNull(allFilesInFolder)) {
+      if (file.isFile() && !file.getName().contains(".zip")) {
+        String fileAbsolutePath = file.getAbsolutePath();
+        if (fileAbsolutePath.contains(".xml")) {
+          importXml(ctx, fileAbsolutePath, importId);
+        } else if (fileAbsolutePath.contains(".json")) {
+          importJson(ctx, fileAbsolutePath, importId);
+        }
+      }
     }
   }
 
@@ -104,7 +99,6 @@ public class ImportHandler {
       CloseableDSLContext ctx, String fileToImport, int importId)
       throws Exception {
     File file = new File(fileToImport);
-    validateAgainstSchema(fileToImport);
     JAXBContext jaxbContext = JAXBContext.newInstance(ImportDto.class);
     Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
     ImportDto importDtoBody = (ImportDto) jaxbUnmarshaller.unmarshal(file);
@@ -117,7 +111,6 @@ public class ImportHandler {
       throws Exception {
     System.setProperty(
         "javax.xml.bind.context.factory", "org.eclipse.persistence.jaxb.JAXBContextFactory");
-    validateAgainstSchema(fileToImport);
     JAXBContext jaxbContext = JAXBContext.newInstance(ImportDto.class);
     Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
     jaxbUnmarshaller.setProperty(JAXBContextProperties.MEDIA_TYPE,
@@ -171,29 +164,35 @@ public class ImportHandler {
   }
 
   /** File validation against XSD/JSON Schema. */
-  public static void validateAgainstSchema(String fileToValidate) throws Exception {
-    if (fileToValidate.contains(".xsd")) {
-      File schemaFile =
-          new File(
-              System.getProperty("user.dir")
-                  + "/src/main/resources/schema/StagingImport.xsd"
-                  .replace('/', File.separatorChar));
-      Source xmlFile = new StreamSource(new File(fileToValidate));
-      SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-      Schema schema = schemaFactory.newSchema(schemaFile);
-      Validator validator = schema.newValidator();
-      validator.validate(xmlFile);
-    } else if (fileToValidate.contains(".json")) {
-      JSONObject jsonSchema =
-          new JSONObject(
-              new JSONTokener(
-                  new FileInputStream(
-                      System.getProperty("user.dir")
-                          + "/src/main/resources/schema/StagingImport.json"
-                          .replace('/', File.separatorChar))));
-      JSONObject jsonSubject = new JSONObject(new JSONTokener(new FileInputStream(fileToValidate)));
-      org.everit.json.schema.Schema schema = SchemaLoader.load(jsonSchema);
-      schema.validate(jsonSubject);
+  public static void validateAgainstSchema(String fileToValidate) throws IOException {
+    try {
+      if (fileToValidate.contains(".xsd")) {
+        File schemaFile =
+            new File(
+                System.getProperty("user.dir")
+                    + "/src/main/resources/schema/StagingImport.xsd"
+                    .replace('/', File.separatorChar));
+        Source xmlFile = new StreamSource(new File(fileToValidate));
+        SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+        Schema schema = schemaFactory.newSchema(schemaFile);
+        Validator validator = schema.newValidator();
+        validator.validate(xmlFile);
+      } else if (fileToValidate.contains(".json")) {
+        JSONObject jsonSchema =
+            new JSONObject(
+                new JSONTokener(
+                    new FileInputStream(
+                        System.getProperty("user.dir")
+                            + "/src/main/resources/schema/StagingImport.json"
+                            .replace('/', File.separatorChar))));
+        JSONObject jsonSubject =
+            new JSONObject(new JSONTokener(new FileInputStream(fileToValidate)));
+        org.everit.json.schema.Schema schema = SchemaLoader.load(jsonSchema);
+        schema.validate(jsonSubject);
+      }
+    } catch (Exception e) {
+      throw new IOException("The import file you submitted did not pass validation.\n"
+          + e.getMessage());
     }
   }
 
