@@ -91,7 +91,7 @@ public class DataElementHandler extends ElementHandler {
 
       if (!Objects.equals(deNsIdentifier, vdNsIdentifier)) {
         Namespace targetNamespace = NamespaceHandler.getByIdentifier(ctx, userId, deNsIdentifier);
-        // If value domain was previously imported into target namespace - use this scoped identifier
+        // If value domain was previously imported into target namespace, use this scoped identifier
         valueDomainIdentifier = IdentificationHandler.getScopedIdentifierFromAnotherNamespace(
             ctx, userId, targetNamespace.getIdentification().getNamespaceId(),
             valueDomainIdentifier

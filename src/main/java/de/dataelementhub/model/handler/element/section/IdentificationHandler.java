@@ -454,6 +454,14 @@ public class IdentificationHandler {
         .fetchOneInto(ScopedIdentifier.class));
   }
 
+  /**
+   * Get the scoped identifier for an element from another namespace.
+   * @param ctx jooq db context
+   * @param userId user id (currently unused)
+   * @param namespaceId id of the target namespace
+   * @param elementIdentifier scoped identifier to check
+   * @return scoped identifier from target namespace, or null if not found
+   */
   public static ScopedIdentifier getScopedIdentifierFromAnotherNamespace(CloseableDSLContext ctx,
       int userId, Integer namespaceId, ScopedIdentifier elementIdentifier) {
     return ctx.selectFrom(SCOPED_IDENTIFIER)
