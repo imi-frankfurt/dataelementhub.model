@@ -3,7 +3,6 @@ package de.dataelementhub.model.handler;
 import static de.dataelementhub.dal.jooq.tables.DehubUser.DEHUB_USER;
 import static de.dataelementhub.dal.jooq.tables.UserNamespaceAccess.USER_NAMESPACE_ACCESS;
 
-import de.dataelementhub.dal.ResourceManager;
 import de.dataelementhub.dal.jooq.Keys;
 import de.dataelementhub.dal.jooq.enums.AccessLevelType;
 import de.dataelementhub.dal.jooq.tables.pojos.DehubUser;
@@ -99,42 +98,40 @@ public class UserHandler {
   /**
    * Give a user access to a namespace.
    */
-  public static void setUserAccessToNamespace(int userId, int namespaceIdentifier,
-      AccessLevelType accessLevel) {
-    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      IdentifiedElementRecord namespaceRecord = NamespaceHandler
-          .getLatestNamespaceRecord(ctx, userId, namespaceIdentifier);
+  public static void setUserAccessToNamespace(
+      CloseableDSLContext ctx, int userId, int namespaceIdentifier, AccessLevelType accessLevel) {
+    IdentifiedElementRecord namespaceRecord = NamespaceHandler
+        .getLatestNamespaceRecord(ctx, userId, namespaceIdentifier);
 
-      UserNamespaceAccessRecord userNamespaceAccessRecord =
-          AccessLevelHandler.getUserNamespaceAccessTypeRecordByUserAndNamespaceId(
-          ctx, userId, namespaceRecord.getId());
-      if (userNamespaceAccessRecord == null) {
-        UserNamespaceAccess userNamespaceAccess = new UserNamespaceAccess();
-        userNamespaceAccess.setUserId(userId);
-        userNamespaceAccess.setNamespaceId(namespaceRecord.getId());
-        userNamespaceAccess.setAccessLevel(accessLevel);
-        ctx.newRecord(USER_NAMESPACE_ACCESS, userNamespaceAccess).insert();
-      } else {
-        ctx.update(USER_NAMESPACE_ACCESS).set(USER_NAMESPACE_ACCESS.ACCESS_LEVEL, accessLevel)
-            .where(USER_NAMESPACE_ACCESS.USER_ID.eq(userId))
-            .and(USER_NAMESPACE_ACCESS.NAMESPACE_ID.eq(namespaceRecord.getId()))
-            .execute();
-      }
+    UserNamespaceAccessRecord userNamespaceAccessRecord =
+        AccessLevelHandler.getUserNamespaceAccessTypeRecordByUserAndNamespaceId(
+        ctx, userId, namespaceRecord.getId());
+    if (userNamespaceAccessRecord == null) {
+      UserNamespaceAccess userNamespaceAccess = new UserNamespaceAccess();
+      userNamespaceAccess.setUserId(userId);
+      userNamespaceAccess.setNamespaceId(namespaceRecord.getId());
+      userNamespaceAccess.setAccessLevel(accessLevel);
+      ctx.newRecord(USER_NAMESPACE_ACCESS, userNamespaceAccess).insert();
+    } else {
+      ctx.update(USER_NAMESPACE_ACCESS).set(USER_NAMESPACE_ACCESS.ACCESS_LEVEL, accessLevel)
+          .where(USER_NAMESPACE_ACCESS.USER_ID.eq(userId))
+          .and(USER_NAMESPACE_ACCESS.NAMESPACE_ID.eq(namespaceRecord.getId()))
+          .execute();
     }
   }
 
   /**
    * Revoke user access from a namespace.
    */
-  public static void removeUserAccessFromNamespace(int userId, int namespaceIdentifier) {
-    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      IdentifiedElementRecord namespaceRecord = NamespaceHandler
-          .getLatestNamespaceRecord(ctx, userId, namespaceIdentifier);
+  public static void removeUserAccessFromNamespace(
+      CloseableDSLContext ctx, int userId, int namespaceIdentifier) {
+    IdentifiedElementRecord namespaceRecord = NamespaceHandler
+        .getLatestNamespaceRecord(ctx, userId, namespaceIdentifier);
 
-      ctx.deleteFrom(USER_NAMESPACE_ACCESS)
-          .where(USER_NAMESPACE_ACCESS.USER_ID.eq(userId))
-          .and(USER_NAMESPACE_ACCESS.NAMESPACE_ID.eq(namespaceRecord.getId()))
-          .execute();
-    }
+    ctx.deleteFrom(USER_NAMESPACE_ACCESS)
+        .where(USER_NAMESPACE_ACCESS.USER_ID.eq(userId))
+        .and(USER_NAMESPACE_ACCESS.NAMESPACE_ID.eq(namespaceRecord.getId()))
+        .execute();
   }
+
 }

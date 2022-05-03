@@ -206,7 +206,7 @@ public class ImportHandler {
         .where(SCOPED_IDENTIFIER.ELEMENT_ID.eq(namespaceId))
         .and(SCOPED_IDENTIFIER.ELEMENT_TYPE.eq(ElementType.NAMESPACE))
         .fetchOneInto(ScopedIdentifier.class);
-    String namespaceUrn = IdentificationHandler.toUrn(scopedIdentifier);
+    String namespaceUrn = IdentificationHandler.toUrn(ctx, scopedIdentifier);
     stagedElementsIds.forEach(stagedElementId -> {
       StagedElement stagedElement = null;
       stagedElement = StagedElementHandler.getStagedElement(ctx, importId,
@@ -244,7 +244,7 @@ public class ImportHandler {
     importInfo.setId(importRecord.getId());
     importInfo.setStatus(importRecord.getStatus());
     importInfo.setNamespaceUrn(NamespaceHandler
-        .getNamespaceUrnById(importRecord.getNamespaceId()));
+        .getNamespaceUrnById(ctx, importRecord.getNamespaceId()));
     importInfo.setConverted(conversionProcess);
     importInfo.setStaged(stagingProcess);
     importInfo.setTimestamp(Timestamp.valueOf(importRecord.getCreatedAt()));

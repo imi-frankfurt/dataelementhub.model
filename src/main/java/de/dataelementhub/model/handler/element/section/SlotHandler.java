@@ -44,7 +44,7 @@ public class SlotHandler {
    * Get a Slot.
    */
   public static List<Slot> get(CloseableDSLContext ctx, String urn) {
-    return get(ctx, IdentificationHandler.fromUrn(urn));
+    return get(ctx, IdentificationHandler.fromUrn(ctx, urn));
   }
 
   /**

@@ -7,7 +7,6 @@ import de.dataelementhub.dal.jooq.enums.Status;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
 import de.dataelementhub.dal.jooq.tables.records.IdentifiedElementRecord;
 import de.dataelementhub.model.CtxUtil;
-import de.dataelementhub.model.dto.element.DataElementGroup;
 import de.dataelementhub.model.dto.element.Element;
 import de.dataelementhub.model.dto.element.Record;
 import de.dataelementhub.model.dto.element.section.Identification;
@@ -25,8 +24,7 @@ public class RecordHandler extends ElementHandler {
   /**
    * Get a record by its urn.
    */
-  public static Record get(CloseableDSLContext ctx, int userId, String urn) {
-    Identification identification = IdentificationHandler.fromUrn(urn);
+  public static Record get(CloseableDSLContext ctx, int userId, Identification identification) {
     IdentifiedElementRecord identifiedElementRecord = ElementHandler
         .getIdentifiedElementRecord(ctx, identification);
     Element element = ElementHandler.convertToElement(ctx, identification, identifiedElementRecord);
@@ -82,7 +80,7 @@ public class RecordHandler extends ElementHandler {
    */
   public static Identification update(CloseableDSLContext ctx, int userId, Record record)
       throws IllegalAccessException {
-    Record previousRecord = get(ctx, userId, record.getIdentification().getUrn());
+    Record previousRecord = get(ctx, userId, record.getIdentification());
 
     // If the members changed in any way, an update is not allowed
     if (!record.getMembers().equals(previousRecord.getMembers())) {
@@ -95,7 +93,7 @@ public class RecordHandler extends ElementHandler {
       ScopedIdentifier scopedIdentifier =
           IdentificationHandler.update(ctx, userId, record.getIdentification(),
               ElementHandler.getIdentifiedElementRecord(ctx,record.getIdentification()).getId());
-      record.setIdentification(IdentificationHandler.convert(scopedIdentifier));
+      record.setIdentification(IdentificationHandler.convert(ctx, scopedIdentifier));
       record.getIdentification().setNamespaceId(
           Integer.parseInt(previousRecord.getIdentification().getUrn().split(":")[1]));
     }
@@ -114,15 +112,15 @@ public class RecordHandler extends ElementHandler {
    */
   public static Identification updateMembers(CloseableDSLContext ctx, int userId,
       ScopedIdentifier scopedIdentifier) {
-    Identification identification = IdentificationHandler.convert(scopedIdentifier);
-    Record record = get(ctx, userId, identification.getUrn());
+    Identification identification = IdentificationHandler.convert(ctx, scopedIdentifier);
+    Record record = get(ctx, userId, identification);
     if (MemberHandler.newMemberVersionExists(ctx, scopedIdentifier)) {
       if (record.getIdentification().getStatus() != Status.DRAFT) {
         ScopedIdentifier newsScopedIdentifier =
             IdentificationHandler.update(ctx, userId, identification,
                 scopedIdentifier.getElementId());
         record.setIdentification(IdentificationHandler
-            .convert(newsScopedIdentifier));
+            .convert(ctx, newsScopedIdentifier));
         record.getIdentification()
             .setNamespaceId(scopedIdentifier.getNamespaceId());
       }

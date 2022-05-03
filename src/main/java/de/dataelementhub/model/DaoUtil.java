@@ -5,7 +5,6 @@ import static de.dataelementhub.dal.jooq.Tables.HIERARCHY;
 import static de.dataelementhub.dal.jooq.Tables.SCOPED_IDENTIFIER;
 import static de.dataelementhub.dal.jooq.Tables.USER_NAMESPACE_ACCESS;
 
-import de.dataelementhub.dal.ResourceManager;
 import de.dataelementhub.dal.jooq.enums.AccessLevelType;
 import de.dataelementhub.dal.jooq.enums.ElementType;
 import de.dataelementhub.dal.jooq.tables.Element;
@@ -59,12 +58,10 @@ public class DaoUtil {
   }
 
   /** Refreshes all materialized views. */
-  public static void refreshMaterializedViews() {
-    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      for (String view : materializedViews) {
-        // TODO: Maybe there is a better way to do this with JOOQ?
-        ctx.execute("REFRESH MATERIALIZED VIEW " + view);
-      }
+  public static void refreshMaterializedViews(CloseableDSLContext ctx) {
+    for (String view : materializedViews) {
+      // TODO: Maybe there is a better way to do this with JOOQ?
+      ctx.execute("REFRESH MATERIALIZED VIEW " + view);
     }
   }
 
@@ -72,18 +69,17 @@ public class DaoUtil {
    * Check if an access level is granted.
    * @return true if user has the specified accessLevel otherwise false.
    * */
-  public static Boolean accessLevelGranted(Integer namespaceIdentifier, Integer userId,
-      List<AccessLevelType> accessLevels) {
-    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      return ctx.fetchExists(ctx.select()
-          .from(USER_NAMESPACE_ACCESS)
-          .join(SCOPED_IDENTIFIER)
-          .on(USER_NAMESPACE_ACCESS.NAMESPACE_ID.eq(SCOPED_IDENTIFIER.ELEMENT_ID))
-          .where(SCOPED_IDENTIFIER.ELEMENT_TYPE.eq(ElementType.NAMESPACE))
-          .and(SCOPED_IDENTIFIER.IDENTIFIER.eq(namespaceIdentifier))
-          .and(USER_NAMESPACE_ACCESS.USER_ID.eq(userId))
-          .and(USER_NAMESPACE_ACCESS.ACCESS_LEVEL.in(accessLevels)));
-    }
+  public static Boolean accessLevelGranted(
+      CloseableDSLContext ctx, Integer namespaceIdentifier,
+      Integer userId, List<AccessLevelType> accessLevels) {
+    return ctx.fetchExists(ctx.select()
+        .from(USER_NAMESPACE_ACCESS)
+        .join(SCOPED_IDENTIFIER)
+        .on(USER_NAMESPACE_ACCESS.NAMESPACE_ID.eq(SCOPED_IDENTIFIER.ELEMENT_ID))
+        .where(SCOPED_IDENTIFIER.ELEMENT_TYPE.eq(ElementType.NAMESPACE))
+        .and(SCOPED_IDENTIFIER.IDENTIFIER.eq(namespaceIdentifier))
+        .and(USER_NAMESPACE_ACCESS.USER_ID.eq(userId))
+        .and(USER_NAMESPACE_ACCESS.ACCESS_LEVEL.in(accessLevels)));
   }
 
 }

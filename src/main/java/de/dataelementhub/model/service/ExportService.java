@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import org.jooq.CloseableDSLContext;
 import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -19,9 +20,11 @@ public class ExportService {
 
   /** Generates an Export file for defined elements. */
   @Async
-  public void exportService(ExportRequest exportRequest, int userId, MediaType mediaType,
+  public void exportService(CloseableDSLContext ctx, ExportRequest exportRequest,
+      int userId, MediaType mediaType,
       Boolean fullExport, String timestamp, String exportDirectory) {
-    ExportHandler.export(exportRequest, userId, mediaType, fullExport, timestamp, exportDirectory);
+    ExportHandler.export(
+        ctx, exportRequest, userId, mediaType, fullExport, timestamp, exportDirectory);
   }
 
   /** returns the import/Export status PROCESSING/DONE/INTERRUPTED/NOT DEFINED.

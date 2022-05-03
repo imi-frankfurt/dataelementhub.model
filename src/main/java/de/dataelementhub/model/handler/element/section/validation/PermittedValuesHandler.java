@@ -60,7 +60,8 @@ public class PermittedValuesHandler {
       throws IllegalAccessException {
 
     List<ScopedIdentifier> permittedValueIdentifierList = new ArrayList<>();
-    Identification parentIdentification = IdentificationHandler.convert(parentScopedIdentifier);
+    Identification parentIdentification =
+        IdentificationHandler.convert(ctx, parentScopedIdentifier);
     Identification fallbackIdentification = new Identification();
     fallbackIdentification.setStatus(parentIdentification.getStatus());
     fallbackIdentification.setNamespaceId(parentIdentification.getNamespaceId());
@@ -112,7 +113,7 @@ public class PermittedValuesHandler {
         MemberHandler.getScopedIdentifiers(ctx, permittedValueIds);
 
     scopedIdentifiers.forEach(si -> permittedValues.add(PermittedValueHandler
-        .get(ctx, userId, IdentificationHandler.toUrn(si))));
+        .get(ctx, userId, IdentificationHandler.convert(ctx, si))));
 
     return permittedValues;
   }

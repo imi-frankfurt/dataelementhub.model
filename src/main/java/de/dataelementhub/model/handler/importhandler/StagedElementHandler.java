@@ -104,7 +104,7 @@ public class StagedElementHandler {
         scopedIdentifier = DataElementHandler.create(ctx, userId, dataElement);
         markAsConverted(ctx, userId, importId, stagedElement.getIdentification().getUrn(),
             scopedIdentifier);
-        return IdentificationHandler.toUrn(scopedIdentifier);
+        return IdentificationHandler.toUrn(ctx, scopedIdentifier);
       case DATAELEMENTGROUP:
         DataElementGroup dataElementGroup = new DataElementGroup();
         dataElementGroup.setDefinitions(stagedElement.getDefinitions());
@@ -116,7 +116,7 @@ public class StagedElementHandler {
         scopedIdentifier = DataElementGroupHandler.create(ctx, userId, dataElementGroup);
         markAsConverted(ctx, userId, importId, stagedElement.getIdentification().getUrn(),
             scopedIdentifier);
-        return IdentificationHandler.toUrn(scopedIdentifier);
+        return IdentificationHandler.toUrn(ctx, scopedIdentifier);
       case RECORD:
         Record record = new Record();
         record.setDefinitions(stagedElement.getDefinitions());
@@ -128,7 +128,7 @@ public class StagedElementHandler {
         scopedIdentifier = RecordHandler.create(ctx, userId, record);
         markAsConverted(ctx, userId, importId, stagedElement.getIdentification().getUrn(),
             scopedIdentifier);
-        return IdentificationHandler.toUrn(scopedIdentifier);
+        return IdentificationHandler.toUrn(ctx, scopedIdentifier);
       case ENUMERATED_VALUE_DOMAIN:
       case DESCRIBED_VALUE_DOMAIN:
         ValueDomain valueDomain = new ValueDomain();
@@ -143,7 +143,7 @@ public class StagedElementHandler {
         scopedIdentifier = ValueDomainHandler.create(ctx, userId, valueDomain);
         markAsConverted(ctx, userId, importId, stagedElement.getIdentification().getUrn(),
             scopedIdentifier);
-        return IdentificationHandler.toUrn(scopedIdentifier);
+        return IdentificationHandler.toUrn(ctx, scopedIdentifier);
       case PERMISSIBLE_VALUE:
         PermittedValue permittedValue = new PermittedValue();
         permittedValue.setIdentification(identification);
@@ -154,7 +154,7 @@ public class StagedElementHandler {
         scopedIdentifier = PermittedValueHandler.create(ctx, userId, permittedValue);
         markAsConverted(ctx, userId, importId, stagedElement.getIdentification().getUrn(),
             scopedIdentifier);
-        return IdentificationHandler.toUrn(scopedIdentifier);
+        return IdentificationHandler.toUrn(ctx, scopedIdentifier);
       default:
         throw new IllegalArgumentException("Element Type is not supported");
     }
@@ -197,7 +197,7 @@ public class StagedElementHandler {
             .where(SCOPED_IDENTIFIER.ID.eq(scopedIdentifierId))
             .fetchOne().into(ScopedIdentifier.class);
         if (scopedIdentifier != null) {
-          return IdentificationHandler.toUrn(scopedIdentifier);
+          return IdentificationHandler.toUrn(ctx, scopedIdentifier);
         }
       }
     } catch (NullPointerException e) {

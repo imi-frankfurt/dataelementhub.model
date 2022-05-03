@@ -8,7 +8,6 @@ import static de.dataelementhub.dal.jooq.Tables.SCOPED_IDENTIFIER;
 import static de.dataelementhub.dal.jooq.Tables.SCOPED_IDENTIFIER_HIERARCHY;
 import static de.dataelementhub.dal.jooq.Tables.SLOT;
 
-import de.dataelementhub.dal.ResourceManager;
 import de.dataelementhub.dal.jooq.enums.AccessLevelType;
 import de.dataelementhub.dal.jooq.enums.ElementType;
 import de.dataelementhub.dal.jooq.enums.Status;
@@ -82,7 +81,8 @@ public class NamespaceHandler extends ElementHandler {
 
     // Creator of the namespace gets admin rights by default
     UserHandler
-        .setUserAccessToNamespace(userId, scopedIdentifier.getIdentifier(), AccessLevelType.ADMIN);
+        .setUserAccessToNamespace(
+            ctx, userId, scopedIdentifier.getIdentifier(), AccessLevelType.ADMIN);
 
     return scopedIdentifier;
   }
@@ -90,34 +90,14 @@ public class NamespaceHandler extends ElementHandler {
   /**
    * Get the namespace id (database id) for a given urn.
    */
-  public static Integer getNamespaceIdByUrn(String urn) {
+  public static Integer getNamespaceIdByUrn(CloseableDSLContext ctx, String urn) {
     Integer identifier = IdentificationHandler.getIdentifierFromUrn(urn);
     Integer revision = IdentificationHandler.getRevisionFromUrn(urn);
-    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      return ctx.select(SCOPED_IDENTIFIER.NAMESPACE_ID).from(SCOPED_IDENTIFIER)
-          .where(SCOPED_IDENTIFIER.ELEMENT_TYPE.equal(ElementType.NAMESPACE))
-          .and(SCOPED_IDENTIFIER.IDENTIFIER.equal(identifier))
-          .and(SCOPED_IDENTIFIER.VERSION.equal(revision))
-          .fetchOneInto(Integer.class);
-    }
-  }
-
-  /**
-   * Get the namespace urn for a given namespace id (database id).
-   */
-  public static String getNamespaceUrnById(int namespaceId) {
-    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      ScopedIdentifier scopedIdentifier = ctx.select(SCOPED_IDENTIFIER.fields())
-          .from(SCOPED_IDENTIFIER)
-          .where(SCOPED_IDENTIFIER.NAMESPACE_ID.eq(namespaceId))
-          .and(SCOPED_IDENTIFIER.ELEMENT_TYPE.eq(ElementType.NAMESPACE))
-          .and(SCOPED_IDENTIFIER.VERSION.equal(
-              ctx.select(DSL.max(SCOPED_IDENTIFIER.VERSION)).from(SCOPED_IDENTIFIER)
-                  .where(SCOPED_IDENTIFIER.NAMESPACE_ID.equal(namespaceId))
-                  .and(SCOPED_IDENTIFIER.ELEMENT_TYPE.eq(ElementType.NAMESPACE))))
-          .fetchOneInto(ScopedIdentifier.class);
-      return IdentificationHandler.toUrn(scopedIdentifier);
-    }
+    return ctx.select(SCOPED_IDENTIFIER.NAMESPACE_ID).from(SCOPED_IDENTIFIER)
+        .where(SCOPED_IDENTIFIER.ELEMENT_TYPE.equal(ElementType.NAMESPACE))
+        .and(SCOPED_IDENTIFIER.IDENTIFIER.equal(identifier))
+        .and(SCOPED_IDENTIFIER.VERSION.equal(revision))
+        .fetchOneInto(Integer.class);
   }
 
   /**
@@ -163,7 +143,7 @@ public class NamespaceHandler extends ElementHandler {
    */
   public static Namespace getByUrn(CloseableDSLContext ctx, int userId, String urn) {
     try {
-      Namespace namespace = getByDatabaseId(ctx, userId, getNamespaceIdByUrn(urn));
+      Namespace namespace = getByDatabaseId(ctx, userId, getNamespaceIdByUrn(ctx, urn));
       namespace.setSlots(SlotHandler.get(ctx, namespace.getIdentification()));
       return namespace;
     } catch (NullPointerException e) {
@@ -217,7 +197,7 @@ public class NamespaceHandler extends ElementHandler {
       scopedIdentifiers.forEach(
           (scopedIdentifier) -> {
             Member member = new Member();
-            member.setElementUrn(IdentificationHandler.toUrn(scopedIdentifier));
+            member.setElementUrn(IdentificationHandler.toUrn(ctx, scopedIdentifier));
             member.setStatus(scopedIdentifier.getStatus());
             namespaceMembers.add(member);
           });
@@ -265,7 +245,7 @@ public class NamespaceHandler extends ElementHandler {
     SelectConditionStep<Record> query = getNamespacesQuery(ctx);
     query.and(DaoUtil.accessibleByUserId(ctx, userId))
         .and(ELEMENT.ID.eq(namespaceId));
-    return fetchNamespaceQuery(query).stream().findFirst().orElse(null);
+    return fetchNamespaceQuery(ctx, query).stream().findFirst().orElse(null);
   }
 
   private static SelectConditionStep<Record> getNamespacesQuery(CloseableDSLContext ctx) {
@@ -286,7 +266,8 @@ public class NamespaceHandler extends ElementHandler {
   /**
    * Fetch and convert DescribedElements from a given query.
    */
-  private static List<Namespace> fetchNamespaceQuery(SelectConditionStep<Record> query) {
+  private static List<Namespace> fetchNamespaceQuery(
+      CloseableDSLContext ctx, SelectConditionStep<Record> query) {
     Result<?> result = query.fetch();
     Map<Integer, Namespace> namespaces = new HashMap<>();
     List<Integer> processedDefinitions = new ArrayList<>();
@@ -320,7 +301,7 @@ public class NamespaceHandler extends ElementHandler {
         namespace.setSlots(new ArrayList<>());
         namespace.getDefinitions().add(DefinitionHandler.convert(definition));
         processedDefinitions.add(definition.getId());
-        namespace.setIdentification(IdentificationHandler.convert(scopedIdentifier));
+        namespace.setIdentification(IdentificationHandler.convert(ctx, scopedIdentifier));
         if (slot != null && slot.getId() != null) {
           namespace.getSlots().add(SlotHandler.convert(slot));
           processedSlots.add(slot.getId());
@@ -344,7 +325,7 @@ public class NamespaceHandler extends ElementHandler {
   public static List<Namespace> getPublicNamespaces(CloseableDSLContext ctx) {
     SelectConditionStep<Record> query = getNamespacesQuery(ctx);
     query.and(ELEMENT.HIDDEN.isNull().or(ELEMENT.HIDDEN.eq(false)));
-    return fetchNamespaceQuery(query);
+    return fetchNamespaceQuery(ctx, query);
   }
 
   /**
@@ -353,7 +334,7 @@ public class NamespaceHandler extends ElementHandler {
   public static List<Namespace> getReadableNamespaces(CloseableDSLContext ctx, int userId) {
     SelectConditionStep<Record> query = getNamespacesQuery(ctx);
     query.and(DaoUtil.accessibleByUserId(ctx, userId));
-    return fetchNamespaceQuery(query);
+    return fetchNamespaceQuery(ctx, query);
   }
 
   /**
@@ -391,7 +372,7 @@ public class NamespaceHandler extends ElementHandler {
     SelectConditionStep<Record> query = getNamespacesQuery(ctx);
     query.and(ELEMENT.ID.in(DaoUtil
         .getUserNamespaceAccessQuery(ctx, userId, Collections.singletonList(accessLevel))));
-    return fetchNamespaceQuery(query);
+    return fetchNamespaceQuery(ctx, query);
   }
 
   /**
@@ -406,9 +387,9 @@ public class NamespaceHandler extends ElementHandler {
 
       ScopedIdentifier scopedIdentifier = IdentificationHandler.updateNamespaceIdentifier(ctx,
           namespace.getIdentification());
-      Identification newIdentification = IdentificationHandler.convert(scopedIdentifier);
+      Identification newIdentification = IdentificationHandler.convert(ctx, scopedIdentifier);
       newIdentification.setNamespaceId(NamespaceHandler.getNamespaceIdByUrn(
-          previousNamespace.getIdentification().getNamespaceUrn()));
+          ctx, previousNamespace.getIdentification().getNamespaceUrn()));
       Boolean newHideNamespace = namespace.getIdentification().getHideNamespace();
       newIdentification.setHideNamespace(newHideNamespace != null ? newHideNamespace :
           previousNamespace.getIdentification().getHideNamespace());
@@ -416,7 +397,7 @@ public class NamespaceHandler extends ElementHandler {
       delete(ctx, userId, previousNamespace.getIdentification().getUrn());
       namespace.setIdentification(newIdentification);
       ScopedIdentifier newScopedIdentifier = create(ctx, userId, namespace);
-      IdentificationHandler.convert(newScopedIdentifier);
+      IdentificationHandler.convert(ctx, newScopedIdentifier);
       List<UserNamespaceAccess> namespaceAccess = AccessLevelHandler
           .getAccessForNamespaceById(ctx, previousNamespace.getIdentification().getNamespaceId());
 
@@ -427,7 +408,7 @@ public class NamespaceHandler extends ElementHandler {
           newScopedIdentifier.getNamespaceId());
 
       CtxUtil.commitAndSetAutoCommit(ctx, autoCommit);
-      return IdentificationHandler.convert(newScopedIdentifier);
+      return IdentificationHandler.convert(ctx, newScopedIdentifier);
     } else {
       DefinitionHandler.updateDefinitions(ctx, userId,
           previousNamespace.getIdentification().getUrn(), namespace.getDefinitions());

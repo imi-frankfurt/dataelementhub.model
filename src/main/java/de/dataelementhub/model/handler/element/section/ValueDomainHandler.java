@@ -20,7 +20,6 @@ import de.dataelementhub.model.handler.element.section.validation.DatetimeHandle
 import de.dataelementhub.model.handler.element.section.validation.NumericHandler;
 import de.dataelementhub.model.handler.element.section.validation.PermittedValuesHandler;
 import de.dataelementhub.model.handler.element.section.validation.TextHandler;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 import org.jooq.CloseableDSLContext;
 
@@ -30,11 +29,8 @@ public class ValueDomainHandler extends ElementHandler {
   /**
    * Get the Value Domain for an identified element record.
    */
-  public static ValueDomain get(CloseableDSLContext ctx, int userId, String urn) {
-    Identification identification = IdentificationHandler.fromUrn(urn);
-    if (identification == null) {
-      throw new NoSuchElementException(urn);
-    }
+  public static ValueDomain get(
+      CloseableDSLContext ctx, int userId, Identification identification) {
     IdentifiedElementRecord identifiedElementRecord = ElementHandler
         .getIdentifiedElementRecord(ctx, identification);
 
@@ -69,7 +65,7 @@ public class ValueDomainHandler extends ElementHandler {
       default:
         break;
     }
-    Integer namespaceIdentifier = NamespaceHandler.getNamespaceIdByUrn(
+    Integer namespaceIdentifier = NamespaceHandler.getNamespaceIdByUrn(ctx,
         identification.getNamespaceUrn());
     valueDomain.getIdentification().setNamespaceUrn(identification.getNamespaceUrn());
     valueDomain.getIdentification().setNamespaceId(namespaceIdentifier);
@@ -182,7 +178,7 @@ public class ValueDomainHandler extends ElementHandler {
    */
   public static Identification update(CloseableDSLContext ctx, int userId, ValueDomain valueDomain)
       throws NoSuchMethodException, IllegalAccessException {
-    ValueDomain oldValueDomain = get(ctx, userId, valueDomain.getIdentification().getUrn());
+    ValueDomain oldValueDomain = get(ctx, userId, valueDomain.getIdentification());
     if (oldValueDomain.getIdentification().getStatus() == Status.DRAFT
         || oldValueDomain.getIdentification().getStatus() == Status.STAGED) {
       delete(ctx, userId, valueDomain.getIdentification().getUrn());

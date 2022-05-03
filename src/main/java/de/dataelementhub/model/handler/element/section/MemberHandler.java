@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import org.jooq.CloseableDSLContext;
-import org.springframework.context.annotation.ScannedGenericBeanDefinition;
 
 public class MemberHandler {
 
@@ -43,7 +42,7 @@ public class MemberHandler {
     scopedIdentifiers.forEach(
         (scopedIdentifier) -> {
           Member member = new Member();
-          member.setElementUrn(IdentificationHandler.toUrn(scopedIdentifier));
+          member.setElementUrn(IdentificationHandler.toUrn(ctx, scopedIdentifier));
           member.setStatus(scopedIdentifier.getStatus());
           members.add(member);
         });
