@@ -21,6 +21,7 @@ import de.dataelementhub.model.handler.element.section.IdentificationHandler;
 import de.dataelementhub.model.handler.element.section.SlotHandler;
 import de.dataelementhub.model.handler.element.section.ValueDomainHandler;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.UUID;
 import org.jooq.CloseableDSLContext;
 
@@ -88,12 +89,18 @@ public class DataElementHandler extends ElementHandler {
       Integer vdNsIdentifier = IdentificationHandler.getNamespaceIdentifierFromUrn(
           dataElement.getValueDomainUrn());
 
-      if (!deNsIdentifier.equals(vdNsIdentifier)) {
-        Namespace targetNamespace = NamespaceHandler
-            .getByIdentifier(ctx, userId, deNsIdentifier);
-        valueDomainIdentifier = ElementHandler
-            .importIntoParentNamespace(ctx, userId, targetNamespace.getIdentification()
-                .getNamespaceId(), dataElement.getValueDomainUrn());
+      if (!Objects.equals(deNsIdentifier, vdNsIdentifier)) {
+        Namespace targetNamespace = NamespaceHandler.getByIdentifier(ctx, userId, deNsIdentifier);
+        // If value domain was previously imported into target namespace, use this scoped identifier
+        valueDomainIdentifier = IdentificationHandler.getScopedIdentifierFromAnotherNamespace(
+            ctx, userId, targetNamespace.getIdentification().getNamespaceId(),
+            valueDomainIdentifier
+        );
+        if (valueDomainIdentifier == null) {
+          valueDomainIdentifier = ElementHandler
+              .importIntoParentNamespace(ctx, userId, targetNamespace.getIdentification()
+                  .getNamespaceId(), dataElement.getValueDomainUrn());
+        }
       }
     }
 

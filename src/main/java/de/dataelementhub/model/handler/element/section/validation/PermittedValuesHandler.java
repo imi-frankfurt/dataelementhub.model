@@ -74,9 +74,13 @@ public class PermittedValuesHandler {
         // If the scoped identifier is in another namespace than the value domain, import the
         // permitted value to this namespace
         if (!scopedIdentifier.getNamespaceId().equals(parentIdentification.getNamespaceId())) {
-          scopedIdentifier = ElementHandler
-              .importIntoParentNamespace(ctx, userId, parentScopedIdentifier.getNamespaceId(),
-              permittedValue.getUrn());
+          scopedIdentifier = IdentificationHandler.getScopedIdentifierFromAnotherNamespace(ctx,
+              userId, parentScopedIdentifier.getNamespaceId(), scopedIdentifier);
+          if (scopedIdentifier == null) {
+            scopedIdentifier = ElementHandler
+                .importIntoParentNamespace(ctx, userId, parentScopedIdentifier.getNamespaceId(),
+                    permittedValue.getUrn());
+          }
         }
       } else {
         // If the permitted value itself has no identification supplied, use the one from its parent
