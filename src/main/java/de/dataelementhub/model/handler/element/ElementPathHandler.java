@@ -15,6 +15,7 @@ import de.dataelementhub.model.handler.element.section.IdentificationHandler;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 import org.jooq.CloseableDSLContext;
 
@@ -70,8 +71,10 @@ public class ElementPathHandler {
       } else {
         Identification namespaceIdentification = IdentificationHandler
             .getNamespaceIdentification(ctx, partialPath.get(0));
-        if (!DaoUtil.accessLevelGranted(ctx, namespaceIdentification.getIdentifier(),
-            userId, DaoUtil.READ_ACCESS_TYPES)) {
+        int namespaceIdentifier = namespaceIdentification.getIdentifier();
+        if (!DaoUtil.accessLevelGranted(ctx, namespaceIdentifier,
+            userId, DaoUtil.READ_ACCESS_TYPES) && !NamespaceHandler
+            .checkNamespaceIsPublic(ctx, namespaceIdentifier)) {
           partialPaths.remove(partialPath);
         } else {
           List<String> newPartialPath = new ArrayList<>();
@@ -80,6 +83,9 @@ public class ElementPathHandler {
           partialPaths.add(newPartialPath);
         }
       }
+    }
+    if (partialPaths.size() == 0) {
+      throw new NoSuchElementException();
     }
     if (!pathsCompleted(partialPaths)) {
       partialPaths = completePaths(ctx, userId, partialPaths);
