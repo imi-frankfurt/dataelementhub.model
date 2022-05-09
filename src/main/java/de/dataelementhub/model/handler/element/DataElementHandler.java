@@ -25,6 +25,9 @@ import java.util.Objects;
 import java.util.UUID;
 import org.jooq.CloseableDSLContext;
 
+/**
+ * Dataelement Handler.
+ */
 public class DataElementHandler extends ElementHandler {
 
   /**

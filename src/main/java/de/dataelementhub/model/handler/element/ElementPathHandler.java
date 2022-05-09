@@ -18,6 +18,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.jooq.CloseableDSLContext;
 
+/**
+ * Element Path Handler.
+ */
 public class ElementPathHandler {
 
   /**

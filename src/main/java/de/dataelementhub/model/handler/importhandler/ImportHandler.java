@@ -46,6 +46,9 @@ import org.json.JSONObject;
 import org.json.JSONTokener;
 import org.springframework.http.MediaType;
 
+/**
+ * Import Handler.
+ */
 public class ImportHandler {
 
   /** Create import directory and return it. */

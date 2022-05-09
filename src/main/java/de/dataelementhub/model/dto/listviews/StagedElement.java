@@ -8,6 +8,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+/**
+ * Staged Element Listview DTO.
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
