@@ -11,8 +11,8 @@ import de.dataelementhub.dal.jooq.enums.ElementType;
 import de.dataelementhub.dal.jooq.enums.ProcessStatus;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
 import de.dataelementhub.dal.jooq.tables.records.ImportRecord;
-import de.dataelementhub.model.dto.datatransfer.DataTransfer;
-import de.dataelementhub.model.dto.datatransfer.ImportInfo;
+import de.dataelementhub.model.dto.importexport.ImportExport;
+import de.dataelementhub.model.dto.importexport.ImportInfo;
 import de.dataelementhub.model.dto.element.StagedElement;
 import de.dataelementhub.model.dto.element.section.Member;
 import de.dataelementhub.model.handler.element.NamespaceHandler;
@@ -99,10 +99,10 @@ public class ImportHandler {
       CloseableDSLContext ctx, String fileToImport, int importId)
       throws Exception {
     File file = new File(fileToImport);
-    JAXBContext jaxbContext = JAXBContext.newInstance(DataTransfer.class);
+    JAXBContext jaxbContext = JAXBContext.newInstance(ImportExport.class);
     Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
-    DataTransfer dataTransfer = (DataTransfer) jaxbUnmarshaller.unmarshal(file);
-    saveElements(ctx, dataTransfer.getStagedElements(), importId);
+    ImportExport importExport = (ImportExport) jaxbUnmarshaller.unmarshal(file);
+    saveElements(ctx, importExport.getStagedElements(), importId);
   }
 
   /** handles importing json file. */
@@ -111,14 +111,14 @@ public class ImportHandler {
       throws Exception {
     System.setProperty(
         "javax.xml.bind.context.factory", "org.eclipse.persistence.jaxb.JAXBContextFactory");
-    JAXBContext jaxbContext = JAXBContext.newInstance(DataTransfer.class);
+    JAXBContext jaxbContext = JAXBContext.newInstance(ImportExport.class);
     Unmarshaller jaxbUnmarshaller = jaxbContext.createUnmarshaller();
     jaxbUnmarshaller.setProperty(JAXBContextProperties.MEDIA_TYPE,
         MediaType.APPLICATION_JSON_VALUE);
     jaxbUnmarshaller.setProperty(JAXBContextProperties.JSON_INCLUDE_ROOT, true);
     StreamSource json = new StreamSource(new StringReader(readFileAsString(fileToImport)));
-    DataTransfer dataTransfer = jaxbUnmarshaller.unmarshal(json, DataTransfer.class).getValue();
-    saveElements(ctx, dataTransfer.getStagedElements(), importId);
+    ImportExport importExport = jaxbUnmarshaller.unmarshal(json, ImportExport.class).getValue();
+    saveElements(ctx, importExport.getStagedElements(), importId);
   }
 
   /** Convert stagedElements to elements and save them. */

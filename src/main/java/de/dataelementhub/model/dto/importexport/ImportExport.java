@@ -1,4 +1,4 @@
-package de.dataelementhub.model.dto.datatransfer;
+package de.dataelementhub.model.dto.importexport;
 
 import de.dataelementhub.model.dto.element.StagedElement;
 import java.util.List;
@@ -10,7 +10,7 @@ import lombok.Data;
 @Data
 @XmlRootElement(name = "dehub_data_transfer", namespace = "http://dehub.de/StagedElement")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class DataTransfer {
+public class ImportExport {
   private String label;
   private List<StagedElement> stagedElements;
 }

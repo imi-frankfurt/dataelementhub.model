@@ -2,8 +2,8 @@ package de.dataelementhub.model.handler.export;
 
 import static de.dataelementhub.model.handler.export.StagedElementHandler.elementsToStagedElements;
 
-import de.dataelementhub.model.dto.datatransfer.DataTransfer;
-import de.dataelementhub.model.dto.datatransfer.ExportRequest;
+import de.dataelementhub.model.dto.importexport.ImportExport;
+import de.dataelementhub.model.dto.importexport.ExportRequest;
 import de.dataelementhub.model.dto.element.StagedElement;
 import java.io.File;
 import java.nio.charset.Charset;
@@ -43,7 +43,7 @@ public class ExportHandler {
     new File(destination).mkdir();
     nonExportable.clear();
     try {
-      DataTransfer export = new DataTransfer();
+      ImportExport export = new ImportExport();
       export.setLabel(exportRequest.getLabel());
       List<StagedElement> stagedElements = elementsToStagedElements(exportRequest.getElementUrns(),
           userId, fullExport);
@@ -69,7 +69,7 @@ public class ExportHandler {
   /**
    * Process Exports.
    */
-  public static Future<String> export(DataTransfer export, String timestamp, String destination,
+  public static Future<String> export(ImportExport export, String timestamp, String destination,
       MediaType mediaType)
       throws Exception {
     // Only support xml and json at the moment
@@ -78,7 +78,7 @@ public class ExportHandler {
       throw new IllegalArgumentException("Unsupported media type: " + mediaType);
     }
     File file = new File(destination + File.separator + "file." + mediaType.getSubtype());
-    JAXBContext jaxbContext = JAXBContext.newInstance(DataTransfer.class);
+    JAXBContext jaxbContext = JAXBContext.newInstance(ImportExport.class);
     Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
     NamespacePrefixMapper mapper =
         new NamespacePrefixMapper() {

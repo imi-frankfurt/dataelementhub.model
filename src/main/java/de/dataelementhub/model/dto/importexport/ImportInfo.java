@@ -1,4 +1,4 @@
-package de.dataelementhub.model.dto.datatransfer;
+package de.dataelementhub.model.dto.importexport;
 
 import de.dataelementhub.dal.jooq.enums.ProcessStatus;
 import java.sql.Timestamp;
