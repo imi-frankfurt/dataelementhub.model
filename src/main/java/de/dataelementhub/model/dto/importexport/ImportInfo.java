@@ -4,6 +4,9 @@ import de.dataelementhub.dal.jooq.enums.ProcessStatus;
 import java.sql.Timestamp;
 import lombok.Data;
 
+/**
+ * ImportInfo DTO.
+ */
 @Data
 public class ImportInfo {
   private Integer id;

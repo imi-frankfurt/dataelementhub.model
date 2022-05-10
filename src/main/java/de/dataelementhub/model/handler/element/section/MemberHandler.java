@@ -15,6 +15,9 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import org.jooq.CloseableDSLContext;
 
+/**
+ * Member Handler.
+ */
 public class MemberHandler {
 
   /**

@@ -21,6 +21,9 @@ import java.util.NoSuchElementException;
 import java.util.UUID;
 import org.jooq.CloseableDSLContext;
 
+/**
+ * Permitted Value Handler.
+ */
 public class PermittedValueHandler {
 
   /**

@@ -17,6 +17,9 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import lombok.Data;
 
+/**
+ * StagedElement DTO.
+ */
 @Data
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)

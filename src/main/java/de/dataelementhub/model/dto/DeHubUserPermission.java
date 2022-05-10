@@ -4,6 +4,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+/**
+ * Dehub User Permission DTO.
+ */
 @Data
 @EqualsAndHashCode
 @AllArgsConstructor

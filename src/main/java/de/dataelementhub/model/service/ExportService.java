@@ -14,6 +14,9 @@ import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+/**
+ * Export Service.
+ */
 @Service
 public class ExportService {
 
@@ -56,7 +59,7 @@ public class ExportService {
     List<ExportInfo> exportDescriptions = new ArrayList<>();
     List<String> listOfFiles = Arrays.stream(inputFolder.listFiles()).map(File::getName).collect(
         Collectors.toList());
-    for (String item: listOfFiles) {
+    for (String item : listOfFiles) {
       String[] itemParts = item.split("-");
       String[] tsp = itemParts[0].split("_");
       Timestamp timestamp = Timestamp.valueOf(tsp[0] + "-" + tsp[1] + "-" + tsp[2]
