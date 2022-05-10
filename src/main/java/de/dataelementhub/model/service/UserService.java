@@ -11,6 +11,9 @@ import java.util.List;
 import org.jooq.CloseableDSLContext;
 import org.springframework.stereotype.Service;
 
+/**
+ * User Service.
+ */
 @Service
 public class UserService {
 

@@ -20,6 +20,9 @@ import java.util.List;
 import java.util.UUID;
 import org.jooq.CloseableDSLContext;
 
+/**
+ * Record Handler.
+ */
 public class RecordHandler extends ElementHandler {
 
   /**
@@ -94,7 +97,7 @@ public class RecordHandler extends ElementHandler {
 
       ScopedIdentifier scopedIdentifier =
           IdentificationHandler.update(ctx, userId, record.getIdentification(),
-              ElementHandler.getIdentifiedElementRecord(ctx,record.getIdentification()).getId());
+              ElementHandler.getIdentifiedElementRecord(ctx, record.getIdentification()).getId());
       record.setIdentification(IdentificationHandler.convert(scopedIdentifier));
       record.getIdentification().setNamespaceId(
           Integer.parseInt(previousRecord.getIdentification().getUrn().split(":")[1]));

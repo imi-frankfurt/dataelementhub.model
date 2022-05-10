@@ -16,6 +16,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.jooq.CloseableDSLContext;
 import org.springframework.context.annotation.ScannedGenericBeanDefinition;
 
+/**
+ * Member Handler.
+ */
 public class MemberHandler {
 
   /**

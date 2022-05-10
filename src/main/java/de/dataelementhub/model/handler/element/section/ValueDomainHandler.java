@@ -24,6 +24,9 @@ import java.util.NoSuchElementException;
 import java.util.UUID;
 import org.jooq.CloseableDSLContext;
 
+/**
+ * ValueDomain Handler.
+ */
 public class ValueDomainHandler extends ElementHandler {
 
 

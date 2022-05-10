@@ -17,6 +17,9 @@ import org.jooq.Condition;
 import org.jooq.Record1;
 import org.jooq.SelectConditionStep;
 
+/**
+ * DaoUtil.
+ */
 public class DaoUtil {
 
   private static final String[] materializedViews = new String[] {HIERARCHY.getName()};
@@ -70,6 +73,7 @@ public class DaoUtil {
 
   /**
    * Check if an access level is granted.
+   *
    * @return true if user has the specified accessLevel otherwise false.
    * */
   public static Boolean accessLevelGranted(Integer namespaceIdentifier, Integer userId,

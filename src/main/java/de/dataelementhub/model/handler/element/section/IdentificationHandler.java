@@ -23,6 +23,9 @@ import java.util.UUID;
 import org.jooq.CloseableDSLContext;
 import org.jooq.impl.DSL;
 
+/**
+ * Identification Handler.
+ */
 public class IdentificationHandler {
 
   /**
@@ -456,6 +459,7 @@ public class IdentificationHandler {
 
   /**
    * Get the scoped identifier for an element from another namespace.
+   *
    * @param ctx jooq db context
    * @param userId user id (currently unused)
    * @param namespaceId id of the target namespace

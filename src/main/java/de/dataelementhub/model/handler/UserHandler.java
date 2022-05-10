@@ -15,6 +15,9 @@ import de.dataelementhub.model.handler.element.NamespaceHandler;
 import java.util.List;
 import org.jooq.CloseableDSLContext;
 
+/**
+ * User Handler.
+ */
 public class UserHandler {
 
   /**

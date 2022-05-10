@@ -19,6 +19,9 @@ import org.eclipse.persistence.jaxb.JAXBContextProperties;
 import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.AsyncResult;
 
+/**
+ * Export Handler.
+ */
 public class ExportHandler {
 
   public static final String JAVAX_XML_BIND_CONTEXT_FACTORY = "javax.xml.bind.context.factory";
