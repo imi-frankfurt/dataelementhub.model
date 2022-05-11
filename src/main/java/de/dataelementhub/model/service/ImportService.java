@@ -10,7 +10,7 @@ import de.dataelementhub.dal.jooq.enums.AccessLevelType;
 import de.dataelementhub.dal.jooq.enums.ProcessStatus;
 import de.dataelementhub.dal.jooq.tables.records.ImportRecord;
 import de.dataelementhub.model.DaoUtil;
-import de.dataelementhub.model.dto.importdto.ImportInfo;
+import de.dataelementhub.model.dto.importexport.ImportInfo;
 import de.dataelementhub.model.dto.listviews.StagedElement;
 import de.dataelementhub.model.handler.element.section.IdentificationHandler;
 import de.dataelementhub.model.handler.importhandler.ImportHandler;

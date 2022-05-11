@@ -9,7 +9,6 @@ import de.dataelementhub.model.dto.element.section.validation.Datetime;
 import de.dataelementhub.model.dto.element.section.validation.Numeric;
 import de.dataelementhub.model.dto.element.section.validation.PermittedValue;
 import de.dataelementhub.model.dto.element.section.validation.Text;
-import java.io.Serializable;
 import java.util.List;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
