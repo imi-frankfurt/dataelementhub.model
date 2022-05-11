@@ -334,14 +334,10 @@ public class NamespaceHandler extends ElementHandler {
   /**
    * Return true if the specified namespace is public otherwise return false.
    */
-  public static boolean checkNamespaceIsPublic(CloseableDSLContext ctx, int namespaceIdentifier) {
+  public static boolean isNamespacePublic(CloseableDSLContext ctx, int namespaceIdentifier) {
     List<Namespace> publicNamespaces = getPublicNamespaces(ctx);
-    for (int i = 0; i < publicNamespaces.size(); i++) {
-      if (publicNamespaces.get(i).getIdentification().getIdentifier() == namespaceIdentifier) {
-        return true;
-      }
-    }
-    return false;
+    return publicNamespaces.stream()
+        .anyMatch(ns -> ns.getIdentification().getIdentifier() == namespaceIdentifier);
   }
 
   /**

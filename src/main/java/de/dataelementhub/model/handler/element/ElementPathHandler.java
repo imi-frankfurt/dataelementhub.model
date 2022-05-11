@@ -77,7 +77,7 @@ public class ElementPathHandler {
         int namespaceIdentifier = namespaceIdentification.getIdentifier();
         if (!DaoUtil.accessLevelGranted(ctx, namespaceIdentifier,
             userId, DaoUtil.READ_ACCESS_TYPES) && !NamespaceHandler
-            .checkNamespaceIsPublic(ctx, namespaceIdentifier)) {
+            .isNamespacePublic(ctx, namespaceIdentifier)) {
           partialPaths.remove(partialPath);
         } else {
           List<String> newPartialPath = new ArrayList<>();
