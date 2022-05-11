@@ -23,6 +23,9 @@ import de.dataelementhub.model.handler.element.section.validation.TextHandler;
 import java.util.UUID;
 import org.jooq.CloseableDSLContext;
 
+/**
+ * ValueDomain Handler.
+ */
 public class ValueDomainHandler extends ElementHandler {
 
 

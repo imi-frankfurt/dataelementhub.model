@@ -20,6 +20,9 @@ import org.simpleflatmapper.jdbc.JdbcMapper;
 import org.simpleflatmapper.jdbc.JdbcMapperFactory;
 import org.simpleflatmapper.util.TypeReference;
 
+/**
+ * Element Relation Handler.
+ */
 public class ElementRelationHandler {
 
   /**

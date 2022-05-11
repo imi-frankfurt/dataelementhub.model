@@ -3,8 +3,8 @@ package de.dataelementhub.model.handler.export;
 import static de.dataelementhub.model.handler.export.StagedElementHandler.elementsToStagedElements;
 
 import de.dataelementhub.model.dto.element.StagedElement;
-import de.dataelementhub.model.dto.export.Export;
-import de.dataelementhub.model.dto.export.ExportRequest;
+import de.dataelementhub.model.dto.importexport.ExportRequest;
+import de.dataelementhub.model.dto.importexport.ImportExport;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -20,6 +20,9 @@ import org.jooq.CloseableDSLContext;
 import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.AsyncResult;
 
+/**
+ * Export Handler.
+ */
 public class ExportHandler {
 
   public static final String JAVAX_XML_BIND_CONTEXT_FACTORY = "javax.xml.bind.context.factory";
@@ -45,7 +48,7 @@ public class ExportHandler {
     new File(destination).mkdir();
     nonExportable.clear();
     try {
-      Export export = new Export();
+      ImportExport export = new ImportExport();
       export.setLabel(exportRequest.getLabel());
       List<StagedElement> stagedElements = elementsToStagedElements(ctx,
           exportRequest.getElementUrns(), userId, fullExport);
@@ -71,7 +74,7 @@ public class ExportHandler {
   /**
    * Process Exports.
    */
-  public static Future<String> export(Export export, String timestamp, String destination,
+  public static Future<String> export(ImportExport export, String timestamp, String destination,
       MediaType mediaType)
       throws Exception {
     // Only support xml and json at the moment
@@ -80,7 +83,7 @@ public class ExportHandler {
       throw new IllegalArgumentException("Unsupported media type: " + mediaType);
     }
     File file = new File(destination + File.separator + "file." + mediaType.getSubtype());
-    JAXBContext jaxbContext = JAXBContext.newInstance(Export.class);
+    JAXBContext jaxbContext = JAXBContext.newInstance(ImportExport.class);
     Marshaller jaxbMarshaller = jaxbContext.createMarshaller();
     NamespacePrefixMapper mapper =
         new NamespacePrefixMapper() {

@@ -9,6 +9,9 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import lombok.Data;
 
+/**
+ * Import DTO.
+ */
 @Data
 @XmlRootElement(name = "dehub_data_transfer", namespace = "http://dehub.de/StagedElement")
 @XmlAccessorType(XmlAccessType.FIELD)

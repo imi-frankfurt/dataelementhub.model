@@ -9,6 +9,9 @@ import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+/**
+ * Dataelement DTO.
+ */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @JsonInclude(Include.NON_NULL)

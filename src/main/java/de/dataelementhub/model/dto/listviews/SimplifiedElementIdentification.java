@@ -5,6 +5,9 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+/**
+ * Simplified Element Identification Listview DTO.
+ */
 @Data
 @EqualsAndHashCode
 @JsonInclude(Include.NON_NULL)

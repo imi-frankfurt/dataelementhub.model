@@ -11,6 +11,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+/**
+ * Dataelementgroup Member Listview DTO.
+ */
 @Data
 @EqualsAndHashCode
 @NoArgsConstructor

@@ -18,7 +18,9 @@ import org.jooq.CloseableDSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-
+/**
+ * Search Service.
+ */
 @Service
 public class SearchService {
 

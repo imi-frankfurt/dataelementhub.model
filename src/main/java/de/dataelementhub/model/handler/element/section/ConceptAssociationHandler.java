@@ -16,6 +16,9 @@ import java.util.ArrayList;
 import java.util.List;
 import org.jooq.CloseableDSLContext;
 
+/**
+ * Concept Association Handler.
+ */
 public class ConceptAssociationHandler {
 
   /**

@@ -11,6 +11,9 @@ import java.io.InputStream;
 import java.util.Set;
 import org.springframework.stereotype.Service;
 
+/**
+ * JSON Validation Service.
+ */
 @Service
 public class JsonValidationService {
 

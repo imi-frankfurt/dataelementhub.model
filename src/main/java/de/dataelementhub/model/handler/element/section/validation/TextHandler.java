@@ -5,6 +5,9 @@ import de.dataelementhub.dal.jooq.enums.ValidationType;
 import de.dataelementhub.model.dto.element.section.ValueDomain;
 import de.dataelementhub.model.dto.element.section.validation.Text;
 
+/**
+ * Text Handler.
+ */
 public class TextHandler {
 
   /**

@@ -32,6 +32,9 @@ import java.util.TimeZone;
 import org.jooq.CloseableDSLContext;
 import org.jooq.Result;
 
+/**
+ * StagedElement Handler.
+ */
 public class StagedElementHandler {
 
   /** Get stagedElement Members by ID. */

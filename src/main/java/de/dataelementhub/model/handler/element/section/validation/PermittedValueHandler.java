@@ -20,6 +20,9 @@ import de.dataelementhub.model.handler.element.section.SlotHandler;
 import java.util.UUID;
 import org.jooq.CloseableDSLContext;
 
+/**
+ * Permitted Value Handler.
+ */
 public class PermittedValueHandler {
 
   /**

@@ -22,6 +22,9 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import org.jooq.CloseableDSLContext;
 
+/**
+ * Element Handler.
+ */
 public abstract class ElementHandler {
 
   /**
