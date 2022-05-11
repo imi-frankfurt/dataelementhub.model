@@ -27,8 +27,8 @@ public class DataElementGroupHandler extends ElementHandler {
   /**
    *  Create a new DataElementGroup and return its new ID.
    */
-  public static DataElementGroup get(CloseableDSLContext ctx, int userId, String urn) {
-    Identification identification = IdentificationHandler.fromUrn(urn);
+  public static DataElementGroup get(
+      CloseableDSLContext ctx, int userId, Identification identification) {
     IdentifiedElementRecord identifiedElementRecord = ElementHandler
         .getIdentifiedElementRecord(ctx, identification);
     Element element = ElementHandler.convertToElement(ctx, identification, identifiedElementRecord);
@@ -85,7 +85,7 @@ public class DataElementGroupHandler extends ElementHandler {
       DataElementGroup dataElementGroup)
       throws IllegalAccessException {
     DataElementGroup previousDataElementGroup = get(ctx, userId,
-        dataElementGroup.getIdentification().getUrn());
+        dataElementGroup.getIdentification());
 
     //update scopedIdentifier if status != DRAFT
     if (previousDataElementGroup.getIdentification().getStatus() != Status.DRAFT) {
@@ -94,7 +94,7 @@ public class DataElementGroupHandler extends ElementHandler {
           IdentificationHandler.update(ctx, userId, dataElementGroup.getIdentification(),
               ElementHandler.getIdentifiedElementRecord(ctx, dataElementGroup.getIdentification())
                   .getId());
-      dataElementGroup.setIdentification(IdentificationHandler.convert(scopedIdentifier));
+      dataElementGroup.setIdentification(IdentificationHandler.convert(ctx, scopedIdentifier));
       dataElementGroup.getIdentification().setNamespaceId(
           Integer.parseInt(previousDataElementGroup.getIdentification().getUrn().split(":")[1]));
     }
@@ -113,15 +113,15 @@ public class DataElementGroupHandler extends ElementHandler {
    */
   public static Identification updateMembers(CloseableDSLContext ctx, int userId,
       ScopedIdentifier scopedIdentifier) {
-    Identification identification = IdentificationHandler.convert(scopedIdentifier);
-    DataElementGroup dataElementGroup = get(ctx, userId, identification.getUrn());
+    Identification identification = IdentificationHandler.convert(ctx, scopedIdentifier);
+    DataElementGroup dataElementGroup = get(ctx, userId, identification);
     if (MemberHandler.newMemberVersionExists(ctx, scopedIdentifier)) {
       if (dataElementGroup.getIdentification().getStatus() != Status.DRAFT) {
         ScopedIdentifier newsScopedIdentifier =
             IdentificationHandler.update(ctx, userId, identification,
                 scopedIdentifier.getElementId());
         dataElementGroup.setIdentification(IdentificationHandler
-            .convert(newsScopedIdentifier));
+            .convert(ctx, newsScopedIdentifier));
         dataElementGroup.getIdentification()
             .setNamespaceId(scopedIdentifier.getNamespaceId());
       }

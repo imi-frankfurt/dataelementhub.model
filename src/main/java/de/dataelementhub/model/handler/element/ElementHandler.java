@@ -44,22 +44,22 @@ public abstract class ElementHandler {
       }
     } else {
       // Read other elements with proper urn
-      Identification identification = IdentificationHandler.fromUrn(urn);
+      Identification identification = IdentificationHandler.fromUrn(ctx, urn);
       if (identification == null) {
         throw new NoSuchElementException(urn);
       }
       switch (identification.getElementType()) {
         case DATAELEMENT:
-          return DataElementHandler.get(ctx, userId, urn);
+          return DataElementHandler.get(ctx, userId, identification);
         case DATAELEMENTGROUP:
-          return DataElementGroupHandler.get(ctx, userId, urn);
+          return DataElementGroupHandler.get(ctx, userId, identification);
         case RECORD:
-          return RecordHandler.get(ctx, userId, urn);
+          return RecordHandler.get(ctx, userId, identification);
         case ENUMERATED_VALUE_DOMAIN:
         case DESCRIBED_VALUE_DOMAIN:
-          return ValueDomainHandler.get(ctx, userId, urn);
+          return ValueDomainHandler.get(ctx, userId, identification);
         case PERMISSIBLE_VALUE:
-          return PermittedValueHandler.get(ctx, userId, urn);
+          return PermittedValueHandler.get(ctx, userId, identification);
         default:
           throw new IllegalArgumentException("Element Type is not supported");
       }
@@ -70,7 +70,7 @@ public abstract class ElementHandler {
    * Get dataElementGroup or record members.
    */
   public static List<Member> readMembers(CloseableDSLContext ctx, int userId, String urn) {
-    Identification identification = IdentificationHandler.fromUrn(urn);
+    Identification identification = IdentificationHandler.fromUrn(ctx, urn);
     return MemberHandler.get(ctx, identification);
   }
 
@@ -107,7 +107,7 @@ public abstract class ElementHandler {
    * Fetch a unique record that has <code>id = value</code>.
    */
   public static Element fetchOneByUrn(CloseableDSLContext ctx, int userId, String urn) {
-    Identification identification = IdentificationHandler.fromUrn(urn);
+    Identification identification = IdentificationHandler.fromUrn(ctx, urn);
     if (identification != null) {
       return fetchOneByIdentification(ctx, userId, identification);
     } else {
@@ -120,7 +120,7 @@ public abstract class ElementHandler {
    */
   public static IdentifiedElementRecord getIdentifiedElementRecordByUrn(CloseableDSLContext ctx,
       String urn) {
-    return getIdentifiedElementRecord(ctx, IdentificationHandler.fromUrn(urn));
+    return getIdentifiedElementRecord(ctx, IdentificationHandler.fromUrn(ctx, urn));
   }
 
   /**
@@ -129,7 +129,8 @@ public abstract class ElementHandler {
   public static List<Element> fetchByUrns(CloseableDSLContext ctx, int userId, List<String> urns) {
     List<Element> elements = new ArrayList<>();
     for (String urn : urns) {
-      Element element = fetchOneByIdentification(ctx, userId, IdentificationHandler.fromUrn(urn));
+      Element element =
+          fetchOneByIdentification(ctx, userId, IdentificationHandler.fromUrn(ctx, urn));
       if (element != null) {
         elements.add(element);
       }

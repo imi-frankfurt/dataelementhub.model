@@ -17,7 +17,6 @@ import de.dataelementhub.model.handler.element.section.ConceptAssociationHandler
 import de.dataelementhub.model.handler.element.section.DefinitionHandler;
 import de.dataelementhub.model.handler.element.section.IdentificationHandler;
 import de.dataelementhub.model.handler.element.section.SlotHandler;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 import org.jooq.CloseableDSLContext;
 
@@ -29,16 +28,13 @@ public class PermittedValueHandler {
   /**
    * Get the permitted value for an identifier.
    */
-  public static PermittedValue get(CloseableDSLContext ctx, int userId, String urn) {
-    Identification identification = IdentificationHandler.fromUrn(urn);
-    if (identification == null) {
-      throw new NoSuchElementException(urn);
-    }
+  public static PermittedValue get(
+      CloseableDSLContext ctx, int userId, Identification identification) {
     IdentifiedElementRecord identifiedElementRecord = ElementHandler
         .getIdentifiedElementRecord(ctx, identification);
     Element element = ElementHandler.convertToElement(ctx, identification, identifiedElementRecord);
     element.getIdentification().setNamespaceUrn(
-        NamespaceHandler.getNamespaceUrnById(element.getIdentification().getNamespaceId()));
+        NamespaceHandler.getNamespaceUrnById(ctx, element.getIdentification().getNamespaceId()));
 
     PermittedValue permittedValue = new PermittedValue();
     permittedValue.setValue(identifiedElementRecord.getPermittedValue());
@@ -129,7 +125,7 @@ public class PermittedValueHandler {
       throws IllegalAccessException {
 
     PermittedValue previousPermittedValue = get(ctx, userId,
-        permittedValue.getIdentification().getUrn());
+        permittedValue.getIdentification());
 
     // If the validation differs, an update is not allowed.
     if (!previousPermittedValue.getValue().equals(permittedValue.getValue())) {
@@ -143,7 +139,7 @@ public class PermittedValueHandler {
           IdentificationHandler.update(ctx, userId, permittedValue.getIdentification(),
               ElementHandler.getIdentifiedElementRecord(ctx, permittedValue.getIdentification())
                   .getId());
-      permittedValue.setIdentification(IdentificationHandler.convert(scopedIdentifier));
+      permittedValue.setIdentification(IdentificationHandler.convert(ctx, scopedIdentifier));
     }
 
     ElementHandler.delete(ctx, userId, previousPermittedValue.getIdentification().getUrn());

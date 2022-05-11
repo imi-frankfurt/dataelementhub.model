@@ -16,6 +16,7 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Marshaller;
 import org.eclipse.persistence.internal.oxm.NamespacePrefixMapper;
 import org.eclipse.persistence.jaxb.JAXBContextProperties;
+import org.jooq.CloseableDSLContext;
 import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.AsyncResult;
 
@@ -37,7 +38,8 @@ public class ExportHandler {
 
   /** Export defined Elements as Xml or Json. */
   public static void export(
-          ExportRequest exportRequest, int userId, MediaType mediaType, Boolean fullExport,
+      CloseableDSLContext ctx, ExportRequest exportRequest,
+      int userId, MediaType mediaType, Boolean fullExport,
       String timestamp, String exportDirectory) {
     System.setProperty(JAVAX_XML_BIND_CONTEXT_FACTORY, JAVAX_XML_BIND_CONTEXT_FACTORY_VALUE);
     String destination = exportDirectory + File.separator + userId + File.separator + timestamp
@@ -48,8 +50,8 @@ public class ExportHandler {
     try {
       ImportExport export = new ImportExport();
       export.setLabel(exportRequest.getLabel());
-      List<StagedElement> stagedElements = elementsToStagedElements(exportRequest.getElementUrns(),
-          userId, fullExport);
+      List<StagedElement> stagedElements = elementsToStagedElements(ctx,
+          exportRequest.getElementUrns(), userId, fullExport);
       List<String> urns = stagedElements.stream().map(se -> se.getIdentification().getUrn())
           .collect(
               Collectors.toList());

@@ -52,7 +52,7 @@ public class DataElementHandler extends ElementHandler {
     } else if (dataElement.getValueDomainUrn() != null && !dataElement.getValueDomainUrn()
         .isEmpty()) {
       // If value domain urn is used, check if it is of an allowed type (enumerated or described vd)
-      ElementType elementType = IdentificationHandler.fromUrn(dataElement.getValueDomainUrn())
+      ElementType elementType = IdentificationHandler.fromUrn(ctx, dataElement.getValueDomainUrn())
           .getElementType();
       if (elementType != ElementType.ENUMERATED_VALUE_DOMAIN
           && elementType != ElementType.DESCRIBED_VALUE_DOMAIN) {
@@ -137,11 +137,9 @@ public class DataElementHandler extends ElementHandler {
   /**
    * Get a dataelement by its urn.
    */
-  public static DataElement get(CloseableDSLContext ctx, int userId, String urn) {
-    Identification identification = IdentificationHandler.fromUrn(urn);
-    if (identification == null) {
-      throw new NoSuchElementException(urn);
-    }
+  public static DataElement get(
+      CloseableDSLContext ctx, int userId, Identification identification) {
+    String urn = identification.getUrn();
     IdentifiedElementRecord identifiedElementRecord = ElementHandler
         .getIdentifiedElementRecord(ctx, identification);
     Element element = ElementHandler.convertToElement(ctx, identification, identifiedElementRecord);
@@ -151,7 +149,7 @@ public class DataElementHandler extends ElementHandler {
     dataElement.setDefinitions(element.getDefinitions());
     ScopedIdentifier valueDomainScopedIdentifier = ValueDomainHandler
         .getValueDomainScopedIdentifierByElementUrn(ctx, userId, urn);
-    dataElement.setValueDomainUrn(IdentificationHandler.toUrn(valueDomainScopedIdentifier));
+    dataElement.setValueDomainUrn(IdentificationHandler.toUrn(ctx, valueDomainScopedIdentifier));
     dataElement.setSlots(element.getSlots());
     dataElement
         .setConceptAssociations(ConceptAssociationHandler.get(ctx, element.getIdentification()));
@@ -175,7 +173,7 @@ public class DataElementHandler extends ElementHandler {
    */
   public static Identification update(CloseableDSLContext ctx, int userId, DataElement dataElement)
       throws IllegalAccessException {
-    DataElement previousDataElement = get(ctx, userId, dataElement.getIdentification().getUrn());
+    DataElement previousDataElement = get(ctx, userId, dataElement.getIdentification());
 
     if (dataElement.getValueDomain() != null) {
       throw new IllegalArgumentException("value domain field has to be empty.");
@@ -193,7 +191,7 @@ public class DataElementHandler extends ElementHandler {
           IdentificationHandler.update(ctx, userId, dataElement.getIdentification(),
               ElementHandler.getIdentifiedElementRecord(ctx, dataElement.getIdentification())
                   .getId());
-      dataElement.setIdentification(IdentificationHandler.convert(scopedIdentifier));
+      dataElement.setIdentification(IdentificationHandler.convert(ctx, scopedIdentifier));
     }
 
     delete(ctx, userId, previousDataElement.getIdentification().getUrn());

@@ -45,7 +45,7 @@ public class MemberHandler {
     scopedIdentifiers.forEach(
         (scopedIdentifier) -> {
           Member member = new Member();
-          member.setElementUrn(IdentificationHandler.toUrn(scopedIdentifier));
+          member.setElementUrn(IdentificationHandler.toUrn(ctx, scopedIdentifier));
           member.setStatus(scopedIdentifier.getStatus());
           members.add(member);
         });

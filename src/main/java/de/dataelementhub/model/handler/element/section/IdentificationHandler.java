@@ -4,7 +4,6 @@ import static de.dataelementhub.dal.jooq.Routines.getScopedIdentifierByUrn;
 import static de.dataelementhub.dal.jooq.Tables.ELEMENT;
 import static de.dataelementhub.dal.jooq.Tables.SCOPED_IDENTIFIER;
 
-import de.dataelementhub.dal.ResourceManager;
 import de.dataelementhub.dal.jooq.Routines;
 import de.dataelementhub.dal.jooq.enums.ElementType;
 import de.dataelementhub.dal.jooq.enums.RelationType;
@@ -32,7 +31,7 @@ public class IdentificationHandler {
    * Convert a ScopedIdentifier object of DataElementHub DAL to a Identification object of
    * DataElementHub Model.
    */
-  public static Identification convert(ScopedIdentifier scopedIdentifier) {
+  public static Identification convert(CloseableDSLContext ctx, ScopedIdentifier scopedIdentifier) {
     if (scopedIdentifier == null || scopedIdentifier.getIdentifier() == null) {
       return null;
     }
@@ -42,12 +41,12 @@ public class IdentificationHandler {
     identification.setStatus(scopedIdentifier.getStatus());
     identification.setIdentifier(scopedIdentifier.getIdentifier());
     identification.setRevision(scopedIdentifier.getVersion());
-    identification.setUrn(toUrn(scopedIdentifier));
+    identification.setUrn(toUrn(ctx, scopedIdentifier));
     if (identification.getElementType() == ElementType.NAMESPACE) {
       identification.setNamespaceUrn(identification.getUrn());
     } else {
       identification.setNamespaceUrn(
-          NamespaceHandler.getNamespaceUrnById(scopedIdentifier.getNamespaceId()));
+          NamespaceHandler.getNamespaceUrnById(ctx, scopedIdentifier.getNamespaceId()));
     }
     return identification;
   }
@@ -228,20 +227,18 @@ public class IdentificationHandler {
   /**
    * Convert a urn to a Identification object.
    */
-  public static Identification fromUrn(String urn) {
-    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      ScopedIdentifier scopedIdentifier;
-      if (urn.toLowerCase().contains("namespace")) {
-        GetNamespaceScopedIdentifierByUrn procedure = new GetNamespaceScopedIdentifierByUrn();
-        procedure.setUrn(urn);
-        procedure.execute(ctx.configuration());
-        ScopedIdentifierRecord scopedIdentifierRecord = procedure.getReturnValue();
-        scopedIdentifier = scopedIdentifierRecord.into(ScopedIdentifier.class);
-      } else {
-        scopedIdentifier = getScopedIdentifier(ctx, urn);
-      }
-      return convert(scopedIdentifier);
+  public static Identification fromUrn(CloseableDSLContext ctx, String urn) {
+    ScopedIdentifier scopedIdentifier;
+    if (urn.toLowerCase().contains("namespace")) {
+      GetNamespaceScopedIdentifierByUrn procedure = new GetNamespaceScopedIdentifierByUrn();
+      procedure.setUrn(urn);
+      procedure.execute(ctx.configuration());
+      ScopedIdentifierRecord scopedIdentifierRecord = procedure.getReturnValue();
+      scopedIdentifier = scopedIdentifierRecord.into(ScopedIdentifier.class);
+    } else {
+      scopedIdentifier = getScopedIdentifier(ctx, urn);
     }
+    return convert(ctx, scopedIdentifier);
   }
 
   /**
@@ -253,17 +250,6 @@ public class IdentificationHandler {
     }
     String[] parts = urn.split(":");
     return parts.length == 5 && parts[0].equals("urn");
-  }
-
-  /**
-   * Accept scopedIdentifier and return Urn.
-   */
-  public static String toUrn(ScopedIdentifier scopedIdentifier) {
-    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      ScopedIdentifierRecord scopedIdentifierRecord = ctx
-          .newRecord(SCOPED_IDENTIFIER, scopedIdentifier);
-      return ctx.select(Routines.urn(scopedIdentifierRecord)).fetchOneInto(String.class);
-    }
   }
 
   /**
@@ -331,7 +317,7 @@ public class IdentificationHandler {
    * Outdates the scoped identifier with the given URN.
    */
   public static void outdateIdentifier(CloseableDSLContext ctx, int userId, String urn) {
-    Identification identification = IdentificationHandler.fromUrn(urn);
+    Identification identification = IdentificationHandler.fromUrn(ctx, urn);
     Element ns = ELEMENT.as("ns");
     ctx.update(SCOPED_IDENTIFIER)
         .set(SCOPED_IDENTIFIER.STATUS, Status.OUTDATED)
@@ -392,8 +378,8 @@ public class IdentificationHandler {
     targetIdentifier.setId(targetIdentifierRecord.getId());
 
     ElementRelationHandler
-        .insertLocalRelation(ctx, userId, toUrn(targetIdentifier), toUrn(sourceIdentifier),
-            RelationType.equal);
+        .insertLocalRelation(ctx, userId, toUrn(ctx, targetIdentifier),
+            toUrn(ctx, sourceIdentifier), RelationType.equal);
 
     return targetIdentifier;
   }
@@ -451,7 +437,7 @@ public class IdentificationHandler {
    */
   public static Identification getNamespaceIdentification(CloseableDSLContext ctx, String urn) {
     int namespaceId = getScopedIdentifier(ctx, urn).getNamespaceId();
-    return convert(ctx.selectFrom(SCOPED_IDENTIFIER)
+    return convert(ctx, ctx.selectFrom(SCOPED_IDENTIFIER)
         .where(SCOPED_IDENTIFIER.ELEMENT_TYPE.eq(ElementType.NAMESPACE))
         .and(SCOPED_IDENTIFIER.NAMESPACE_ID.eq(namespaceId))
         .fetchOneInto(ScopedIdentifier.class));

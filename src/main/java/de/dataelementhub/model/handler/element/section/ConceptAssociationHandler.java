@@ -84,7 +84,7 @@ public class ConceptAssociationHandler {
    * Get a List of concept association.
    */
   public static List<ConceptAssociation> get(CloseableDSLContext ctx, String urn) {
-    return get(ctx, IdentificationHandler.fromUrn(urn));
+    return get(ctx, IdentificationHandler.fromUrn(ctx, urn));
   }
 
   /**

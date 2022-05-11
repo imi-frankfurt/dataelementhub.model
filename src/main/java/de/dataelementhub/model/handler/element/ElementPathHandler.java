@@ -73,7 +73,7 @@ public class ElementPathHandler {
       } else {
         Identification namespaceIdentification = IdentificationHandler
             .getNamespaceIdentification(ctx, partialPath.get(0));
-        if (!DaoUtil.accessLevelGranted(namespaceIdentification.getIdentifier(),
+        if (!DaoUtil.accessLevelGranted(ctx, namespaceIdentification.getIdentifier(),
             userId, DaoUtil.READ_ACCESS_TYPES)) {
           partialPaths.remove(partialPath);
         } else {

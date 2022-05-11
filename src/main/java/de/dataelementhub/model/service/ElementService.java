@@ -4,7 +4,6 @@ import static de.dataelementhub.dal.jooq.Routines.getDefinitionByUrn;
 import static de.dataelementhub.dal.jooq.Routines.getSlotByUrn;
 import static de.dataelementhub.dal.jooq.Routines.getValueDomainScopedIdentifierByDataelementUrn;
 
-import de.dataelementhub.dal.ResourceManager;
 import de.dataelementhub.dal.jooq.enums.AccessLevelType;
 import de.dataelementhub.dal.jooq.enums.ElementType;
 import de.dataelementhub.dal.jooq.enums.Status;
@@ -51,78 +50,72 @@ public class ElementService {
   /**
    * Create a new Element and return its new ID.
    */
-  public ScopedIdentifier create(int userId, Element element)
+  public ScopedIdentifier create(CloseableDSLContext ctx, int userId, Element element)
       throws IllegalAccessException, IllegalArgumentException {
 
     // When creating new elements, remove user submitted values for identifier and revision. They
     // will be assigned by the backend.
     element.setIdentification(IdentificationHandler.removeUserSubmittedIdentifierAndRevision(
         element.getIdentification()));
-    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      if (element.getIdentification().getElementType() != ElementType.NAMESPACE) {
-        // check if namespace status and element status are compatible
-        if (ElementHandler.statusMismatch(ctx, userId, element)) {
-          throw new IllegalStateException("Unreleased namespaces can't contain released elements");
-        }
+    if (element.getIdentification().getElementType() != ElementType.NAMESPACE) {
+      // check if namespace status and element status are compatible
+      if (ElementHandler.statusMismatch(ctx, userId, element)) {
+        throw new IllegalStateException("Unreleased namespaces can't contain released elements");
       }
-      switch (element.getIdentification().getElementType()) {
-        case DATAELEMENT:
-          return DataElementHandler.create(ctx, userId, (DataElement) element);
-        case DATAELEMENTGROUP:
-          return DataElementGroupHandler.create(ctx, userId, (DataElementGroup) element);
-        case RECORD:
-          return RecordHandler.create(ctx, userId, (Record) element);
-        case ENUMERATED_VALUE_DOMAIN:
-        case DESCRIBED_VALUE_DOMAIN:
-          return ValueDomainHandler.create(ctx, userId, (ValueDomain) element);
-        case PERMISSIBLE_VALUE:
-          return PermittedValueHandler.create(ctx, userId, (PermittedValue) element);
-        default:
-          throw new IllegalArgumentException("Element Type is not supported");
-      }
+    }
+    switch (element.getIdentification().getElementType()) {
+      case DATAELEMENT:
+        return DataElementHandler.create(ctx, userId, (DataElement) element);
+      case DATAELEMENTGROUP:
+        return DataElementGroupHandler.create(ctx, userId, (DataElementGroup) element);
+      case RECORD:
+        return RecordHandler.create(ctx, userId, (Record) element);
+      case ENUMERATED_VALUE_DOMAIN:
+      case DESCRIBED_VALUE_DOMAIN:
+        return ValueDomainHandler.create(ctx, userId, (ValueDomain) element);
+      case PERMISSIBLE_VALUE:
+        return PermittedValueHandler.create(ctx, userId, (PermittedValue) element);
+      default:
+        throw new IllegalArgumentException("Element Type is not supported");
     }
   }
 
   /**
    * Get an Element by its urn.
    */
-  public Element read(int userId, String urn) {
-    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      Identification identification = IdentificationHandler.fromUrn(urn);
-      if (identification == null) {
-        throw new NoSuchElementException(urn);
-      }
-      switch (identification.getElementType()) {
-        case DATAELEMENT:
-          return DataElementHandler.get(ctx, userId, urn);
-        case DATAELEMENTGROUP:
-          return DataElementGroupHandler.get(ctx, userId, urn);
-        case RECORD:
-          return RecordHandler.get(ctx, userId, urn);
-        case ENUMERATED_VALUE_DOMAIN:
-        case DESCRIBED_VALUE_DOMAIN:
-          return ValueDomainHandler.get(ctx, userId, urn);
-        case PERMISSIBLE_VALUE:
-          return PermittedValueHandler.get(ctx, userId, urn);
-        default:
-          throw new IllegalArgumentException("Element Type is not supported");
-      }
+  public Element read(CloseableDSLContext ctx, int userId, String urn) {
+    Identification identification = IdentificationHandler.fromUrn(ctx, urn);
+    if (identification == null) {
+      throw new NoSuchElementException(urn);
+    }
+    switch (identification.getElementType()) {
+      case DATAELEMENT:
+        return DataElementHandler.get(ctx, userId, identification);
+      case DATAELEMENTGROUP:
+        return DataElementGroupHandler.get(ctx, userId, identification);
+      case RECORD:
+        return RecordHandler.get(ctx, userId, identification);
+      case ENUMERATED_VALUE_DOMAIN:
+      case DESCRIBED_VALUE_DOMAIN:
+        return ValueDomainHandler.get(ctx, userId, identification);
+      case PERMISSIBLE_VALUE:
+        return PermittedValueHandler.get(ctx, userId, identification);
+      default:
+        throw new IllegalArgumentException("Element Type is not supported");
     }
   }
 
   /**
    * Get the ValueDomain of an Element by the elements urn.
    */
-  public Element readValueDomain(int userId, String elementUrn) {
-    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      if (!IdentificationHandler.isUrn(elementUrn)) {
-        throw new IllegalArgumentException("Not a URN: " + elementUrn);
-      } else {
-        ScopedIdentifier valueDomainScopedIdentifier = ctx
-            .selectQuery(getValueDomainScopedIdentifierByDataelementUrn(elementUrn))
-            .fetchOneInto(ScopedIdentifier.class);
-        return read(userId, IdentificationHandler.toUrn(valueDomainScopedIdentifier));
-      }
+  public Element readValueDomain(CloseableDSLContext ctx, int userId, String elementUrn) {
+    if (!IdentificationHandler.isUrn(elementUrn)) {
+      throw new IllegalArgumentException("Not a URN: " + elementUrn);
+    } else {
+      ScopedIdentifier valueDomainScopedIdentifier = ctx
+          .selectQuery(getValueDomainScopedIdentifierByDataelementUrn(elementUrn))
+          .fetchOneInto(ScopedIdentifier.class);
+      return read(ctx, userId, IdentificationHandler.toUrn(ctx, valueDomainScopedIdentifier));
     }
   }
 
@@ -130,64 +123,57 @@ public class ElementService {
   /**
    * Get the Definitions of an Element by the elements urn.
    */
-  public List<Definition> readDefinitions(int userId, String elementUrn) {
-    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      if (!IdentificationHandler.isUrn(elementUrn)) {
-        throw new IllegalArgumentException("Not a URN: " + elementUrn);
-      } else {
-        List<de.dataelementhub.dal.jooq.tables.pojos.Definition> definitions = ctx
-            .selectQuery(getDefinitionByUrn(elementUrn))
-            .fetchInto(de.dataelementhub.dal.jooq.tables.pojos.Definition.class);
-        List<Definition> definitionsDto = new ArrayList<>();
-        definitions.forEach(d -> definitionsDto.add(DefinitionHandler.convert(d)));
-        return definitionsDto;
-      }
+  public List<Definition> readDefinitions(CloseableDSLContext ctx, int userId, String elementUrn) {
+    if (!IdentificationHandler.isUrn(elementUrn)) {
+      throw new IllegalArgumentException("Not a URN: " + elementUrn);
+    } else {
+      List<de.dataelementhub.dal.jooq.tables.pojos.Definition> definitions = ctx
+          .selectQuery(getDefinitionByUrn(elementUrn))
+          .fetchInto(de.dataelementhub.dal.jooq.tables.pojos.Definition.class);
+      List<Definition> definitionsDto = new ArrayList<>();
+      definitions.forEach(d -> definitionsDto.add(DefinitionHandler.convert(d)));
+      return definitionsDto;
     }
   }
 
   /**
    * Get the Slots of an Element by the elements urn.
    */
-  public List<Slot> readSlots(int userId, String elementUrn) {
-    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      if (!IdentificationHandler.isUrn(elementUrn)) {
-        throw new IllegalArgumentException("Not a URN: " + elementUrn);
-      } else {
-        List<de.dataelementhub.dal.jooq.tables.pojos.Slot> slots = ctx
-            .selectQuery(getSlotByUrn(elementUrn))
-            .fetchInto(de.dataelementhub.dal.jooq.tables.pojos.Slot.class);
-        List<Slot> slotsDto = new ArrayList<>();
-        slots.forEach(s -> slotsDto.add(SlotHandler.convert(s)));
-        return slotsDto;
-      }
+  public List<Slot> readSlots(CloseableDSLContext ctx, int userId, String elementUrn) {
+    if (!IdentificationHandler.isUrn(elementUrn)) {
+      throw new IllegalArgumentException("Not a URN: " + elementUrn);
+    } else {
+      List<de.dataelementhub.dal.jooq.tables.pojos.Slot> slots = ctx
+          .selectQuery(getSlotByUrn(elementUrn))
+          .fetchInto(de.dataelementhub.dal.jooq.tables.pojos.Slot.class);
+      List<Slot> slotsDto = new ArrayList<>();
+      slots.forEach(s -> slotsDto.add(SlotHandler.convert(s)));
+      return slotsDto;
     }
   }
 
   /**
    * Get the Identification of an Element by the elements urn.
    */
-  public Identification readIdentification(int userId, String elementUrn) {
-    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      if (!IdentificationHandler.isUrn(elementUrn)) {
-        throw new IllegalArgumentException("Not a URN: " + elementUrn);
-      } else {
-        ScopedIdentifier scopedIdentifier = IdentificationHandler
-            .getScopedIdentifier(ctx, elementUrn);
-        return IdentificationHandler.convert(scopedIdentifier);
-      }
+  public Identification readIdentification(CloseableDSLContext ctx, int userId, String elementUrn) {
+    if (!IdentificationHandler.isUrn(elementUrn)) {
+      throw new IllegalArgumentException("Not a URN: " + elementUrn);
+    } else {
+      ScopedIdentifier scopedIdentifier = IdentificationHandler
+          .getScopedIdentifier(ctx, elementUrn);
+      return IdentificationHandler.convert(ctx, scopedIdentifier);
     }
   }
 
   /**
    * Get the Concept Associations of an Element by the elements urn.
    */
-  public List<ConceptAssociation> readConceptAssociations(int userId, String elementUrn) {
-    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      if (!IdentificationHandler.isUrn(elementUrn)) {
-        throw new IllegalArgumentException("Not a URN: " + elementUrn);
-      } else {
-        return ConceptAssociationHandler.get(ctx, elementUrn);
-      }
+  public List<ConceptAssociation> readConceptAssociations(
+      CloseableDSLContext ctx, int userId, String elementUrn) {
+    if (!IdentificationHandler.isUrn(elementUrn)) {
+      throw new IllegalArgumentException("Not a URN: " + elementUrn);
+    } else {
+      return ConceptAssociationHandler.get(ctx, elementUrn);
     }
   }
 
@@ -195,25 +181,23 @@ public class ElementService {
   /**
    * Get the Relations of an Element by the elements urn.
    */
-  public List<de.dataelementhub.model.dto.ElementRelation> readRelations(int userId,
-      String elementUrn) {
-    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      if (!IdentificationHandler.isUrn(elementUrn)) {
-        throw new IllegalArgumentException("Not a URN: " + elementUrn);
-      } else {
-        List<de.dataelementhub.model.dto.ElementRelation> elementRelations =
-            ElementRelationHandler.getElementRelations(ctx, elementUrn, null);
-        return elementRelations;
-      }
+  public List<de.dataelementhub.model.dto.ElementRelation> readRelations(
+      CloseableDSLContext ctx, int userId, String elementUrn) {
+    if (!IdentificationHandler.isUrn(elementUrn)) {
+      throw new IllegalArgumentException("Not a URN: " + elementUrn);
+    } else {
+      List<de.dataelementhub.model.dto.ElementRelation> elementRelations =
+          ElementRelationHandler.getElementRelations(ctx, elementUrn, null);
+      return elementRelations;
     }
   }
 
   /**
    * Get dataElementGroup or record members.
    */
-  public List<Member> readMembers(int userId, String urn) {
-    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      Identification identification = IdentificationHandler.fromUrn(urn);
+  public List<Member> readMembers(CloseableDSLContext ctx, int userId, String urn) {
+    try {
+      Identification identification = IdentificationHandler.fromUrn(ctx, urn);
       List<Member> members = MemberHandler.get(ctx, identification);
       return members;
     } catch (NumberFormatException e) {
@@ -224,73 +208,67 @@ public class ElementService {
   /**
    * Update an Element and return its urn.
    */
-  public Identification update(int userId, Element element)
+  public Identification update(CloseableDSLContext ctx, int userId, Element element)
       throws IllegalAccessException, NoSuchMethodException {
-    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      if (element.getIdentification().getElementType() != ElementType.NAMESPACE) {
-        // check if namespace status and element status are compatible
-        if (ElementHandler.statusMismatch(ctx, userId, element)) {
-          throw new IllegalStateException("Unreleased namespaces can't contain released elements");
-        }
+    if (element.getIdentification().getElementType() != ElementType.NAMESPACE) {
+      // check if namespace status and element status are compatible
+      if (ElementHandler.statusMismatch(ctx, userId, element)) {
+        throw new IllegalStateException("Unreleased namespaces can't contain released elements");
       }
-      switch (element.getIdentification().getElementType()) {
-        case DATAELEMENT:
-          return DataElementHandler.update(ctx, userId, (DataElement) element);
-        case DATAELEMENTGROUP:
-          return DataElementGroupHandler.update(ctx, userId, (DataElementGroup) element);
-        case RECORD:
-          return RecordHandler.update(ctx, userId, (Record) element);
-        case DESCRIBED_VALUE_DOMAIN:
-        case ENUMERATED_VALUE_DOMAIN:
-          return ValueDomainHandler.update(ctx, userId, (ValueDomain) element);
-        case PERMISSIBLE_VALUE:
-          return PermittedValueHandler.update(ctx, userId, (PermittedValue) element);
-        default:
-          throw new IllegalArgumentException("Element Type is not supported");
-      }
+    }
+    switch (element.getIdentification().getElementType()) {
+      case DATAELEMENT:
+        return DataElementHandler.update(ctx, userId, (DataElement) element);
+      case DATAELEMENTGROUP:
+        return DataElementGroupHandler.update(ctx, userId, (DataElementGroup) element);
+      case RECORD:
+        return RecordHandler.update(ctx, userId, (Record) element);
+      case DESCRIBED_VALUE_DOMAIN:
+      case ENUMERATED_VALUE_DOMAIN:
+        return ValueDomainHandler.update(ctx, userId, (ValueDomain) element);
+      case PERMISSIBLE_VALUE:
+        return PermittedValueHandler.update(ctx, userId, (PermittedValue) element);
+      default:
+        throw new IllegalArgumentException("Element Type is not supported");
     }
   }
 
   /**
    * Delete an identifier with the given urn.
    */
-  public void delete(int userId, String urn) {
-    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      Identification identification = IdentificationHandler.fromUrn(urn);
-      if (identification == null) {
-        throw new NoSuchElementException(urn);
-      }
-      ElementHandler.delete(ctx, userId, urn);
+  public void delete(CloseableDSLContext ctx, int userId, String urn) {
+    Identification identification = IdentificationHandler.fromUrn(ctx, urn);
+    if (identification == null) {
+      throw new NoSuchElementException(urn);
     }
+    ElementHandler.delete(ctx, userId, urn);
   }
 
   /**
    * Release an Element.
    */
-  public void release(int userId, String urn) {
-    Identification identification = IdentificationHandler.fromUrn(urn);
+  public void release(CloseableDSLContext ctx, int userId, String urn) {
+    Identification identification = IdentificationHandler.fromUrn(ctx, urn);
 
-    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      if (IdentificationHandler.canBeReleased(ctx, userId, identification)) {
-        switch (identification.getElementType()) {
-          case DATAELEMENT:
+    if (IdentificationHandler.canBeReleased(ctx, userId, identification)) {
+      switch (identification.getElementType()) {
+        case DATAELEMENT:
+          IdentificationHandler.updateStatus(ctx, userId, identification, Status.RELEASED);
+          break;
+        case DATAELEMENTGROUP:
+        case RECORD:
+          if (MemberHandler.allSubIdsAreReleased(ctx, identification)) {
             IdentificationHandler.updateStatus(ctx, userId, identification, Status.RELEASED);
-            break;
-          case DATAELEMENTGROUP:
-          case RECORD:
-            if (MemberHandler.allSubIdsAreReleased(ctx, identification)) {
-              IdentificationHandler.updateStatus(ctx, userId, identification, Status.RELEASED);
-            } else {
-              throw new IllegalStateException("Not all members are released");
-            }
-            break;
-          default:
-            throw new IllegalArgumentException(
-                "Element Type is not supported: " + identification.getElementType());
-        }
-      } else {
-        throw new IllegalStateException("Namespace is not released. Element can not be released.");
+          } else {
+            throw new IllegalStateException("Not all members are released");
+          }
+          break;
+        default:
+          throw new IllegalArgumentException(
+              "Element Type is not supported: " + identification.getElementType());
       }
+    } else {
+      throw new IllegalStateException("Namespace is not released. Element can not be released.");
     }
   }
 
@@ -299,24 +277,22 @@ public class ElementService {
    *
    * @return the new urn if at least one member has new version - otherwise return the old one.
    */
-  public String updateMembers(int userId, String urn)
+  public String updateMembers(CloseableDSLContext ctx, int userId, String urn)
       throws IllegalAccessException, IllegalArgumentException {
-    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      ScopedIdentifier scopedIdentifier = IdentificationHandler.getScopedIdentifier(ctx, urn);
-      AccessLevelType accessLevel = AccessLevelHandler
-          .getAccessLevelByUserAndNamespaceId(ctx, userId, scopedIdentifier.getNamespaceId());
-      if (!DaoUtil.WRITE_ACCESS_TYPES.contains(accessLevel)) {
-        throw new IllegalAccessException("User has no write access to namespace.");
-      }
-      switch (scopedIdentifier.getElementType()) {
-        case DATAELEMENTGROUP:
-          return DataElementGroupHandler.updateMembers(ctx, userId, scopedIdentifier).getUrn();
-        case RECORD:
-          return RecordHandler.updateMembers(ctx, userId, scopedIdentifier).getUrn();
-        default:
-          throw new IllegalArgumentException("Element Type is not supported. "
-              + "Only dataELementGroup and record are accepted!");
-      }
+    ScopedIdentifier scopedIdentifier = IdentificationHandler.getScopedIdentifier(ctx, urn);
+    AccessLevelType accessLevel = AccessLevelHandler
+        .getAccessLevelByUserAndNamespaceId(ctx, userId, scopedIdentifier.getNamespaceId());
+    if (!DaoUtil.WRITE_ACCESS_TYPES.contains(accessLevel)) {
+      throw new IllegalAccessException("User has no write access to namespace.");
+    }
+    switch (scopedIdentifier.getElementType()) {
+      case DATAELEMENTGROUP:
+        return DataElementGroupHandler.updateMembers(ctx, userId, scopedIdentifier).getUrn();
+      case RECORD:
+        return RecordHandler.updateMembers(ctx, userId, scopedIdentifier).getUrn();
+      default:
+        throw new IllegalArgumentException("Element Type is not supported. "
+            + "Only dataELementGroup and record are accepted!");
     }
   }
 
@@ -324,13 +300,11 @@ public class ElementService {
    * Get all available paths for a given element.
    */
   public List<List<SimplifiedElementIdentification>> getElementPaths(
-      int userId, String urn, String languages)
+      CloseableDSLContext ctx, int userId, String urn, String languages)
       throws IllegalArgumentException, IllegalStateException {
-    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      if (IdentificationHandler.getScopedIdentifier(ctx, urn).getStatus() == Status.OUTDATED) {
-        throw new IllegalStateException(urn + " is OUTDATED.");
-      }
-      return ElementPathHandler.getElementPaths(ctx, userId, urn, languages);
+    if (IdentificationHandler.getScopedIdentifier(ctx, urn).getStatus() == Status.OUTDATED) {
+      throw new IllegalStateException(urn + " is OUTDATED.");
     }
+    return ElementPathHandler.getElementPaths(ctx, userId, urn, languages);
   }
 }
