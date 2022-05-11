@@ -95,7 +95,7 @@ public class RecordHandler extends ElementHandler {
 
       ScopedIdentifier scopedIdentifier =
           IdentificationHandler.update(ctx, userId, record.getIdentification(),
-              ElementHandler.getIdentifiedElementRecord(ctx,record.getIdentification()).getId());
+              ElementHandler.getIdentifiedElementRecord(ctx, record.getIdentification()).getId());
       record.setIdentification(IdentificationHandler.convert(ctx, scopedIdentifier));
 
       record.getIdentification().setNamespaceId(
