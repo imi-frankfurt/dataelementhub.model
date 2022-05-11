@@ -8,6 +8,9 @@ import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.model.ZipParameters;
 import org.apache.tomcat.util.http.fileupload.FileUtils;
 
+/**
+ * File Handler.
+ */
 public class FileHandler {
 
   /** returns a list of Json/Xml files in a Directory. */

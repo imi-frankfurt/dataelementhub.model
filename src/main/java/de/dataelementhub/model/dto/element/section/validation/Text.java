@@ -4,6 +4,9 @@ import java.io.Serializable;
 import java.util.Objects;
 import lombok.Data;
 
+/**
+ * Text Validation DTO.
+ */
 @Data
 public class Text implements Serializable {
 

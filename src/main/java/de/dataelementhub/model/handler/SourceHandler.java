@@ -8,6 +8,9 @@ import de.dataelementhub.dal.jooq.tables.records.SourceRecord;
 import java.util.List;
 import org.jooq.CloseableDSLContext;
 
+/**
+ * Source Handler.
+ */
 public class SourceHandler {
 
   /**

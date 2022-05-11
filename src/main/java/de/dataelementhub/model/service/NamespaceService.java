@@ -21,6 +21,9 @@ import java.util.NoSuchElementException;
 import org.jooq.CloseableDSLContext;
 import org.springframework.stereotype.Service;
 
+/**
+ * Namespace Service.
+ */
 @Service
 public class NamespaceService {
 

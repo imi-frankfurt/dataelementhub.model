@@ -41,6 +41,9 @@ import java.util.NoSuchElementException;
 import org.jooq.CloseableDSLContext;
 import org.springframework.stereotype.Service;
 
+/**
+ * Element Service.
+ */
 @Service
 public class ElementService {
 

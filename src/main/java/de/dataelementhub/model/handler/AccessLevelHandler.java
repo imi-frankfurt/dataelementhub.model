@@ -11,6 +11,9 @@ import de.dataelementhub.model.handler.element.section.IdentificationHandler;
 import java.util.List;
 import org.jooq.CloseableDSLContext;
 
+/**
+ * Access Level Handler.
+ */
 public class AccessLevelHandler {
 
   /**
@@ -26,8 +29,6 @@ public class AccessLevelHandler {
         .and(SCOPED_IDENTIFIER.ELEMENT_TYPE.eq(ElementType.NAMESPACE))
         .and(USER_NAMESPACE_ACCESS.USER_ID.eq(userId)).fetchOneInto(AccessLevelType.class);
   }
-
-
 
   /**
    * Returns the access level of the given user and namespace.

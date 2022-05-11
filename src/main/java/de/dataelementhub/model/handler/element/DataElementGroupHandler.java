@@ -19,6 +19,9 @@ import java.util.List;
 import java.util.UUID;
 import org.jooq.CloseableDSLContext;
 
+/**
+ * Dataelement Group Handler.
+ */
 public class DataElementGroupHandler extends ElementHandler {
 
   /**

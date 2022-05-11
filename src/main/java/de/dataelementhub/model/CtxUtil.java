@@ -2,6 +2,9 @@ package de.dataelementhub.model;
 
 import org.jooq.CloseableDSLContext;
 
+/**
+ * CtxUtil.
+ */
 public class CtxUtil {
 
   /**

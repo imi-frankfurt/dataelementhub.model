@@ -52,6 +52,9 @@ import org.simpleflatmapper.jdbc.JdbcMapper;
 import org.simpleflatmapper.jdbc.JdbcMapperFactory;
 import org.simpleflatmapper.util.TypeReference;
 
+/**
+ * Namespace Handler.
+ */
 public class NamespaceHandler extends ElementHandler {
 
   /**
