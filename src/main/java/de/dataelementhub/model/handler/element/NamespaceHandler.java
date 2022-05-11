@@ -332,6 +332,15 @@ public class NamespaceHandler extends ElementHandler {
   }
 
   /**
+   * Return true if the specified namespace is public otherwise return false.
+   */
+  public static boolean isNamespacePublic(CloseableDSLContext ctx, int namespaceIdentifier) {
+    List<Namespace> publicNamespaces = getPublicNamespaces(ctx);
+    return publicNamespaces.stream()
+        .anyMatch(ns -> ns.getIdentification().getIdentifier() == namespaceIdentifier);
+  }
+
+  /**
    * Returns all readable namespaces, including the implicitly readable namespaces.
    */
   public static List<Namespace> getReadableNamespaces(CloseableDSLContext ctx, int userId) {
