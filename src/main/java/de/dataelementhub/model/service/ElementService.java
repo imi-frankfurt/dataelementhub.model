@@ -196,7 +196,8 @@ public class ElementService {
       Identification identification = IdentificationHandler.fromUrn(ctx, elementUrn);
       // This variable is currently not used - however this throws an exception when the user has
       // no access rights to the namespace. TODO: Solve this in a sane way.
-      Namespace namespace = NamespaceHandler.getByUrn(ctx, userId, identification.getNamespaceUrn());
+      Namespace namespace = NamespaceHandler.getByUrn(ctx, userId,
+          identification.getNamespaceUrn());
       List<de.dataelementhub.model.dto.ElementRelation> elementRelations =
           ElementRelationHandler.getElementRelations(ctx, elementUrn, null);
       return elementRelations;
@@ -211,7 +212,8 @@ public class ElementService {
       Identification identification = IdentificationHandler.fromUrn(ctx, urn);
       // This variable is currently not used - however this throws an exception when the user has
       // no access rights to the namespace. TODO: Solve this in a sane way.
-      Namespace namespace = NamespaceHandler.getByUrn(ctx, userId, identification.getNamespaceUrn());
+      Namespace namespace = NamespaceHandler.getByUrn(ctx, userId,
+          identification.getNamespaceUrn());
       List<Member> members = MemberHandler.get(ctx, identification);
       return members;
     } catch (NumberFormatException e) {
