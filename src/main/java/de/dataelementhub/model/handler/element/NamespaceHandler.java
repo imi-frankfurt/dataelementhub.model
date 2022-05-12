@@ -112,7 +112,7 @@ public class NamespaceHandler extends ElementHandler {
         .and(SCOPED_IDENTIFIER.ELEMENT_TYPE.eq(ElementType.NAMESPACE))
         .orderBy(SCOPED_IDENTIFIER.VERSION.desc()).limit(1)
         .fetchOneInto(ScopedIdentifier.class);
-    return "urn:" + scopedIdentifier.getNamespaceId() + ":namespace:"
+    return "urn:" + scopedIdentifier.getIdentifier() + ":namespace:"
         + scopedIdentifier.getIdentifier() + ":" + scopedIdentifier.getVersion();
   }
 
