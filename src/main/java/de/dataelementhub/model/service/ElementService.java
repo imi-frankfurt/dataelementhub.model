@@ -12,6 +12,7 @@ import de.dataelementhub.model.DaoUtil;
 import de.dataelementhub.model.dto.element.DataElement;
 import de.dataelementhub.model.dto.element.DataElementGroup;
 import de.dataelementhub.model.dto.element.Element;
+import de.dataelementhub.model.dto.element.Namespace;
 import de.dataelementhub.model.dto.element.Record;
 import de.dataelementhub.model.dto.element.section.ConceptAssociation;
 import de.dataelementhub.model.dto.element.section.Definition;
@@ -27,6 +28,7 @@ import de.dataelementhub.model.handler.element.DataElementGroupHandler;
 import de.dataelementhub.model.handler.element.DataElementHandler;
 import de.dataelementhub.model.handler.element.ElementHandler;
 import de.dataelementhub.model.handler.element.ElementPathHandler;
+import de.dataelementhub.model.handler.element.NamespaceHandler;
 import de.dataelementhub.model.handler.element.RecordHandler;
 import de.dataelementhub.model.handler.element.section.ConceptAssociationHandler;
 import de.dataelementhub.model.handler.element.section.DefinitionHandler;
@@ -88,6 +90,11 @@ public class ElementService {
     if (identification == null) {
       throw new NoSuchElementException(urn);
     }
+
+    // This variable is currently not used - however this throws an exception when the user has
+    // no access rights to the namespace. TODO: Solve this in a sane way.
+    Namespace namespace = NamespaceHandler.getByUrn(ctx, userId, identification.getNamespaceUrn());
+
     switch (identification.getElementType()) {
       case DATAELEMENT:
         return DataElementHandler.get(ctx, userId, identification);
@@ -186,6 +193,11 @@ public class ElementService {
     if (!IdentificationHandler.isUrn(elementUrn)) {
       throw new IllegalArgumentException("Not a URN: " + elementUrn);
     } else {
+      Identification identification = IdentificationHandler.fromUrn(ctx, elementUrn);
+      // This variable is currently not used - however this throws an exception when the user has
+      // no access rights to the namespace. TODO: Solve this in a sane way.
+      Namespace namespace = NamespaceHandler.getByUrn(ctx, userId,
+          identification.getNamespaceUrn());
       List<de.dataelementhub.model.dto.ElementRelation> elementRelations =
           ElementRelationHandler.getElementRelations(ctx, elementUrn, null);
       return elementRelations;
@@ -198,6 +210,10 @@ public class ElementService {
   public List<Member> readMembers(CloseableDSLContext ctx, int userId, String urn) {
     try {
       Identification identification = IdentificationHandler.fromUrn(ctx, urn);
+      // This variable is currently not used - however this throws an exception when the user has
+      // no access rights to the namespace. TODO: Solve this in a sane way.
+      Namespace namespace = NamespaceHandler.getByUrn(ctx, userId,
+          identification.getNamespaceUrn());
       List<Member> members = MemberHandler.get(ctx, identification);
       return members;
     } catch (NumberFormatException e) {

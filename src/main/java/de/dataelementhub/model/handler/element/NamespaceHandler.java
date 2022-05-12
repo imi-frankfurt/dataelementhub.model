@@ -112,7 +112,7 @@ public class NamespaceHandler extends ElementHandler {
         .and(SCOPED_IDENTIFIER.ELEMENT_TYPE.eq(ElementType.NAMESPACE))
         .orderBy(SCOPED_IDENTIFIER.VERSION.desc()).limit(1)
         .fetchOneInto(ScopedIdentifier.class);
-    return "urn:" + scopedIdentifier.getNamespaceId() + ":namespace:"
+    return "urn:" + scopedIdentifier.getIdentifier() + ":namespace:"
         + scopedIdentifier.getIdentifier() + ":" + scopedIdentifier.getVersion();
   }
 
@@ -166,16 +166,18 @@ public class NamespaceHandler extends ElementHandler {
     }
     try {
       Integer namespaceId = ctx.select(SCOPED_IDENTIFIER.NAMESPACE_ID).from(SCOPED_IDENTIFIER)
+          .join(ELEMENT).on(SCOPED_IDENTIFIER.ELEMENT_ID.eq(ELEMENT.ID))
           .where(SCOPED_IDENTIFIER.ELEMENT_TYPE.equal(ElementType.NAMESPACE))
+          .and(DaoUtil.accessibleByUserId(ctx, userId))
           .and(SCOPED_IDENTIFIER.IDENTIFIER.equal(namespaceIdentifier))
           .and(SCOPED_IDENTIFIER.VERSION.equal(
               ctx.select(DSL.max(SCOPED_IDENTIFIER.VERSION)).from(SCOPED_IDENTIFIER)
                   .where(SCOPED_IDENTIFIER.IDENTIFIER.equal(namespaceIdentifier))
                   .and(SCOPED_IDENTIFIER.ELEMENT_TYPE.equal(ElementType.NAMESPACE))))
           .fetchOneInto(Integer.class);
-      // to check if Namespace is accessible by current user
-      getByDatabaseId(ctx, userId, namespaceId);
-      List<ScopedIdentifier> scopedIdentifiers = new ArrayList<>();
+
+
+      List<ScopedIdentifier> scopedIdentifiers;
       if (hideSubElements) {
         scopedIdentifiers =
             ctx.selectFrom(SCOPED_IDENTIFIER).where(
