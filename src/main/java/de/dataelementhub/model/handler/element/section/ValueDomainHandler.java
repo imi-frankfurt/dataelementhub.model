@@ -167,6 +167,7 @@ public class ValueDomainHandler extends ElementHandler {
     }
 
     if (valueDomain.getPermittedValues() != null) {
+      valueDomain.getPermittedValues().forEach(pv -> pv.setIdentification(null));
       PermittedValuesHandler
           .create(ctx, userId, valueDomain.getPermittedValues(), scopedIdentifier);
     }
