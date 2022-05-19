@@ -3,6 +3,7 @@ package de.dataelementhub.model.handler.element;
 import static de.dataelementhub.dal.jooq.Tables.ELEMENT;
 import static de.dataelementhub.dal.jooq.Tables.IDENTIFIED_ELEMENT;
 
+import de.dataelementhub.dal.jooq.enums.ElementType;
 import de.dataelementhub.dal.jooq.enums.Status;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
 import de.dataelementhub.dal.jooq.tables.records.IdentifiedElementRecord;
@@ -10,6 +11,8 @@ import de.dataelementhub.model.dto.element.Element;
 import de.dataelementhub.model.dto.element.Namespace;
 import de.dataelementhub.model.dto.element.section.Identification;
 import de.dataelementhub.model.dto.element.section.Member;
+import de.dataelementhub.model.dto.element.section.ValueDomain;
+import de.dataelementhub.model.dto.element.section.validation.PermittedValue;
 import de.dataelementhub.model.handler.element.section.ConceptAssociationHandler;
 import de.dataelementhub.model.handler.element.section.DefinitionHandler;
 import de.dataelementhub.model.handler.element.section.IdentificationHandler;
@@ -17,6 +20,7 @@ import de.dataelementhub.model.handler.element.section.MemberHandler;
 import de.dataelementhub.model.handler.element.section.SlotHandler;
 import de.dataelementhub.model.handler.element.section.ValueDomainHandler;
 import de.dataelementhub.model.handler.element.section.validation.PermittedValueHandler;
+import de.dataelementhub.model.handler.element.section.validation.PermittedValuesHandler;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -221,7 +225,6 @@ public abstract class ElementHandler {
     }
   }
 
-
   /**
    * Import the ScopedIdentifier and all related entries into the value domain namespace.
    * This imports the scoped identifier of the permitted value itself, all linked definitions,
@@ -242,10 +245,26 @@ public abstract class ElementHandler {
 
     // Copy Slots
     SlotHandler.copySlots(ctx, sourceScopedIdentifier.getId(), targetScopedIdentifier.getId());
+
     // Copy Concept associations
     ConceptAssociationHandler
         .copyConceptElementAssociations(ctx, userId, sourceScopedIdentifier.getId(),
             targetScopedIdentifier.getId());
+
+    // If it is an enumerated value domain, also import permissible values
+    if (sourceScopedIdentifier.getElementType().equals(ElementType.ENUMERATED_VALUE_DOMAIN)) {
+      ValueDomain valueDomain = ValueDomainHandler
+          .get(ctx, userId, IdentificationHandler.convert(ctx, sourceScopedIdentifier));
+      List<ScopedIdentifier> importedPermittedValueScopedIdentifiers = new ArrayList<>();
+
+      for (PermittedValue pv : valueDomain.getPermittedValues()) {
+        ScopedIdentifier importedScopedIdentifier = importIntoParentNamespace(ctx, userId,
+            targetNamespaceId, pv.getIdentification().getUrn());
+        importedPermittedValueScopedIdentifiers.add(importedScopedIdentifier);
+      }
+      PermittedValuesHandler.createRelations(ctx, targetScopedIdentifier.getId(),
+          importedPermittedValueScopedIdentifiers);
+    }
 
     return targetScopedIdentifier;
   }
