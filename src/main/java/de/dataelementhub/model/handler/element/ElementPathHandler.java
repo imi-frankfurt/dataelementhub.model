@@ -100,13 +100,16 @@ public class ElementPathHandler {
    * Return true if all paths are completed and reached the namespace otherwise return false.
    */
   public static boolean pathsCompleted(List<List<String>> paths) {
+
+    int completedPaths = 0;
+
     for (List<String> path : paths) {
       if (path.stream().anyMatch(n ->
           n.toUpperCase().contains(ElementType.NAMESPACE.getLiteral()))) {
-        return true;
+        ++completedPaths;
       }
     }
-    return false;
+    return completedPaths == paths.size();
   }
 
   /**
