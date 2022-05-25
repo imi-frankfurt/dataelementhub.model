@@ -3,6 +3,7 @@ package de.dataelementhub.model.handler.element.section;
 import static de.dataelementhub.dal.jooq.Routines.getScopedIdentifierByUrn;
 import static de.dataelementhub.dal.jooq.Tables.ELEMENT;
 import static de.dataelementhub.dal.jooq.Tables.SCOPED_IDENTIFIER;
+import static org.jooq.impl.DSL.noCondition;
 
 import de.dataelementhub.dal.jooq.Routines;
 import de.dataelementhub.dal.jooq.enums.ElementType;
@@ -20,6 +21,7 @@ import de.dataelementhub.model.handler.element.NamespaceHandler;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 import org.jooq.CloseableDSLContext;
+import org.jooq.Condition;
 import org.jooq.impl.DSL;
 
 /**
@@ -155,6 +157,15 @@ public class IdentificationHandler {
    */
   public static String getFreeIdentifier(CloseableDSLContext ctx, Integer namespaceId,
       ElementType type) {
+
+    Condition elementTypeCondition = noCondition();
+    if (type.getLiteral().toLowerCase().endsWith("value_domain")) {
+      elementTypeCondition = elementTypeCondition.and(
+          SCOPED_IDENTIFIER.ELEMENT_TYPE.like("%VALUE_DOMAIN%"));
+    } else {
+      elementTypeCondition = elementTypeCondition.and(SCOPED_IDENTIFIER.ELEMENT_TYPE.eq(type));
+    }
+
     Element ns = ELEMENT.as("ns");
     Integer max = ctx.select(DSL.max(
             DSL.when(SCOPED_IDENTIFIER.IDENTIFIER.cast(String.class).likeRegex("^\\d+$"),
@@ -164,7 +175,7 @@ public class IdentificationHandler {
         .leftJoin(ns)
         .on(ns.ID.eq(SCOPED_IDENTIFIER.NAMESPACE_ID))
         .where(ns.ID.eq(namespaceId))
-        .and(SCOPED_IDENTIFIER.ELEMENT_TYPE.eq(type))
+        .and(elementTypeCondition)
         .fetchOne().value1();
     if (max != null) {
       return String.valueOf(max + 1);
