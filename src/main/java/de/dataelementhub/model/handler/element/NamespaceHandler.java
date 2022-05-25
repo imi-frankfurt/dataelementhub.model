@@ -503,7 +503,7 @@ public class NamespaceHandler extends ElementHandler {
                       .where(SCOPED_IDENTIFIER.ID.eq(SCOPED_IDENTIFIER_HIERARCHY.SUPER_ID))
                       .and(SCOPED_IDENTIFIER.STATUS.eq(Status.OUTDATED))))
               .and(LISTVIEW_ELEMENT.SI_NAMESPACE_ID.eq(
-                  ctx.select(SCOPED_IDENTIFIER.ID)
+                  ctx.select(SCOPED_IDENTIFIER.NAMESPACE_ID)
                       .from(SCOPED_IDENTIFIER)
                       .where(SCOPED_IDENTIFIER.ELEMENT_TYPE.eq(ElementType.NAMESPACE))
                       .and(SCOPED_IDENTIFIER.IDENTIFIER.eq(namespaceIdentifier))
@@ -530,7 +530,7 @@ public class NamespaceHandler extends ElementHandler {
               .leftJoin(DEFINITION).on(DEFINITION.SCOPED_IDENTIFIER_ID.eq(LISTVIEW_ELEMENT.SI_ID))
               .where(LISTVIEW_ELEMENT.ELEMENT_TYPE.in(elementTypes))
               .and(LISTVIEW_ELEMENT.SI_NAMESPACE_ID.eq(
-                  ctx.select(SCOPED_IDENTIFIER.ID)
+                  ctx.select(SCOPED_IDENTIFIER.NAMESPACE_ID)
                       .from(SCOPED_IDENTIFIER)
                       .where(SCOPED_IDENTIFIER.ELEMENT_TYPE.eq(ElementType.NAMESPACE))
                       .and(SCOPED_IDENTIFIER.IDENTIFIER.eq(namespaceIdentifier))
