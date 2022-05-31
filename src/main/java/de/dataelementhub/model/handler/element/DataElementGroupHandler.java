@@ -82,10 +82,8 @@ public class DataElementGroupHandler extends ElementHandler {
    * Update a dataelementgroup.
    */
   public static Identification update(CloseableDSLContext ctx, int userId,
-      DataElementGroup dataElementGroup)
+      DataElementGroup dataElementGroup, DataElementGroup previousDataElementGroup)
       throws IllegalAccessException {
-    DataElementGroup previousDataElementGroup = get(ctx, userId,
-        dataElementGroup.getIdentification());
 
     //update scopedIdentifier if status != DRAFT
     if (previousDataElementGroup.getIdentification().getStatus() != Status.DRAFT) {

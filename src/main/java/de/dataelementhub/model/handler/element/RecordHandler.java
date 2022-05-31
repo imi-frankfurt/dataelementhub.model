@@ -81,9 +81,8 @@ public class RecordHandler extends ElementHandler {
   /**
    * Update an identifier.
    */
-  public static Identification update(CloseableDSLContext ctx, int userId, Record record)
-      throws IllegalAccessException {
-    Record previousRecord = get(ctx, userId, record.getIdentification());
+  public static Identification update(CloseableDSLContext ctx, int userId,
+      Record record, Record previousRecord) throws IllegalAccessException {
 
     // If the members changed in any way, an update is not allowed
     if (!record.getMembers().equals(previousRecord.getMembers())) {
