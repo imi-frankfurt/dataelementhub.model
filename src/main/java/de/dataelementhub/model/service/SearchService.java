@@ -25,10 +25,12 @@ import org.springframework.stereotype.Service;
 public class SearchService {
 
   private ElementService elementService;
+  private NamespaceService namespaceService;
 
   @Autowired
-  public SearchService(ElementService elementService) {
+  public SearchService(ElementService elementService, NamespaceService namespaceService) {
     this.elementService = elementService;
+    this.namespaceService = namespaceService;
   }
 
   /**
@@ -86,8 +88,8 @@ public class SearchService {
       if (scopedIdentifier.getElementType().equals(ElementType.NAMESPACE)
           && !idList.contains(urn)) {
         idList.add(urn);
-        results.add(elementService.read(ctx, userId,
-            IdentificationHandler.getIdentifierFromUrn(urn).toString()));
+        results.add(namespaceService.read(ctx, userId,
+            String.valueOf(scopedIdentifier.getIdentifier())));
       } else {
         if (!idList.contains(urn)) {
           idList.add(urn);
