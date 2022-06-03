@@ -121,11 +121,8 @@ public class PermittedValueHandler {
    * Update a permitted value in the db.
    */
   public static Identification update(CloseableDSLContext ctx, int userId,
-      PermittedValue permittedValue)
+      PermittedValue permittedValue, PermittedValue previousPermittedValue)
       throws IllegalAccessException {
-
-    PermittedValue previousPermittedValue = get(ctx, userId,
-        permittedValue.getIdentification());
 
     // If the validation differs, an update is not allowed.
     if (!previousPermittedValue.getValue().equals(permittedValue.getValue())) {
