@@ -232,18 +232,23 @@ public class ElementService {
         throw new IllegalStateException("Unreleased namespaces can't contain released elements");
       }
     }
+    Element previousElement = read(ctx, userId, element.getIdentification().getUrn());
     switch (element.getIdentification().getElementType()) {
       case DATAELEMENT:
-        return DataElementHandler.update(ctx, userId, (DataElement) element);
+        return DataElementHandler.update(
+            ctx, userId, (DataElement) element, (DataElement) previousElement);
       case DATAELEMENTGROUP:
-        return DataElementGroupHandler.update(ctx, userId, (DataElementGroup) element);
+        return DataElementGroupHandler.update(
+            ctx, userId, (DataElementGroup) element, (DataElementGroup) previousElement);
       case RECORD:
-        return RecordHandler.update(ctx, userId, (Record) element);
+        return RecordHandler.update(ctx, userId, (Record) element, (Record) previousElement);
       case DESCRIBED_VALUE_DOMAIN:
       case ENUMERATED_VALUE_DOMAIN:
-        return ValueDomainHandler.update(ctx, userId, (ValueDomain) element);
+        return ValueDomainHandler.update(
+            ctx, userId, (ValueDomain) element, (ValueDomain) previousElement);
       case PERMISSIBLE_VALUE:
-        return PermittedValueHandler.update(ctx, userId, (PermittedValue) element);
+        return PermittedValueHandler.update(
+            ctx, userId, (PermittedValue) element, (PermittedValue) previousElement);
       default:
         throw new IllegalArgumentException("Element Type is not supported");
     }

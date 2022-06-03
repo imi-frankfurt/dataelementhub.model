@@ -171,10 +171,8 @@ public class DataElementHandler extends ElementHandler {
   /**
    * Update a dataelement.
    */
-  public static Identification update(CloseableDSLContext ctx, int userId, DataElement dataElement)
-      throws IllegalAccessException {
-    DataElement previousDataElement = get(ctx, userId, dataElement.getIdentification());
-
+  public static Identification update(CloseableDSLContext ctx, int userId, DataElement dataElement,
+      DataElement previousDataElement) throws IllegalAccessException {
     if (dataElement.getValueDomain() != null) {
       throw new IllegalArgumentException("value domain field has to be empty.");
     }

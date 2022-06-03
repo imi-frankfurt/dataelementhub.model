@@ -180,9 +180,8 @@ public class ValueDomainHandler extends ElementHandler {
    * Update a value domain.
    * Currently only working on drafts.
    */
-  public static Identification update(CloseableDSLContext ctx, int userId, ValueDomain valueDomain)
-      throws NoSuchMethodException, IllegalAccessException {
-    ValueDomain oldValueDomain = get(ctx, userId, valueDomain.getIdentification());
+  public static Identification update(CloseableDSLContext ctx, int userId, ValueDomain valueDomain,
+      ValueDomain oldValueDomain) throws NoSuchMethodException, IllegalAccessException {
     if (oldValueDomain.getIdentification().getStatus() == Status.DRAFT
         || oldValueDomain.getIdentification().getStatus() == Status.STAGED) {
       delete(ctx, userId, valueDomain.getIdentification().getUrn());
