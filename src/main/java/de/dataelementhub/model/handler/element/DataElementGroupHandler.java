@@ -112,6 +112,16 @@ public class DataElementGroupHandler extends ElementHandler {
   public static Identification updateMembers(CloseableDSLContext ctx, int userId,
       ScopedIdentifier scopedIdentifier) {
     Identification identification = IdentificationHandler.convert(ctx, scopedIdentifier);
+
+    for (Member member : MemberHandler.get(ctx, identification)) {
+      if (member.getElementUrn().contains("dataelementgroup") || member.getElementUrn()
+          .contains("record")) {
+        ScopedIdentifier memberScopedIdentifier = IdentificationHandler.getScopedIdentifier(ctx,
+            member.getElementUrn());
+        updateMembers(ctx, userId, memberScopedIdentifier);
+      }
+    }
+
     if (MemberHandler.newMemberVersionExists(ctx, scopedIdentifier)) {
       DataElementGroup dataElementGroup = get(ctx, userId, identification);
       if (dataElementGroup.getIdentification().getStatus() != Status.DRAFT) {
