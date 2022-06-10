@@ -116,8 +116,8 @@ public class RecordHandler extends ElementHandler {
   public static Identification updateMembers(CloseableDSLContext ctx, int userId,
       ScopedIdentifier scopedIdentifier) {
     Identification identification = IdentificationHandler.convert(ctx, scopedIdentifier);
-    Record record = get(ctx, userId, identification);
     if (MemberHandler.newMemberVersionExists(ctx, scopedIdentifier)) {
+      Record record = get(ctx, userId, identification);
       if (record.getIdentification().getStatus() != Status.DRAFT) {
         ScopedIdentifier newsScopedIdentifier =
             IdentificationHandler.update(ctx, userId, identification,
@@ -131,6 +131,6 @@ public class RecordHandler extends ElementHandler {
       ScopedIdentifier si = create(ctx, userId, record);
       MemberHandler.updateMembers(ctx, si);
     }
-    return record.getIdentification();
+    return identification;
   }
 }
