@@ -323,9 +323,6 @@ public class ElementService {
   public List<List<SimplifiedElementIdentification>> getElementPaths(
       CloseableDSLContext ctx, int userId, String urn, String languages)
       throws IllegalArgumentException, IllegalStateException {
-    if (IdentificationHandler.getScopedIdentifier(ctx, urn).getStatus() == Status.OUTDATED) {
-      throw new IllegalStateException(urn + " is OUTDATED.");
-    }
     return ElementPathHandler.getElementPaths(ctx, userId, urn, languages);
   }
 }
