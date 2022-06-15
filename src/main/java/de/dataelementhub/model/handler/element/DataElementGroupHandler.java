@@ -50,8 +50,17 @@ public class DataElementGroupHandler extends ElementHandler {
     List<Element> members = ElementHandler
         .fetchByUrns(ctx, userId, dataElementGroup.getMembers().stream().map(Member::getElementUrn)
             .collect(toList()));
+
     if (members.size() != dataElementGroup.getMembers().size()) {
       throw new IllegalArgumentException();
+    }
+
+    if (dataElementGroup.getIdentification().getStatus() == Status.RELEASED) {
+      if (members.stream().anyMatch(m -> m.getIdentification().getStatus() == Status.DRAFT
+          || m.getIdentification().getStatus() == Status.STAGED)) {
+        throw new IllegalArgumentException(
+            "Released DataelementGroup may not contain draft or staged members.");
+      }
     }
 
     final boolean autoCommit = CtxUtil.disableAutoCommit(ctx);

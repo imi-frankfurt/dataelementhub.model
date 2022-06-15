@@ -54,6 +54,14 @@ public class RecordHandler extends ElementHandler {
       throw new IllegalArgumentException();
     }
 
+    if (record.getIdentification().getStatus() == Status.RELEASED) {
+      if (members.stream().anyMatch(m -> m.getIdentification().getStatus() == Status.DRAFT
+          || m.getIdentification().getStatus() == Status.STAGED)) {
+        throw new IllegalArgumentException(
+            "Released Record may not contain draft or staged members.");
+      }
+    }
+
     final boolean autoCommit = CtxUtil.disableAutoCommit(ctx);
     de.dataelementhub.dal.jooq.tables.pojos.Element element =
         new de.dataelementhub.dal.jooq.tables.pojos.Element();
