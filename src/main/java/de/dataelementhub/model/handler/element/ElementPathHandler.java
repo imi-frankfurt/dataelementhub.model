@@ -147,12 +147,16 @@ public class ElementPathHandler {
    */
   public static List<ScopedIdentifier> getParentScopedIdentifiers(
       CloseableDSLContext ctx, String urn) {
+    ScopedIdentifier scopedIdentifier = IdentificationHandler.getScopedIdentifier(ctx, urn);
+    if (scopedIdentifier == null) {
+      throw new NoSuchElementException("Element not found: " + urn);
+    }
     return ctx.select()
         .from(SCOPED_IDENTIFIER_HIERARCHY)
         .leftJoin(SCOPED_IDENTIFIER)
         .on(SCOPED_IDENTIFIER.ID.eq(SCOPED_IDENTIFIER_HIERARCHY.SUPER_ID))
         .where(SCOPED_IDENTIFIER_HIERARCHY.SUB_ID
-            .eq(IdentificationHandler.getScopedIdentifier(ctx, urn).getId()))
+            .eq(scopedIdentifier.getId()))
         .fetchInto(ScopedIdentifier.class);
   }
 }
