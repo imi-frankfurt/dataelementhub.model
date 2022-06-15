@@ -224,6 +224,10 @@ public class MemberHandler {
     return oldNewSiId;
   }
 
+  /**
+   * Get all scoped identifier hierarchy entries for a scoped identifier.
+   * Get those entries where the scoped identifier is either the super or the sub identifier.
+   */
   public static List<ScopedIdentifierHierarchy> getHierarchyEntries(
       CloseableDSLContext ctx, ScopedIdentifier scopedIdentifier) {
     return ctx.selectFrom(SCOPED_IDENTIFIER_HIERARCHY)
@@ -232,6 +236,9 @@ public class MemberHandler {
         .fetchInto(ScopedIdentifierHierarchy.class);
   }
 
+  /**
+   * Add a list of scoped identifier hierarchy entries.
+   */
   public static void addHierarchyEntries(
       CloseableDSLContext ctx, List<ScopedIdentifierHierarchy> hierarchyEntries) {
     ScopedIdentifierHierarchyDao scopedIdentifierHierarchyDao = new ScopedIdentifierHierarchyDao(
