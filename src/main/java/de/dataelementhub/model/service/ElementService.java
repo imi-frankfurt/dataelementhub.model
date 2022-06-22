@@ -321,11 +321,7 @@ public class ElementService {
    * Get all available paths for a given element.
    */
   public List<List<SimplifiedElementIdentification>> getElementPaths(
-      CloseableDSLContext ctx, int userId, String urn, String languages)
-      throws IllegalArgumentException, IllegalStateException {
-    if (IdentificationHandler.getScopedIdentifier(ctx, urn).getStatus() == Status.OUTDATED) {
-      throw new IllegalStateException(urn + " is OUTDATED.");
-    }
+      CloseableDSLContext ctx, int userId, String urn, String languages) {
     return ElementPathHandler.getElementPaths(ctx, userId, urn, languages);
   }
 }
