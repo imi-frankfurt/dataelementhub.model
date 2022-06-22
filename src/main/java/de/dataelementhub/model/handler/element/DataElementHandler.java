@@ -6,6 +6,7 @@ import de.dataelementhub.dal.jooq.enums.AccessLevelType;
 import de.dataelementhub.dal.jooq.enums.ElementType;
 import de.dataelementhub.dal.jooq.enums.Status;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
+import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifierHierarchy;
 import de.dataelementhub.dal.jooq.tables.records.IdentifiedElementRecord;
 import de.dataelementhub.model.CtxUtil;
 import de.dataelementhub.model.DaoUtil;
@@ -18,8 +19,10 @@ import de.dataelementhub.model.handler.AccessLevelHandler;
 import de.dataelementhub.model.handler.element.section.ConceptAssociationHandler;
 import de.dataelementhub.model.handler.element.section.DefinitionHandler;
 import de.dataelementhub.model.handler.element.section.IdentificationHandler;
+import de.dataelementhub.model.handler.element.section.MemberHandler;
 import de.dataelementhub.model.handler.element.section.SlotHandler;
 import de.dataelementhub.model.handler.element.section.ValueDomainHandler;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.UUID;
@@ -182,18 +185,39 @@ public class DataElementHandler extends ElementHandler {
     }
 
     final boolean autoCommit = CtxUtil.disableAutoCommit(ctx);
+    List<ScopedIdentifierHierarchy> scopedIdentifierHierarchyList = null;
+    final ScopedIdentifier previousScopedIdentifier;
     //update scopedIdentifier if status != DRAFT
-    if (previousDataElement.getIdentification().getStatus() != Status.DRAFT) {
-
+    if (previousDataElement.getIdentification().getStatus() == Status.DRAFT) {
+      previousScopedIdentifier = IdentificationHandler.getScopedIdentifier(ctx,
+          previousDataElement.getIdentification().getUrn());
+      scopedIdentifierHierarchyList
+          = MemberHandler.getHierarchyEntries(ctx, previousScopedIdentifier);
+    } else {
       ScopedIdentifier scopedIdentifier =
           IdentificationHandler.update(ctx, userId, dataElement.getIdentification(),
               ElementHandler.getIdentifiedElementRecord(ctx, dataElement.getIdentification())
                   .getId());
       dataElement.setIdentification(IdentificationHandler.convert(ctx, scopedIdentifier));
+      previousScopedIdentifier = null;
     }
 
     delete(ctx, userId, previousDataElement.getIdentification().getUrn());
     create(ctx, userId, dataElement);
+
+    if (scopedIdentifierHierarchyList != null) {
+      ScopedIdentifier newScopedIdentifier = IdentificationHandler.getScopedIdentifier(ctx,
+          dataElement.getIdentification().getUrn());
+      scopedIdentifierHierarchyList.forEach(sih -> {
+        if (sih.getSuperId() == previousScopedIdentifier.getId()) {
+          sih.setSuperId(newScopedIdentifier.getId());
+        }
+        if (sih.getSubId() == previousScopedIdentifier.getId()) {
+          sih.setSubId(newScopedIdentifier.getId());
+        }
+      });
+      MemberHandler.addHierarchyEntries(ctx, scopedIdentifierHierarchyList);
+    }
 
     CtxUtil.commitAndSetAutoCommit(ctx, autoCommit);
     return dataElement.getIdentification();
