@@ -5,7 +5,6 @@ import static java.util.stream.Collectors.toList;
 import de.dataelementhub.dal.jooq.enums.ElementType;
 import de.dataelementhub.dal.jooq.enums.Status;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
-import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifierHierarchy;
 import de.dataelementhub.dal.jooq.tables.records.IdentifiedElementRecord;
 import de.dataelementhub.model.CtxUtil;
 import de.dataelementhub.model.dto.element.DataElementGroup;
@@ -95,16 +94,8 @@ public class DataElementGroupHandler extends ElementHandler {
       DataElementGroup dataElementGroup, DataElementGroup previousDataElementGroup)
       throws IllegalAccessException {
 
-    List<ScopedIdentifierHierarchy> scopedIdentifierHierarchyList = null;
-    final ScopedIdentifier previousScopedIdentifier;
-
     //update scopedIdentifier if status != DRAFT
-    if (previousDataElementGroup.getIdentification().getStatus() == Status.DRAFT) {
-      previousScopedIdentifier = IdentificationHandler.getScopedIdentifier(ctx,
-          previousDataElementGroup.getIdentification().getUrn());
-      scopedIdentifierHierarchyList
-          = MemberHandler.getHierarchyEntries(ctx, previousScopedIdentifier);
-    } else {
+    if (previousDataElementGroup.getIdentification().getStatus() != Status.DRAFT) {
       ScopedIdentifier scopedIdentifier =
           IdentificationHandler.update(ctx, userId, dataElementGroup.getIdentification(),
               ElementHandler.getIdentifiedElementRecord(ctx, dataElementGroup.getIdentification())
@@ -114,25 +105,10 @@ public class DataElementGroupHandler extends ElementHandler {
       dataElementGroup.getIdentification().setNamespaceId(
           IdentificationHandler.getScopedIdentifier(ctx,
               previousDataElementGroup.getIdentification().getUrn()).getNamespaceId());
-      previousScopedIdentifier = null;
     }
 
     delete(ctx, userId, previousDataElementGroup.getIdentification().getUrn());
     create(ctx, userId, dataElementGroup);
-
-    if (scopedIdentifierHierarchyList != null) {
-      ScopedIdentifier newScopedIdentifier = IdentificationHandler.getScopedIdentifier(ctx,
-          dataElementGroup.getIdentification().getUrn());
-      scopedIdentifierHierarchyList.forEach(sih -> {
-        if (sih.getSuperId() == previousScopedIdentifier.getId()) {
-          sih.setSuperId(newScopedIdentifier.getId());
-        }
-        if (sih.getSubId() == previousScopedIdentifier.getId()) {
-          sih.setSubId(newScopedIdentifier.getId());
-        }
-      });
-      MemberHandler.addHierarchyEntries(ctx, scopedIdentifierHierarchyList);
-    }
 
     return dataElementGroup.getIdentification();
   }
