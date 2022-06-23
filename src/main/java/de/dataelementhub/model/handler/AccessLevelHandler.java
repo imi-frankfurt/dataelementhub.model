@@ -10,6 +10,7 @@ import de.dataelementhub.dal.jooq.tables.records.UserNamespaceAccessRecord;
 import de.dataelementhub.model.handler.element.section.IdentificationHandler;
 import java.util.List;
 import org.jooq.CloseableDSLContext;
+import org.jooq.impl.DSL;
 
 /**
  * Access Level Handler.
@@ -22,12 +23,16 @@ public class AccessLevelHandler {
    */
   public static AccessLevelType getAccessLevelByUserAndNamespaceIdentifier(CloseableDSLContext ctx,
       int userId, int namespaceSiIdentifier) {
-    return ctx.select(USER_NAMESPACE_ACCESS.ACCESS_LEVEL).from(USER_NAMESPACE_ACCESS)
+    return ctx.select(USER_NAMESPACE_ACCESS.ACCESS_LEVEL)
+        .from(USER_NAMESPACE_ACCESS)
         .leftJoin(SCOPED_IDENTIFIER)
         .on(USER_NAMESPACE_ACCESS.NAMESPACE_ID.eq(SCOPED_IDENTIFIER.NAMESPACE_ID))
         .where(SCOPED_IDENTIFIER.IDENTIFIER.eq(namespaceSiIdentifier))
         .and(SCOPED_IDENTIFIER.ELEMENT_TYPE.eq(ElementType.NAMESPACE))
-        .and(USER_NAMESPACE_ACCESS.USER_ID.eq(userId)).fetchOneInto(AccessLevelType.class);
+        .and(USER_NAMESPACE_ACCESS.USER_ID.eq(userId))
+        .orderBy(SCOPED_IDENTIFIER.VERSION.desc())
+        .limit(1)
+        .fetchOneInto(AccessLevelType.class);
   }
 
   /**
@@ -78,6 +83,11 @@ public class AccessLevelHandler {
             .on(USER_NAMESPACE_ACCESS.NAMESPACE_ID.eq(SCOPED_IDENTIFIER.NAMESPACE_ID))
             .where(SCOPED_IDENTIFIER.IDENTIFIER.eq(namespaceSiIdentifier))
             .and(SCOPED_IDENTIFIER.ELEMENT_TYPE.eq(ElementType.NAMESPACE))
+            .and(SCOPED_IDENTIFIER.VERSION.eq(
+                ctx.select(DSL.max(SCOPED_IDENTIFIER.VERSION)).from(SCOPED_IDENTIFIER)
+                    .where(SCOPED_IDENTIFIER.ELEMENT_TYPE.eq(ElementType.NAMESPACE))
+                    .and(SCOPED_IDENTIFIER.IDENTIFIER.eq(namespaceSiIdentifier))
+            ))
             .fetchInto(UserNamespaceAccess.class);
   }
 

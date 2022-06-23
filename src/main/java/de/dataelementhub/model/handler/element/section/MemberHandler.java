@@ -4,7 +4,9 @@ import static de.dataelementhub.dal.jooq.tables.ScopedIdentifier.SCOPED_IDENTIFI
 import static de.dataelementhub.dal.jooq.tables.ScopedIdentifierHierarchy.SCOPED_IDENTIFIER_HIERARCHY;
 
 import de.dataelementhub.dal.jooq.enums.Status;
+import de.dataelementhub.dal.jooq.tables.daos.ScopedIdentifierHierarchyDao;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
+import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifierHierarchy;
 import de.dataelementhub.model.dto.element.Element;
 import de.dataelementhub.model.dto.element.section.Identification;
 import de.dataelementhub.model.dto.element.section.Member;
@@ -220,5 +222,27 @@ public class MemberHandler {
       }
     }
     return oldNewSiId;
+  }
+
+  /**
+   * Get all scoped identifier hierarchy entries for a scoped identifier.
+   * Get those entries where the scoped identifier is either the super or the sub identifier.
+   */
+  public static List<ScopedIdentifierHierarchy> getHierarchyEntries(
+      CloseableDSLContext ctx, ScopedIdentifier scopedIdentifier) {
+    return ctx.selectFrom(SCOPED_IDENTIFIER_HIERARCHY)
+        .where(SCOPED_IDENTIFIER_HIERARCHY.SUB_ID.eq(scopedIdentifier.getId()))
+        .or(SCOPED_IDENTIFIER_HIERARCHY.SUPER_ID.eq(scopedIdentifier.getId()))
+        .fetchInto(ScopedIdentifierHierarchy.class);
+  }
+
+  /**
+   * Add a list of scoped identifier hierarchy entries.
+   */
+  public static void addHierarchyEntries(
+      CloseableDSLContext ctx, List<ScopedIdentifierHierarchy> hierarchyEntries) {
+    ScopedIdentifierHierarchyDao scopedIdentifierHierarchyDao = new ScopedIdentifierHierarchyDao(
+        ctx.configuration());
+    scopedIdentifierHierarchyDao.insert(hierarchyEntries);
   }
 }

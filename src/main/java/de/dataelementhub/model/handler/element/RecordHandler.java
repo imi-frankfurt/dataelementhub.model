@@ -5,6 +5,7 @@ import static java.util.stream.Collectors.toList;
 import de.dataelementhub.dal.jooq.enums.ElementType;
 import de.dataelementhub.dal.jooq.enums.Status;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
+import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifierHierarchy;
 import de.dataelementhub.dal.jooq.tables.records.IdentifiedElementRecord;
 import de.dataelementhub.model.CtxUtil;
 import de.dataelementhub.model.dto.element.Element;
@@ -97,20 +98,42 @@ public class RecordHandler extends ElementHandler {
       throw new IllegalArgumentException();
     }
 
-    //update scopedIdentifier if status != DRAFT
-    if (previousRecord.getIdentification().getStatus() != Status.DRAFT) {
+    List<ScopedIdentifierHierarchy> scopedIdentifierHierarchyList = null;
+    final ScopedIdentifier previousScopedIdentifier;
 
+    //update scopedIdentifier if status != DRAFT
+    if (previousRecord.getIdentification().getStatus() == Status.DRAFT) {
+      previousScopedIdentifier = IdentificationHandler.getScopedIdentifier(ctx,
+          previousRecord.getIdentification().getUrn());
+      scopedIdentifierHierarchyList
+          = MemberHandler.getHierarchyEntries(ctx, previousScopedIdentifier);
+    } else {
       ScopedIdentifier scopedIdentifier =
           IdentificationHandler.update(ctx, userId, record.getIdentification(),
               ElementHandler.getIdentifiedElementRecord(ctx, record.getIdentification()).getId());
       record.setIdentification(IdentificationHandler.convert(ctx, scopedIdentifier));
 
-      record.getIdentification().setNamespaceId(
-          Integer.parseInt(previousRecord.getIdentification().getUrn().split(":")[1]));
+      record.getIdentification().setNamespaceId(IdentificationHandler.getScopedIdentifier(ctx,
+          previousRecord.getIdentification().getUrn()).getNamespaceId());
+      previousScopedIdentifier = null;
     }
 
     delete(ctx, userId, previousRecord.getIdentification().getUrn());
     create(ctx, userId, record);
+
+    if (scopedIdentifierHierarchyList != null) {
+      ScopedIdentifier newScopedIdentifier = IdentificationHandler.getScopedIdentifier(ctx,
+          record.getIdentification().getUrn());
+      scopedIdentifierHierarchyList.forEach(sih -> {
+        if (sih.getSuperId() == previousScopedIdentifier.getId()) {
+          sih.setSuperId(newScopedIdentifier.getId());
+        }
+        if (sih.getSubId() == previousScopedIdentifier.getId()) {
+          sih.setSubId(newScopedIdentifier.getId());
+        }
+      });
+      MemberHandler.addHierarchyEntries(ctx, scopedIdentifierHierarchyList);
+    }
 
     return record.getIdentification();
   }
