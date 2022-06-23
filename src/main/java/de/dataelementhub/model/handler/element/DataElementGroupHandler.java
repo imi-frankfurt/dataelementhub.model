@@ -18,11 +18,13 @@ import de.dataelementhub.model.handler.element.section.MemberHandler;
 import de.dataelementhub.model.handler.element.section.SlotHandler;
 import java.util.List;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 import org.jooq.CloseableDSLContext;
 
 /**
  * Dataelement Group Handler.
  */
+@Slf4j
 public class DataElementGroupHandler extends ElementHandler {
 
   /**
@@ -167,9 +169,13 @@ public class DataElementGroupHandler extends ElementHandler {
         dataElementGroup.getIdentification()
             .setNamespaceId(scopedIdentifier.getNamespaceId());
       }
-      delete(ctx, userId, identification.getUrn());
-      ScopedIdentifier si = create(ctx, userId, dataElementGroup);
-      MemberHandler.updateMembers(ctx, si);
+      try {
+        delete(ctx, userId, identification.getUrn());
+        ScopedIdentifier si = create(ctx, userId, dataElementGroup);
+        MemberHandler.updateMembers(ctx, si);
+      } catch (IllegalStateException e) {
+        log.debug("No need to delete already outdated element.");
+      }
     }
     return identification;
   }
