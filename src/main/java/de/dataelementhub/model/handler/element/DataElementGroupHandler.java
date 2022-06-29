@@ -18,11 +18,13 @@ import de.dataelementhub.model.handler.element.section.MemberHandler;
 import de.dataelementhub.model.handler.element.section.SlotHandler;
 import java.util.List;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 import org.jooq.CloseableDSLContext;
 
 /**
  * Dataelement Group Handler.
  */
+@Slf4j
 public class DataElementGroupHandler extends ElementHandler {
 
   /**
@@ -146,8 +148,18 @@ public class DataElementGroupHandler extends ElementHandler {
   public static Identification updateMembers(CloseableDSLContext ctx, int userId,
       ScopedIdentifier scopedIdentifier) {
     Identification identification = IdentificationHandler.convert(ctx, scopedIdentifier);
-    DataElementGroup dataElementGroup = get(ctx, userId, identification);
+
+    for (Member member : MemberHandler.get(ctx, identification)) {
+      if (member.getElementUrn().contains("dataelementgroup") || member.getElementUrn()
+          .contains("record")) {
+        ScopedIdentifier memberScopedIdentifier = IdentificationHandler.getScopedIdentifier(ctx,
+            member.getElementUrn());
+        updateMembers(ctx, userId, memberScopedIdentifier);
+      }
+    }
+
     if (MemberHandler.newMemberVersionExists(ctx, scopedIdentifier)) {
+      DataElementGroup dataElementGroup = get(ctx, userId, identification);
       if (dataElementGroup.getIdentification().getStatus() != Status.DRAFT) {
         ScopedIdentifier newsScopedIdentifier =
             IdentificationHandler.update(ctx, userId, identification,
@@ -157,10 +169,14 @@ public class DataElementGroupHandler extends ElementHandler {
         dataElementGroup.getIdentification()
             .setNamespaceId(scopedIdentifier.getNamespaceId());
       }
-      delete(ctx, userId, identification.getUrn());
-      ScopedIdentifier si = create(ctx, userId, dataElementGroup);
-      MemberHandler.updateMembers(ctx, si);
+      try {
+        delete(ctx, userId, identification.getUrn());
+        ScopedIdentifier si = create(ctx, userId, dataElementGroup);
+        MemberHandler.updateMembers(ctx, si);
+      } catch (IllegalStateException e) {
+        log.debug("No need to delete already outdated element.");
+      }
     }
-    return dataElementGroup.getIdentification();
+    return identification;
   }
 }

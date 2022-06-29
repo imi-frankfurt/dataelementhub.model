@@ -18,11 +18,13 @@ import de.dataelementhub.model.handler.element.section.MemberHandler;
 import de.dataelementhub.model.handler.element.section.SlotHandler;
 import java.util.List;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 import org.jooq.CloseableDSLContext;
 
 /**
  * Record Handler.
  */
+@Slf4j
 public class RecordHandler extends ElementHandler {
 
   /**
@@ -147,8 +149,8 @@ public class RecordHandler extends ElementHandler {
   public static Identification updateMembers(CloseableDSLContext ctx, int userId,
       ScopedIdentifier scopedIdentifier) {
     Identification identification = IdentificationHandler.convert(ctx, scopedIdentifier);
-    Record record = get(ctx, userId, identification);
     if (MemberHandler.newMemberVersionExists(ctx, scopedIdentifier)) {
+      Record record = get(ctx, userId, identification);
       if (record.getIdentification().getStatus() != Status.DRAFT) {
         ScopedIdentifier newsScopedIdentifier =
             IdentificationHandler.update(ctx, userId, identification,
@@ -158,10 +160,14 @@ public class RecordHandler extends ElementHandler {
         record.getIdentification()
             .setNamespaceId(scopedIdentifier.getNamespaceId());
       }
-      delete(ctx, userId, identification.getUrn());
-      ScopedIdentifier si = create(ctx, userId, record);
-      MemberHandler.updateMembers(ctx, si);
+      try {
+        delete(ctx, userId, identification.getUrn());
+        ScopedIdentifier si = create(ctx, userId, record);
+        MemberHandler.updateMembers(ctx, si);
+      } catch (IllegalStateException e) {
+        log.debug("No need to delete already outdated element.");
+      }
     }
-    return record.getIdentification();
+    return identification;
   }
 }
