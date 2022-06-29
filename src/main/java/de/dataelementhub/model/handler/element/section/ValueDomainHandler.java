@@ -142,6 +142,13 @@ public class ValueDomainHandler extends ElementHandler {
       throw new IllegalAccessException("User has no write access to namespace.");
     }
 
+    if (valueDomain.getType().equals(ValueDomain.TYPE_ENUMERATED)
+        && valueDomain.getIdentification().getStatus() == Status.RELEASED && (
+        valueDomain.getPermittedValues() == null || valueDomain.getPermittedValues().isEmpty())) {
+      throw new IllegalArgumentException(
+          "Can't create released enumerated value domain without permitted values.");
+    }
+
     final boolean autoCommit = CtxUtil.disableAutoCommit(ctx);
     de.dataelementhub.dal.jooq.tables.pojos.Element element = convert(valueDomain);
 
