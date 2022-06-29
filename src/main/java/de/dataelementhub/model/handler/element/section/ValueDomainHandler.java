@@ -177,13 +177,20 @@ public class ValueDomainHandler extends ElementHandler {
   }
 
   /**
-   * Update a value domain.
-   * Currently only working on drafts.
+   * Update a value domain. Currently only working on drafts.
    */
   public static Identification update(CloseableDSLContext ctx, int userId, ValueDomain valueDomain,
       ValueDomain oldValueDomain) throws NoSuchMethodException, IllegalAccessException {
+
     if (oldValueDomain.getIdentification().getStatus() == Status.DRAFT
         || oldValueDomain.getIdentification().getStatus() == Status.STAGED) {
+
+      if (valueDomain.getIdentification().getStatus() == Status.RELEASED && valueDomain.getType()
+          .equals(ValueDomain.TYPE_ENUMERATED) && (valueDomain.getPermittedValues() == null
+          || valueDomain.getPermittedValues().isEmpty())) {
+        throw new IllegalArgumentException("Can't release value domain without permitted values");
+      }
+
       delete(ctx, userId, valueDomain.getIdentification().getUrn());
       create(ctx, userId, valueDomain);
       return valueDomain.getIdentification();
