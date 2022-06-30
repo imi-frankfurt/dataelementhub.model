@@ -217,15 +217,13 @@ public class NamespaceService {
   public void release(CloseableDSLContext ctx, int userId, String urn) {
     Identification identification = IdentificationHandler.fromUrn(ctx, urn);
 
-    if (IdentificationHandler.canBeReleased(ctx, userId, identification)) {
-      if (identification.getElementType() == ElementType.NAMESPACE) {
-        IdentificationHandler.updateStatus(ctx, userId, identification, Status.RELEASED);
-      } else {
-        throw new IllegalArgumentException(
-            "Element Type is not supported: " + identification.getElementType());
-      }
+    IdentificationHandler.canBeReleased(ctx, userId, identification);
+
+    if (identification.getElementType() == ElementType.NAMESPACE) {
+      IdentificationHandler.updateStatus(ctx, userId, identification, Status.RELEASED);
     } else {
-      throw new IllegalStateException("Namespace is not released. Element can not be released.");
+      throw new IllegalArgumentException(
+          "Element Type is not supported: " + identification.getElementType());
     }
   }
 }

@@ -409,7 +409,7 @@ public class IdentificationHandler {
   /**
    * Check if the element belonging to an identification can be released.
    */
-  public static boolean canBeReleased(CloseableDSLContext ctx, int userId,
+  public static void canBeReleased(CloseableDSLContext ctx, int userId,
       Identification identification) {
     if (identification == null) {
       throw new NoSuchElementException();
@@ -440,8 +440,6 @@ public class IdentificationHandler {
         throw new IllegalStateException("Namespace is not released. Element can not be released.");
       }
     }
-
-    return true;
   }
 
   /**

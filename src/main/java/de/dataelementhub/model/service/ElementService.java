@@ -271,25 +271,26 @@ public class ElementService {
   public void release(CloseableDSLContext ctx, int userId, String urn) {
     Identification identification = IdentificationHandler.fromUrn(ctx, urn);
 
-    if (IdentificationHandler.canBeReleased(ctx, userId, identification)) {
-      switch (identification.getElementType()) {
-        case DATAELEMENT:
+    IdentificationHandler.canBeReleased(ctx, userId, identification);
+
+    switch (identification.getElementType()) {
+      case DATAELEMENT:
+      case DESCRIBED_VALUE_DOMAIN:
+      case ENUMERATED_VALUE_DOMAIN:
+      case DEFINED_VALUE_DOMAIN:
+        IdentificationHandler.updateStatus(ctx, userId, identification, Status.RELEASED);
+        break;
+      case DATAELEMENTGROUP:
+      case RECORD:
+        if (MemberHandler.allSubIdsAreReleased(ctx, identification)) {
           IdentificationHandler.updateStatus(ctx, userId, identification, Status.RELEASED);
-          break;
-        case DATAELEMENTGROUP:
-        case RECORD:
-          if (MemberHandler.allSubIdsAreReleased(ctx, identification)) {
-            IdentificationHandler.updateStatus(ctx, userId, identification, Status.RELEASED);
-          } else {
-            throw new IllegalStateException("Not all members are released");
-          }
-          break;
-        default:
-          throw new IllegalArgumentException(
-              "Element Type is not supported: " + identification.getElementType());
-      }
-    } else {
-      throw new IllegalStateException("Namespace is not released. Element can not be released.");
+        } else {
+          throw new IllegalStateException("Not all members are released");
+        }
+        break;
+      default:
+        throw new IllegalArgumentException(
+            "Element Type is not supported: " + identification.getElementType());
     }
   }
 
