@@ -55,8 +55,8 @@ public class DataElementHandler extends ElementHandler {
     } else if (dataElement.getValueDomainUrn() != null && !dataElement.getValueDomainUrn()
         .isEmpty()) {
       // If value domain urn is used, check if it is of an allowed type (enumerated or described vd)
-      Identification valueDomainIdentification =
-      IdentificationHandler.fromUrn(ctx, dataElement.getValueDomainUrn());
+      Identification valueDomainIdentification = IdentificationHandler.fromUrn(ctx,
+          dataElement.getValueDomainUrn());
       if (valueDomainIdentification == null) {
         throw new NoSuchElementException(
             "ValueDomainUrn: " + dataElement.getValueDomainUrn() + " does not exist!");
