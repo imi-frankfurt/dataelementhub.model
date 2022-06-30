@@ -142,6 +142,13 @@ public class ValueDomainHandler extends ElementHandler {
       throw new IllegalAccessException("User has no write access to namespace.");
     }
 
+    if (valueDomain.getType().equals(ValueDomain.TYPE_ENUMERATED)
+        && valueDomain.getIdentification().getStatus() == Status.RELEASED && (
+        valueDomain.getPermittedValues() == null || valueDomain.getPermittedValues().isEmpty())) {
+      throw new IllegalArgumentException(
+          "Can't create released enumerated value domain without permitted values.");
+    }
+
     final boolean autoCommit = CtxUtil.disableAutoCommit(ctx);
     de.dataelementhub.dal.jooq.tables.pojos.Element element = convert(valueDomain);
 
@@ -177,13 +184,20 @@ public class ValueDomainHandler extends ElementHandler {
   }
 
   /**
-   * Update a value domain.
-   * Currently only working on drafts.
+   * Update a value domain. Currently only working on drafts.
    */
   public static Identification update(CloseableDSLContext ctx, int userId, ValueDomain valueDomain,
       ValueDomain oldValueDomain) throws NoSuchMethodException, IllegalAccessException {
+
     if (oldValueDomain.getIdentification().getStatus() == Status.DRAFT
         || oldValueDomain.getIdentification().getStatus() == Status.STAGED) {
+
+      if (valueDomain.getIdentification().getStatus() == Status.RELEASED && valueDomain.getType()
+          .equals(ValueDomain.TYPE_ENUMERATED) && (valueDomain.getPermittedValues() == null
+          || valueDomain.getPermittedValues().isEmpty())) {
+        throw new IllegalArgumentException("Can't release value domain without permitted values");
+      }
+
       delete(ctx, userId, valueDomain.getIdentification().getUrn());
       create(ctx, userId, valueDomain);
       return valueDomain.getIdentification();
