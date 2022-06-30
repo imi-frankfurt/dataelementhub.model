@@ -1,6 +1,7 @@
 package de.dataelementhub.model.handler.element.section;
 
 import static de.dataelementhub.dal.jooq.Routines.getScopedIdentifierByUrn;
+import static de.dataelementhub.dal.jooq.Routines.getValueDomainScopedIdentifierByDataelementUrn;
 import static de.dataelementhub.dal.jooq.Tables.ELEMENT;
 import static de.dataelementhub.dal.jooq.Tables.SCOPED_IDENTIFIER;
 import static org.jooq.impl.DSL.noCondition;
@@ -412,6 +413,16 @@ public class IdentificationHandler {
       Identification identification) {
     if (identification == null) {
       throw new NoSuchElementException();
+    }
+
+    if (identification.getElementType() == ElementType.DATAELEMENT) {
+      ScopedIdentifier valueDomainScopedIdentifier = ctx.selectQuery(
+          getValueDomainScopedIdentifierByDataelementUrn(identification.getUrn()))
+              .fetchOneInto(ScopedIdentifier.class);
+      if (valueDomainScopedIdentifier.getStatus() != Status.RELEASED) {
+        throw new IllegalStateException(
+            "Value domain is not released. Element can not be released.");
+      }
     }
 
     if (!identification.getStatus().equals(Status.STAGED) && !identification.getStatus()

@@ -128,6 +128,12 @@ public class DataElementHandler extends ElementHandler {
 
     ScopedIdentifier scopedIdentifier =
         IdentificationHandler.create(ctx, userId, dataElement.getIdentification(), element.getId());
+    Identification identification = IdentificationHandler.convert(ctx, scopedIdentifier);
+
+    if (scopedIdentifier.getStatus() == Status.RELEASED) {
+      IdentificationHandler.canBeReleased(ctx, userId, identification);
+    }
+
     DefinitionHandler.create(ctx, dataElement.getDefinitions(), element.getId(),
         scopedIdentifier.getId());
     if (dataElement.getSlots() != null) {
@@ -203,7 +209,11 @@ public class DataElementHandler extends ElementHandler {
           IdentificationHandler.update(ctx, userId, dataElement.getIdentification(),
               ElementHandler.getIdentifiedElementRecord(ctx, dataElement.getIdentification())
                   .getId());
-      dataElement.setIdentification(IdentificationHandler.convert(ctx, scopedIdentifier));
+      Identification identification = IdentificationHandler.convert(ctx, scopedIdentifier);
+      if (identification.getStatus() == Status.RELEASED) {
+        IdentificationHandler.canBeReleased(ctx, userId, identification);
+      }
+      dataElement.setIdentification(identification);
       previousScopedIdentifier = null;
     }
 
