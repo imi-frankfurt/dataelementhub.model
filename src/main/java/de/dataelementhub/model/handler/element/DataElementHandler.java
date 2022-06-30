@@ -209,10 +209,10 @@ public class DataElementHandler extends ElementHandler {
       ScopedIdentifier newScopedIdentifier = IdentificationHandler.getScopedIdentifier(ctx,
           dataElement.getIdentification().getUrn());
       scopedIdentifierHierarchyList.forEach(sih -> {
-        if (sih.getSuperId() == previousScopedIdentifier.getId()) {
+        if (Objects.equals(sih.getSuperId(), previousScopedIdentifier.getId())) {
           sih.setSuperId(newScopedIdentifier.getId());
         }
-        if (sih.getSubId() == previousScopedIdentifier.getId()) {
+        if (Objects.equals(sih.getSubId(), previousScopedIdentifier.getId())) {
           sih.setSubId(newScopedIdentifier.getId());
         }
       });
