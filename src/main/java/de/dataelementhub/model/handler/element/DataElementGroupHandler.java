@@ -58,10 +58,9 @@ public class DataElementGroupHandler extends ElementHandler {
     }
 
     if (dataElementGroup.getIdentification().getStatus() == Status.RELEASED) {
-      if (members.stream().anyMatch(m -> m.getIdentification().getStatus() == Status.DRAFT
-          || m.getIdentification().getStatus() == Status.STAGED)) {
+      if (members.stream().anyMatch(m -> m.getIdentification().getStatus() == Status.DRAFT)) {
         throw new IllegalArgumentException(
-            "Released DataelementGroup may not contain draft or staged members.");
+            "Released DataelementGroup may not contain draft members.");
       }
     }
 

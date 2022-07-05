@@ -189,8 +189,7 @@ public class ValueDomainHandler extends ElementHandler {
   public static Identification update(CloseableDSLContext ctx, int userId, ValueDomain valueDomain,
       ValueDomain oldValueDomain) throws NoSuchMethodException, IllegalAccessException {
 
-    if (oldValueDomain.getIdentification().getStatus() == Status.DRAFT
-        || oldValueDomain.getIdentification().getStatus() == Status.STAGED) {
+    if (oldValueDomain.getIdentification().getStatus() == Status.DRAFT) {
 
       if (valueDomain.getIdentification().getStatus() == Status.RELEASED && valueDomain.getType()
           .equals(ValueDomain.TYPE_ENUMERATED) && (valueDomain.getPermittedValues() == null
