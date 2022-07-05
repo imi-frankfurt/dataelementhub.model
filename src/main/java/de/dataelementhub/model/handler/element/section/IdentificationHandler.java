@@ -352,8 +352,7 @@ public class IdentificationHandler {
       throws IllegalArgumentException {
     ScopedIdentifier scopedIdentifier = getScopedIdentifier(ctx, urn);
 
-    if (scopedIdentifier.getStatus() == Status.DRAFT
-        || scopedIdentifier.getStatus() == Status.STAGED) {
+    if (scopedIdentifier.getStatus() == Status.DRAFT) {
       ctx.deleteFrom(SCOPED_IDENTIFIER)
           .where(SCOPED_IDENTIFIER.ID.eq(scopedIdentifier.getId()))
           .execute();
@@ -425,9 +424,8 @@ public class IdentificationHandler {
       }
     }
 
-    if (!identification.getStatus().equals(Status.STAGED) && !identification.getStatus()
-        .equals(Status.DRAFT)) {
-      throw new IllegalStateException("Neither a draft nor staged");
+    if (identification.getStatus().equals(Status.OUTDATED)) {
+      throw new IllegalStateException("OUTDATED elements can not be released.");
     }
 
     // No need to try to check a namespaces namespace, because that would not make sense.
@@ -435,8 +433,7 @@ public class IdentificationHandler {
       Namespace namespace = NamespaceHandler.getByUrn(ctx, userId,
           identification.getNamespaceUrn());
 
-      if (namespace.getIdentification().getStatus().equals(Status.STAGED)
-          || namespace.getIdentification().getStatus().equals(Status.DRAFT)) {
+      if (namespace.getIdentification().getStatus().equals(Status.DRAFT)) {
         throw new IllegalStateException("Namespace is not released. Element can not be released.");
       }
     }

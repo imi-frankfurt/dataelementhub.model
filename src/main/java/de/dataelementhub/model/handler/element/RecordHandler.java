@@ -57,10 +57,9 @@ public class RecordHandler extends ElementHandler {
     }
 
     if (record.getIdentification().getStatus() == Status.RELEASED) {
-      if (members.stream().anyMatch(m -> m.getIdentification().getStatus() == Status.DRAFT
-          || m.getIdentification().getStatus() == Status.STAGED)) {
+      if (members.stream().anyMatch(m -> m.getIdentification().getStatus() == Status.DRAFT)) {
         throw new IllegalArgumentException(
-            "Released Record may not contain draft or staged members.");
+            "Released Record may not contain draft members.");
       }
     }
 
