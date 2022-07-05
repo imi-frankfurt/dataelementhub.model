@@ -362,7 +362,7 @@ public class NamespaceHandler extends ElementHandler {
 
   /**
    * Returns all writable namespaces (which are not hidden or which are writable for the user as
-   * defined in the "user_namespace_access" table.
+   * defined in the "user_namespace_access" table).
    */
   public static List<Namespace> getWritableNamespaces(CloseableDSLContext ctx, int userId) {
     return getNamespacesByAccessLevel(ctx, userId, AccessLevelType.WRITE);

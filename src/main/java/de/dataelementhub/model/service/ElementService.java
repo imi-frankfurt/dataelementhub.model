@@ -198,9 +198,7 @@ public class ElementService {
       // no access rights to the namespace. TODO: Solve this in a sane way.
       Namespace namespace = NamespaceHandler.getByUrn(ctx, userId,
           identification.getNamespaceUrn());
-      List<de.dataelementhub.model.dto.ElementRelation> elementRelations =
-          ElementRelationHandler.getElementRelations(ctx, elementUrn, null);
-      return elementRelations;
+      return ElementRelationHandler.getElementRelations(ctx, elementUrn, null);
     }
   }
 
@@ -214,8 +212,7 @@ public class ElementService {
       // no access rights to the namespace. TODO: Solve this in a sane way.
       Namespace namespace = NamespaceHandler.getByUrn(ctx, userId,
           identification.getNamespaceUrn());
-      List<Member> members = MemberHandler.get(ctx, identification);
-      return members;
+      return MemberHandler.get(ctx, identification);
     } catch (NumberFormatException e) {
       throw new NoSuchElementException();
     }
@@ -314,7 +311,7 @@ public class ElementService {
         return RecordHandler.updateMembers(ctx, userId, scopedIdentifier).getUrn();
       default:
         throw new IllegalArgumentException("Element Type is not supported. "
-            + "Only dataELementGroup and record are accepted!");
+            + "Only dataElementGroup and record are accepted!");
     }
   }
 

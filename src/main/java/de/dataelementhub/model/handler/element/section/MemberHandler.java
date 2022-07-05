@@ -146,9 +146,8 @@ public class MemberHandler {
       Identification identification) {
     List<Integer> subIds = getSubIds(ctx, identification);
     AtomicReference<Boolean> allReleased = new AtomicReference<>(true);
-    List<de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier> scopedIdentifiers =
-        new ArrayList<>();
-    scopedIdentifiers.addAll(getScopedIdentifiers(ctx, subIds));
+    List<ScopedIdentifier> scopedIdentifiers =
+        new ArrayList<>(getScopedIdentifiers(ctx, subIds));
     scopedIdentifiers.forEach(
         (scopedIdentifier) -> {
           if (scopedIdentifier.getStatus() != Status.RELEASED) {
@@ -174,7 +173,7 @@ public class MemberHandler {
       ScopedIdentifier scopedIdentifier) {
     List<ScopedIdentifier> currentMembersScopedIdentifiers =
         getMembersScopedIdentifiers(ctx, scopedIdentifier);
-    Map<Integer, Integer> oldNewSiId = new HashMap<Integer, Integer>();
+    Map<Integer, Integer> oldNewSiId = new HashMap<>();
     for (ScopedIdentifier memberSi : currentMembersScopedIdentifiers) {
       Integer newestVersionSiId = ctx.selectFrom(SCOPED_IDENTIFIER)
           .where(SCOPED_IDENTIFIER.NAMESPACE_ID.eq(memberSi.getNamespaceId()))
@@ -202,7 +201,7 @@ public class MemberHandler {
       CloseableDSLContext ctx, ScopedIdentifier scopedIdentifier) {
     List<ScopedIdentifier> currentMembersScopedIdentifiers =
         getMembersScopedIdentifiers(ctx, scopedIdentifier);
-    Map<Integer, Integer> oldNewSiId = new HashMap<Integer, Integer>();
+    Map<Integer, Integer> oldNewSiId = new HashMap<>();
     for (ScopedIdentifier memberSi : currentMembersScopedIdentifiers) {
       Integer newestVersionSiId = ctx.selectFrom(SCOPED_IDENTIFIER)
           .where(SCOPED_IDENTIFIER.NAMESPACE_ID.eq(memberSi.getNamespaceId()))

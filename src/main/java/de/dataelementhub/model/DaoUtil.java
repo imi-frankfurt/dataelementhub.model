@@ -28,7 +28,7 @@ public class DaoUtil {
   public static final List<AccessLevelType> WRITE_ACCESS_TYPES =
       Collections.unmodifiableList(Arrays.asList(AccessLevelType.WRITE, AccessLevelType.ADMIN));
   public static final List<AccessLevelType> ADMIN_ACCESS_TYPES =
-      Collections.unmodifiableList(Arrays.asList(AccessLevelType.ADMIN));
+      Collections.singletonList(AccessLevelType.ADMIN);
 
   /**
    * Returns a condition which checks whether a user is able to access and see a namespace or not.

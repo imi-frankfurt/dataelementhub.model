@@ -31,7 +31,7 @@ import org.jooq.impl.DSL;
 public class IdentificationHandler {
 
   /**
-   * Convert a ScopedIdentifier object of DataElementHub DAL to a Identification object of
+   * Convert a ScopedIdentifier object of DataElementHub DAL to an Identification object of
    * DataElementHub Model.
    */
   public static Identification convert(CloseableDSLContext ctx, ScopedIdentifier scopedIdentifier) {
@@ -237,7 +237,7 @@ public class IdentificationHandler {
   }
 
   /**
-   * Convert a urn to a Identification object.
+   * Convert a urn to an Identification object.
    */
   public static Identification fromUrn(CloseableDSLContext ctx, String urn) {
     ScopedIdentifier scopedIdentifier;
