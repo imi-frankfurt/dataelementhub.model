@@ -204,6 +204,7 @@ public class DataElementHandler extends ElementHandler {
     List<ScopedIdentifierHierarchy> scopedIdentifierHierarchyList = null;
     final ScopedIdentifier previousScopedIdentifier;
     //update scopedIdentifier if status != DRAFT
+    Identification releasedElementIdentification = new Identification();
     if (previousDataElement.getIdentification().getStatus() == Status.DRAFT) {
       previousScopedIdentifier = IdentificationHandler.getScopedIdentifier(ctx,
           previousDataElement.getIdentification().getUrn());
@@ -214,21 +215,22 @@ public class DataElementHandler extends ElementHandler {
           IdentificationHandler.update(ctx, userId, dataElement.getIdentification(),
               ElementHandler.getIdentifiedElementRecord(ctx, dataElement.getIdentification())
                   .getId());
-      Identification identification = IdentificationHandler.convert(ctx, scopedIdentifier);
-      if (identification.getStatus() == Status.RELEASED) {
-        try {
-          IdentificationHandler.canBeReleased(ctx, userId, identification);
-        } catch (IllegalStateException e) {
-          CtxUtil.rollbackAndSetAutoCommit(ctx, autoCommit);
-          throw e;
-        }
-      }
-      dataElement.setIdentification(identification);
+      releasedElementIdentification = IdentificationHandler.convert(ctx, scopedIdentifier);
+      dataElement.setIdentification(releasedElementIdentification);
       previousScopedIdentifier = null;
     }
 
     delete(ctx, userId, previousDataElement.getIdentification().getUrn());
     create(ctx, userId, dataElement);
+
+    if (releasedElementIdentification.getStatus() == Status.RELEASED) {
+      try {
+        IdentificationHandler.canBeReleased(ctx, userId, releasedElementIdentification);
+      } catch (IllegalStateException e) {
+        CtxUtil.rollbackAndSetAutoCommit(ctx, autoCommit);
+        throw e;
+      }
+    }
 
     if (scopedIdentifierHierarchyList != null) {
       ScopedIdentifier newScopedIdentifier = IdentificationHandler.getScopedIdentifier(ctx,
