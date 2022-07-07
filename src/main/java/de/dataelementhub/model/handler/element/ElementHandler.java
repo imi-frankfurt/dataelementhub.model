@@ -182,7 +182,6 @@ public abstract class ElementHandler {
 
     switch (element.getIdentification().getStatus()) {
       case DRAFT:
-      case STAGED:
         IdentificationHandler
             .deleteDraftIdentifier(ctx, userId, element.getIdentification().getUrn());
         break;
@@ -211,7 +210,6 @@ public abstract class ElementHandler {
 
     switch (element.getIdentification().getStatus()) {
       case DRAFT:
-      case STAGED:
         IdentificationHandler
             .deleteDraftIdentifier(ctx, userId, element.getIdentification().getUrn());
         break;

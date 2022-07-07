@@ -68,8 +68,7 @@ public class ImportHandler {
   /** list all files inside a defined directory.*/
   public static File[] getAllFilesInFolder(String folder) {
     File inputFolder = new File(folder);
-    File[] listOfFiles = inputFolder.listFiles();
-    return listOfFiles;
+    return inputFolder.listFiles();
   }
 
   /** Validate all files in a folder against schema and throw an exception
@@ -211,7 +210,7 @@ public class ImportHandler {
         .fetchOneInto(ScopedIdentifier.class);
     String namespaceUrn = IdentificationHandler.toUrn(ctx, scopedIdentifier);
     stagedElementsIds.forEach(stagedElementId -> {
-      StagedElement stagedElement = null;
+      StagedElement stagedElement;
       stagedElement = StagedElementHandler.getStagedElement(ctx, importId,
           userId, stagedElementId);
       try {
@@ -241,8 +240,8 @@ public class ImportHandler {
       stagingProcess =
           countNotNullEntriesAndAllEntries.value2() / importRecord.getNumberOfElements();
     } catch (Exception e) {
-      stagingProcess = (double) 0;
-      conversionProcess = (double) 0;
+      stagingProcess = 0;
+      conversionProcess = 0;
     }
     importInfo.setId(importRecord.getId());
     importInfo.setStatus(importRecord.getStatus());

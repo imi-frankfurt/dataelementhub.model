@@ -140,7 +140,7 @@ public class NamespaceService {
   }
 
   /**
-   * Get all Members of a given type from the given Namespace Scoped Identifier Identifier.
+   * Get all Members of a given type from the given Namespace Scoped Identifier.
    */
   public List<Member> readNamespaceMembers(
       CloseableDSLContext ctx, int userId, Integer namespaceSiIdentifier,

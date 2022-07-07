@@ -52,7 +52,7 @@ public class ElementPathHandler {
    */
   public static List<List<String>> completePaths(CloseableDSLContext ctx, int userId,
       List<List<String>> startPartialPaths) {
-    List<List<String>> partialPaths = new ArrayList<List<String>>(startPartialPaths);
+    List<List<String>> partialPaths = new ArrayList<>(startPartialPaths);
     for (int i = 0; i < partialPaths.size(); i++) {
       List<String> partialPath = partialPaths.get(i);
       if (partialPath.stream().anyMatch(n ->
