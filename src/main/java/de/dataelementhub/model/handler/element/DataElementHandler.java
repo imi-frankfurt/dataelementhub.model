@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.UUID;
-import org.jooq.CloseableDSLContext;
+import org.jooq.DSLContext;
 
 /**
  * Dataelement Handler.
@@ -36,7 +36,7 @@ public class DataElementHandler extends ElementHandler {
   /**
    * Create a new DataElement and return its new ID.
    */
-  public static ScopedIdentifier create(CloseableDSLContext ctx, int userId,
+  public static ScopedIdentifier create(DSLContext ctx, int userId,
       DataElement dataElement)
       throws IllegalAccessException {
 
@@ -152,7 +152,7 @@ public class DataElementHandler extends ElementHandler {
    * Get a dataelement by its urn.
    */
   public static DataElement get(
-      CloseableDSLContext ctx, int userId, Identification identification) {
+      DSLContext ctx, int userId, Identification identification) {
     String urn = identification.getUrn();
     IdentifiedElementRecord identifiedElementRecord = ElementHandler
         .getIdentifiedElementRecord(ctx, identification);
@@ -173,7 +173,7 @@ public class DataElementHandler extends ElementHandler {
   /**
    * Save an element.
    */
-  public static int saveElement(CloseableDSLContext ctx,
+  public static int saveElement(DSLContext ctx,
       de.dataelementhub.dal.jooq.tables.pojos.Element dataElement) {
 
     return ctx.insertInto(ELEMENT)
@@ -185,7 +185,7 @@ public class DataElementHandler extends ElementHandler {
   /**
    * Update a dataelement.
    */
-  public static Identification update(CloseableDSLContext ctx, int userId, DataElement dataElement,
+  public static Identification update(DSLContext ctx, int userId, DataElement dataElement,
       DataElement previousDataElement) throws IllegalAccessException {
     if (dataElement.getValueDomain() != null) {
       throw new IllegalArgumentException("value domain field has to be empty.");

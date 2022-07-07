@@ -21,7 +21,7 @@ import de.dataelementhub.model.handler.element.section.validation.NumericHandler
 import de.dataelementhub.model.handler.element.section.validation.PermittedValuesHandler;
 import de.dataelementhub.model.handler.element.section.validation.TextHandler;
 import java.util.UUID;
-import org.jooq.CloseableDSLContext;
+import org.jooq.DSLContext;
 
 /**
  * ValueDomain Handler.
@@ -33,7 +33,7 @@ public class ValueDomainHandler extends ElementHandler {
    * Get the Value Domain for an identified element record.
    */
   public static ValueDomain get(
-      CloseableDSLContext ctx, int userId, Identification identification) {
+      DSLContext ctx, int userId, Identification identification) {
     IdentifiedElementRecord identifiedElementRecord = ElementHandler
         .getIdentifiedElementRecord(ctx, identification);
 
@@ -120,7 +120,7 @@ public class ValueDomainHandler extends ElementHandler {
   /**
    * Returns the scoped identifier of the value domain for the given Dataelement.
    */
-  public static ScopedIdentifier getValueDomainScopedIdentifierByElementUrn(CloseableDSLContext ctx,
+  public static ScopedIdentifier getValueDomainScopedIdentifierByElementUrn(DSLContext ctx,
       int userId,
       String dataElementUrn) {
     return ctx.selectQuery(getValueDomainScopedIdentifierByDataelementUrn(dataElementUrn))
@@ -130,7 +130,7 @@ public class ValueDomainHandler extends ElementHandler {
   /**
    * Create a new ValueDomain of DataElementHub DAL with a Value Domain of DataElementHub Model.
    */
-  public static ScopedIdentifier create(CloseableDSLContext ctx, int userId,
+  public static ScopedIdentifier create(DSLContext ctx, int userId,
       ValueDomain valueDomain)
       throws IllegalAccessException {
 
@@ -186,7 +186,7 @@ public class ValueDomainHandler extends ElementHandler {
   /**
    * Update a value domain. Currently only working on drafts.
    */
-  public static Identification update(CloseableDSLContext ctx, int userId, ValueDomain valueDomain,
+  public static Identification update(DSLContext ctx, int userId, ValueDomain valueDomain,
       ValueDomain oldValueDomain) throws NoSuchMethodException, IllegalAccessException {
 
     if (oldValueDomain.getIdentification().getStatus() == Status.DRAFT) {

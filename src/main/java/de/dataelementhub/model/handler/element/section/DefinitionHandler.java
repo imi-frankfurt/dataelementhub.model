@@ -8,7 +8,7 @@ import de.dataelementhub.model.CtxUtil;
 import de.dataelementhub.model.dto.element.section.Definition;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.jooq.CloseableDSLContext;
+import org.jooq.DSLContext;
 
 /**
  * Definition Handler.
@@ -18,7 +18,7 @@ public class DefinitionHandler {
   /**
    * Get all definitions for a scoped identifier.
    */
-  public static List<Definition> get(CloseableDSLContext ctx,
+  public static List<Definition> get(DSLContext ctx,
       int scopedIdentifierId) {
     List<DefinitionRecord> definitionRecords =
         ctx.fetch(DEFINITION,
@@ -100,7 +100,7 @@ public class DefinitionHandler {
   /**
    * Insert a list of definitions for an element.
    */
-  public static void create(CloseableDSLContext ctx, List<Definition> definitions,
+  public static void create(DSLContext ctx, List<Definition> definitions,
       Integer elementId) {
     create(ctx, definitions, elementId, null);
   }
@@ -108,7 +108,7 @@ public class DefinitionHandler {
   /**
    * Insert a list of definitions for an element / scoped identifier.
    */
-  public static void create(CloseableDSLContext ctx, List<Definition> definitions,
+  public static void create(DSLContext ctx, List<Definition> definitions,
       Integer elementId, Integer scopedIdentifierId) {
     final boolean autoCommit = CtxUtil.disableAutoCommit(ctx);
     List<de.dataelementhub.dal.jooq.tables.pojos.Definition> definitionPojos = DefinitionHandler
@@ -124,7 +124,7 @@ public class DefinitionHandler {
   /**
    * Save definitions.
    */
-  public static void saveDefinitions(CloseableDSLContext ctx,
+  public static void saveDefinitions(DSLContext ctx,
       List<de.dataelementhub.dal.jooq.tables.pojos.Definition> definitions) {
     definitions.forEach(d -> ctx.newRecord(DEFINITION, d).store());
   }
@@ -132,7 +132,7 @@ public class DefinitionHandler {
   /**
    * Save definition.
    */
-  public static void saveDefinition(CloseableDSLContext ctx,
+  public static void saveDefinition(DSLContext ctx,
       de.dataelementhub.dal.jooq.tables.pojos.Definition definition) {
     ctx.newRecord(DEFINITION, definition).store();
   }
@@ -140,7 +140,7 @@ public class DefinitionHandler {
   /**
    * Copy definitions from one scoped identifier to another.
    */
-  public static void copyDefinitions(CloseableDSLContext ctx, Integer sourceId, Integer targetId) {
+  public static void copyDefinitions(DSLContext ctx, Integer sourceId, Integer targetId) {
     List<de.dataelementhub.dal.jooq.tables.pojos.Definition> definitions = ctx.selectFrom(
             DEFINITION)
         .where(DEFINITION.SCOPED_IDENTIFIER_ID.eq(sourceId))
@@ -156,7 +156,7 @@ public class DefinitionHandler {
   /**
    * Delete all Definitions belonging to a given element (by element scoped identifier).
    */
-  public static void deleteDefinitionsByElementUrnId(CloseableDSLContext ctx, int userId,
+  public static void deleteDefinitionsByElementUrnId(DSLContext ctx, int userId,
       ScopedIdentifier scopedIdentifier) {
     ctx.deleteFrom(DEFINITION).where(DEFINITION.SCOPED_IDENTIFIER_ID.eq(scopedIdentifier.getId()))
         .execute();
@@ -165,7 +165,7 @@ public class DefinitionHandler {
   /**
    * Update the definitions of an existing element.
    */
-  public static void updateDefinitions(CloseableDSLContext ctx, int userId, String urn,
+  public static void updateDefinitions(DSLContext ctx, int userId, String urn,
       List<Definition> definitions) {
     ScopedIdentifier elementScopedIdentifier = IdentificationHandler.getScopedIdentifier(ctx, urn);
     // Delete the old definitions first because updating can also remove definitions.

@@ -14,7 +14,7 @@ import de.dataelementhub.model.dto.search.SearchRequest;
 import de.dataelementhub.model.handler.element.section.IdentificationHandler;
 import java.util.ArrayList;
 import java.util.List;
-import org.jooq.CloseableDSLContext;
+import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -37,7 +37,7 @@ public class SearchService {
    * Returns search results matching all specifications in searchRequest as a list of
    * DataElementHubElements. If no results found an empty list will be returned.
    */
-  public List<Element> search(CloseableDSLContext ctx, SearchRequest searchRequest, int userId) {
+  public List<Element> search(DSLContext ctx, SearchRequest searchRequest, int userId) {
     List<ScopedIdentifier> scopedIdentifiers = new ArrayList<>();
     if (searchRequest.getElementParts().contains("definition")) {
       scopedIdentifiers.addAll(definitionSearch(ctx, searchRequest, "definition"));
@@ -79,7 +79,7 @@ public class SearchService {
    * Converts a list of scopedIdentifiers to a list of DataElementHub Elements and removes
    * duplicates.
    */
-  public List<Element> scopedIdentifiersToElements(CloseableDSLContext ctx, int userId,
+  public List<Element> scopedIdentifiersToElements(DSLContext ctx, int userId,
       List<ScopedIdentifier> scopedIdentifiers) {
     List<String> idList = new ArrayList<>();
     List<Element> results = new ArrayList<>();
@@ -104,7 +104,7 @@ public class SearchService {
   /**
    * Get scopedIdentifiers for related search results in definition table.
    */
-  public List<ScopedIdentifier> definitionSearch(CloseableDSLContext ctx,
+  public List<ScopedIdentifier> definitionSearch(DSLContext ctx,
       SearchRequest searchRequest, String column) {
     return ctx.select(SCOPED_IDENTIFIER.IDENTIFIER,
             SCOPED_IDENTIFIER.VERSION,
@@ -125,7 +125,7 @@ public class SearchService {
   /**
    * Get scopedIdentifiers for related search results in slot table.
    */
-  public List<ScopedIdentifier> slotSearch(CloseableDSLContext ctx,
+  public List<ScopedIdentifier> slotSearch(DSLContext ctx,
       SearchRequest searchRequest, String column) {
     return ctx.select(SCOPED_IDENTIFIER.IDENTIFIER,
             SCOPED_IDENTIFIER.VERSION,
@@ -146,7 +146,7 @@ public class SearchService {
   /**
    * Get scopedIdentifiers for related search results in concepts table.
    */
-  public List<ScopedIdentifier> conceptsSearch(CloseableDSLContext ctx,
+  public List<ScopedIdentifier> conceptsSearch(DSLContext ctx,
       SearchRequest searchRequest, String column) {
     return ctx.select(SCOPED_IDENTIFIER.IDENTIFIER,
             SCOPED_IDENTIFIER.VERSION,
@@ -168,7 +168,7 @@ public class SearchService {
   /**
    * Get scopedIdentifiers for related search results in element table.
    */
-  public List<ScopedIdentifier> elementSearch(CloseableDSLContext ctx,
+  public List<ScopedIdentifier> elementSearch(DSLContext ctx,
       SearchRequest searchRequest, String column) {
     return ctx.select(SCOPED_IDENTIFIER.IDENTIFIER,
             SCOPED_IDENTIFIER.VERSION,

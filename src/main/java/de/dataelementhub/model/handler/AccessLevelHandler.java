@@ -9,7 +9,7 @@ import de.dataelementhub.dal.jooq.tables.pojos.UserNamespaceAccess;
 import de.dataelementhub.dal.jooq.tables.records.UserNamespaceAccessRecord;
 import de.dataelementhub.model.handler.element.section.IdentificationHandler;
 import java.util.List;
-import org.jooq.CloseableDSLContext;
+import org.jooq.DSLContext;
 import org.jooq.impl.DSL;
 
 /**
@@ -21,7 +21,7 @@ public class AccessLevelHandler {
    * Returns the access level of the given user and namespace.
    * Namespace is given by its identifier.
    */
-  public static AccessLevelType getAccessLevelByUserAndNamespaceIdentifier(CloseableDSLContext ctx,
+  public static AccessLevelType getAccessLevelByUserAndNamespaceIdentifier(DSLContext ctx,
       int userId, int namespaceSiIdentifier) {
     return ctx.select(USER_NAMESPACE_ACCESS.ACCESS_LEVEL)
         .from(USER_NAMESPACE_ACCESS)
@@ -39,7 +39,7 @@ public class AccessLevelHandler {
    * Returns the access level of the given user and namespace.
    * Namespace is given by its urn.
    */
-  public static AccessLevelType getAccessLevelByUserAndNamespaceUrn(CloseableDSLContext ctx,
+  public static AccessLevelType getAccessLevelByUserAndNamespaceUrn(DSLContext ctx,
       int userId, String namespaceUrn) {
     Integer namespaceIdentifier = IdentificationHandler.getNamespaceIdentifierFromUrn(
         namespaceUrn);
@@ -50,7 +50,7 @@ public class AccessLevelHandler {
    * Returns the access level of the given user and namespace.
    * Namespace is given by its database id.
    */
-  public static AccessLevelType getAccessLevelByUserAndNamespaceId(CloseableDSLContext ctx,
+  public static AccessLevelType getAccessLevelByUserAndNamespaceId(DSLContext ctx,
       int userId, int namespaceId) {
     return ctx.select(USER_NAMESPACE_ACCESS.ACCESS_LEVEL).from(USER_NAMESPACE_ACCESS)
         .where(USER_NAMESPACE_ACCESS.NAMESPACE_ID.eq(namespaceId))
@@ -62,7 +62,7 @@ public class AccessLevelHandler {
    * Namespace is given by its id.
    */
   public static UserNamespaceAccessRecord getUserNamespaceAccessTypeRecordByUserAndNamespaceId(
-      CloseableDSLContext ctx, int userId, int namespaceId) {
+      DSLContext ctx, int userId, int namespaceId) {
 
     return
         ctx.selectFrom(USER_NAMESPACE_ACCESS)
@@ -75,7 +75,7 @@ public class AccessLevelHandler {
    * Returns all access rights for a given namespace.
    * Namespace is given by its identifier.
    */
-  public static List<UserNamespaceAccess> getAccessForNamespaceByIdentifier(CloseableDSLContext ctx,
+  public static List<UserNamespaceAccess> getAccessForNamespaceByIdentifier(DSLContext ctx,
       int namespaceSiIdentifier) {
     return
         ctx.select(USER_NAMESPACE_ACCESS.fields()).from(USER_NAMESPACE_ACCESS)
@@ -95,7 +95,7 @@ public class AccessLevelHandler {
    * Returns all access rights for a given namespace.
    * Namespace is given by its database id.
    */
-  public static List<UserNamespaceAccess> getAccessForNamespaceById(CloseableDSLContext ctx,
+  public static List<UserNamespaceAccess> getAccessForNamespaceById(DSLContext ctx,
       int namespaceId) {
     return
         ctx.select(USER_NAMESPACE_ACCESS.fields()).from(USER_NAMESPACE_ACCESS)
@@ -107,7 +107,7 @@ public class AccessLevelHandler {
   /**
    * Insert access for a namespace.
    */
-  public static void setAccessForNamespace(CloseableDSLContext ctx,
+  public static void setAccessForNamespace(DSLContext ctx,
       List<UserNamespaceAccess> accessLevels) {
     accessLevels.forEach(al -> ctx.insertInto(USER_NAMESPACE_ACCESS, USER_NAMESPACE_ACCESS.USER_ID,
             USER_NAMESPACE_ACCESS.NAMESPACE_ID, USER_NAMESPACE_ACCESS.ACCESS_LEVEL)

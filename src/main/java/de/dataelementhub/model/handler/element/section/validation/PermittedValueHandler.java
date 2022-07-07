@@ -18,7 +18,7 @@ import de.dataelementhub.model.handler.element.section.DefinitionHandler;
 import de.dataelementhub.model.handler.element.section.IdentificationHandler;
 import de.dataelementhub.model.handler.element.section.SlotHandler;
 import java.util.UUID;
-import org.jooq.CloseableDSLContext;
+import org.jooq.DSLContext;
 
 /**
  * Permitted Value Handler.
@@ -29,7 +29,7 @@ public class PermittedValueHandler {
    * Get the permitted value for an identifier.
    */
   public static PermittedValue get(
-      CloseableDSLContext ctx, int userId, Identification identification) {
+      DSLContext ctx, int userId, Identification identification) {
     IdentifiedElementRecord identifiedElementRecord = ElementHandler
         .getIdentifiedElementRecord(ctx, identification);
     Element element = ElementHandler.convertToElement(ctx, identification, identifiedElementRecord);
@@ -50,7 +50,7 @@ public class PermittedValueHandler {
   /**
    * Create a Permitted Value.
    */
-  public static ScopedIdentifier create(CloseableDSLContext ctx, int userId,
+  public static ScopedIdentifier create(DSLContext ctx, int userId,
       PermittedValue permittedValue)
       throws IllegalAccessException {
 
@@ -120,7 +120,7 @@ public class PermittedValueHandler {
   /**
    * Update a permitted value in the db.
    */
-  public static Identification update(CloseableDSLContext ctx, int userId,
+  public static Identification update(DSLContext ctx, int userId,
       PermittedValue permittedValue, PermittedValue previousPermittedValue)
       throws IllegalAccessException {
 

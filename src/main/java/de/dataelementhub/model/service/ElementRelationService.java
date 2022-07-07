@@ -5,7 +5,7 @@ import de.dataelementhub.model.dto.ElementRelation;
 import de.dataelementhub.model.handler.ElementRelationHandler;
 import java.util.Collections;
 import java.util.List;
-import org.jooq.CloseableDSLContext;
+import org.jooq.DSLContext;
 import org.springframework.stereotype.Service;
 
 /**
@@ -17,14 +17,14 @@ public class ElementRelationService {
   /**
    * Get a list of all ElementRelations.
    */
-  public List<ElementRelation> list(CloseableDSLContext ctx) {
+  public List<ElementRelation> list(DSLContext ctx) {
     return ElementRelationHandler.getElementRelations(ctx);
   }
 
   /**
    * Get a list of all ElementRelations of the provided type.
    */
-  public List<ElementRelation> listByType(CloseableDSLContext ctx, RelationType relationType) {
+  public List<ElementRelation> listByType(DSLContext ctx, RelationType relationType) {
     return listByTypes(ctx, Collections.singletonList(relationType));
   }
 
@@ -32,14 +32,14 @@ public class ElementRelationService {
    * Get a list of all ElementRelations of the provided types.
    */
   public List<ElementRelation> listByTypes(
-      CloseableDSLContext ctx, List<RelationType> relationTypes) {
+      DSLContext ctx, List<RelationType> relationTypes) {
     return ElementRelationHandler.getElementRelations(ctx, relationTypes);
   }
 
   /**
    * Insert a new dataelement relation.
    */
-  public void createDataElementRelation(CloseableDSLContext ctx, int userId,
+  public void createDataElementRelation(DSLContext ctx, int userId,
       de.dataelementhub.dal.jooq.tables.pojos.ElementRelation elementRelation) {
     ElementRelationHandler.insertRelation(ctx, userId, elementRelation);
   }
@@ -47,7 +47,7 @@ public class ElementRelationService {
   /**
    * Update an existing dataelement relation.
    */
-  public void updateDataElementRelation(CloseableDSLContext ctx, int userId,
+  public void updateDataElementRelation(DSLContext ctx, int userId,
       de.dataelementhub.dal.jooq.tables.pojos.ElementRelation elementRelation) {
     ElementRelationHandler.updateElementRelation(ctx, userId, elementRelation);
   }
@@ -55,7 +55,7 @@ public class ElementRelationService {
   /**
    * Delete an existing dataelement relation.
    */
-  public void deleteDataElementRelation(CloseableDSLContext ctx, int userId,
+  public void deleteDataElementRelation(DSLContext ctx, int userId,
       de.dataelementhub.dal.jooq.tables.pojos.ElementRelation elementRelation) {
     ElementRelationHandler.deleteElementRelation(ctx, userId, elementRelation);
   }

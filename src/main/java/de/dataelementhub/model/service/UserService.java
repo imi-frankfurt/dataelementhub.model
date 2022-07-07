@@ -7,7 +7,7 @@ import de.dataelementhub.model.handler.AccessLevelHandler;
 import de.dataelementhub.model.handler.UserHandler;
 import java.util.ArrayList;
 import java.util.List;
-import org.jooq.CloseableDSLContext;
+import org.jooq.DSLContext;
 import org.springframework.stereotype.Service;
 
 /**
@@ -20,7 +20,7 @@ public class UserService {
    * Give a user access to a namespace.
    */
   public void grantAccessToNamespace(
-      CloseableDSLContext ctx, int executingUserId, int namespaceIdentifier,
+      DSLContext ctx, int executingUserId, int namespaceIdentifier,
       List<DeHubUserPermission> userPermissions) throws IllegalAccessException {
     if (AccessLevelHandler.getAccessLevelByUserAndNamespaceIdentifier(ctx, executingUserId,
         namespaceIdentifier) != AccessLevelType.ADMIN) {
@@ -56,7 +56,7 @@ public class UserService {
    * Remove a users access to a namespace.
    */
   public void revokeAccessToNamespace(
-      CloseableDSLContext ctx, int executingUserId, int namespaceIdentifier,
+      DSLContext ctx, int executingUserId, int namespaceIdentifier,
       String userAuthId) throws IllegalAccessException {
     if (AccessLevelHandler.getAccessLevelByUserAndNamespaceIdentifier(ctx, executingUserId,
         namespaceIdentifier) != AccessLevelType.ADMIN) {

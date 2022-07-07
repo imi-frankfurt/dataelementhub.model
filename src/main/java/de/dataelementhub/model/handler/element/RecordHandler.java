@@ -18,7 +18,7 @@ import de.dataelementhub.model.handler.element.section.SlotHandler;
 import java.util.List;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
-import org.jooq.CloseableDSLContext;
+import org.jooq.DSLContext;
 
 /**
  * Record Handler.
@@ -29,7 +29,7 @@ public class RecordHandler extends ElementHandler {
   /**
    * Get a record by its urn.
    */
-  public static Record get(CloseableDSLContext ctx, int userId, Identification identification) {
+  public static Record get(DSLContext ctx, int userId, Identification identification) {
     IdentifiedElementRecord identifiedElementRecord = ElementHandler
         .getIdentifiedElementRecord(ctx, identification);
     Element element = ElementHandler.convertToElement(ctx, identification, identifiedElementRecord);
@@ -45,7 +45,7 @@ public class RecordHandler extends ElementHandler {
 
   /** Create a new Record and return its new Scoped identifier. */
   public static ScopedIdentifier create(
-      CloseableDSLContext ctx, int userId, Record record)
+      DSLContext ctx, int userId, Record record)
       throws IllegalArgumentException {
 
     // Check if all member urns are present
@@ -90,7 +90,7 @@ public class RecordHandler extends ElementHandler {
   /**
    * Update an identifier.
    */
-  public static Identification update(CloseableDSLContext ctx, int userId,
+  public static Identification update(DSLContext ctx, int userId,
       Record record, Record previousRecord) throws IllegalAccessException {
 
     // If the members changed in any way, an update is not allowed
@@ -121,7 +121,7 @@ public class RecordHandler extends ElementHandler {
    * @return the new record identification if at least one member has new version -
    *     otherwise the old identification is returned
    */
-  public static Identification updateMembers(CloseableDSLContext ctx, int userId,
+  public static Identification updateMembers(DSLContext ctx, int userId,
       ScopedIdentifier scopedIdentifier) {
     Identification identification = IdentificationHandler.convert(ctx, scopedIdentifier);
     if (MemberHandler.newMemberVersionExists(ctx, scopedIdentifier)) {

@@ -16,7 +16,7 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Marshaller;
 import org.eclipse.persistence.internal.oxm.NamespacePrefixMapper;
 import org.eclipse.persistence.jaxb.JAXBContextProperties;
-import org.jooq.CloseableDSLContext;
+import org.jooq.DSLContext;
 import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.AsyncResult;
 
@@ -38,7 +38,7 @@ public class ExportHandler {
 
   /** Export defined Elements as Xml or Json. */
   public static void export(
-      CloseableDSLContext ctx, ExportRequest exportRequest,
+      DSLContext ctx, ExportRequest exportRequest,
       int userId, MediaType mediaType, Boolean fullExport,
       String timestamp, String exportDirectory) {
     System.setProperty(JAVAX_XML_BIND_CONTEXT_FACTORY, JAVAX_XML_BIND_CONTEXT_FACTORY_VALUE);
