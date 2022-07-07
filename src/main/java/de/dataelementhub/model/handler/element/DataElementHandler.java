@@ -131,7 +131,12 @@ public class DataElementHandler extends ElementHandler {
     Identification identification = IdentificationHandler.convert(ctx, scopedIdentifier);
 
     if (scopedIdentifier.getStatus() == Status.RELEASED) {
-      IdentificationHandler.canBeReleased(ctx, userId, identification);
+      try {
+        IdentificationHandler.canBeReleased(ctx, userId, identification);
+      } catch (IllegalStateException e) {
+        CtxUtil.rollbackAndSetAutoCommit(ctx, autoCommit);
+        throw(e);
+      }
     }
 
     DefinitionHandler.create(ctx, dataElement.getDefinitions(), element.getId(),
@@ -211,7 +216,12 @@ public class DataElementHandler extends ElementHandler {
                   .getId());
       Identification identification = IdentificationHandler.convert(ctx, scopedIdentifier);
       if (identification.getStatus() == Status.RELEASED) {
-        IdentificationHandler.canBeReleased(ctx, userId, identification);
+        try {
+          IdentificationHandler.canBeReleased(ctx, userId, identification);
+        } catch (IllegalStateException e) {
+          CtxUtil.rollbackAndSetAutoCommit(ctx, autoCommit);
+          throw e;
+        }
       }
       dataElement.setIdentification(identification);
       previousScopedIdentifier = null;
