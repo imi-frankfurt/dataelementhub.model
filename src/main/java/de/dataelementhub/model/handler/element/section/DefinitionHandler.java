@@ -4,7 +4,6 @@ import static de.dataelementhub.dal.jooq.Tables.DEFINITION;
 
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
 import de.dataelementhub.dal.jooq.tables.records.DefinitionRecord;
-import de.dataelementhub.model.CtxUtil;
 import de.dataelementhub.model.dto.element.section.Definition;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -110,7 +109,7 @@ public class DefinitionHandler {
    */
   public static void create(DSLContext ctx, List<Definition> definitions,
       Integer elementId, Integer scopedIdentifierId) {
-    final boolean autoCommit = CtxUtil.disableAutoCommit(ctx);
+
     List<de.dataelementhub.dal.jooq.tables.pojos.Definition> definitionPojos = DefinitionHandler
         .convert(definitions, elementId);
     definitionPojos.forEach(d -> {
@@ -118,7 +117,6 @@ public class DefinitionHandler {
       d.setScopedIdentifierId(scopedIdentifierId);
     });
     saveDefinitions(ctx, definitionPojos);
-    CtxUtil.commitAndSetAutoCommit(ctx, autoCommit);
   }
 
   /**

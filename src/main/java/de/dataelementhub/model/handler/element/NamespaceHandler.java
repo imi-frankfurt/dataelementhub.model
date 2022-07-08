@@ -17,7 +17,6 @@ import de.dataelementhub.dal.jooq.tables.pojos.UserNamespaceAccess;
 import de.dataelementhub.dal.jooq.tables.records.DefinitionRecord;
 import de.dataelementhub.dal.jooq.tables.records.IdentifiedElementRecord;
 import de.dataelementhub.dal.jooq.tables.records.ListviewElementRecord;
-import de.dataelementhub.model.CtxUtil;
 import de.dataelementhub.model.DaoUtil;
 import de.dataelementhub.model.dto.DeHubUserPermission;
 import de.dataelementhub.model.dto.element.Namespace;
@@ -61,7 +60,6 @@ public class NamespaceHandler extends ElementHandler {
    * Create a new Namespace and return its new ID.
    */
   public static ScopedIdentifier create(DSLContext ctx, int userId, Namespace namespace) {
-    final boolean autoCommit = CtxUtil.disableAutoCommit(ctx);
     de.dataelementhub.dal.jooq.tables.pojos.Element element
         = new de.dataelementhub.dal.jooq.tables.pojos.Element();
     element.setElementType(ElementType.NAMESPACE);
@@ -79,8 +77,6 @@ public class NamespaceHandler extends ElementHandler {
     if (namespace.getSlots() != null) {
       SlotHandler.create(ctx, namespace.getSlots(), scopedIdentifier.getId());
     }
-
-    CtxUtil.commitAndSetAutoCommit(ctx, autoCommit);
 
     // Creator of the namespace gets admin rights by default
     UserHandler
@@ -397,8 +393,6 @@ public class NamespaceHandler extends ElementHandler {
 
     //update scopedIdentifier if status != DRAFT
     if (previousNamespace.getIdentification().getStatus() != Status.DRAFT) {
-      final boolean autoCommit = CtxUtil.disableAutoCommit(ctx);
-
       ScopedIdentifier scopedIdentifier = IdentificationHandler.updateNamespaceIdentifier(ctx,
           namespace.getIdentification());
       Identification newIdentification = IdentificationHandler.convert(ctx, scopedIdentifier);
@@ -421,7 +415,6 @@ public class NamespaceHandler extends ElementHandler {
       updateNamespaceIds(ctx, userId, previousNamespace.getIdentification().getNamespaceId(),
           newScopedIdentifier.getNamespaceId());
 
-      CtxUtil.commitAndSetAutoCommit(ctx, autoCommit);
       return IdentificationHandler.convert(ctx, newScopedIdentifier);
     } else {
       DefinitionHandler.updateDefinitions(ctx, userId,

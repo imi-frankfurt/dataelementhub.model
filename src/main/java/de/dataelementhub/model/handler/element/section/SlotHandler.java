@@ -7,7 +7,6 @@ import static de.dataelementhub.dal.jooq.tables.Slot.SLOT;
 import de.dataelementhub.dal.jooq.Tables;
 import de.dataelementhub.dal.jooq.tables.Element;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
-import de.dataelementhub.model.CtxUtil;
 import de.dataelementhub.model.dto.element.section.Identification;
 import de.dataelementhub.model.dto.element.section.Slot;
 import java.util.ArrayList;
@@ -97,11 +96,9 @@ public class SlotHandler {
    * Create a list of Slots.
    */
   public static void create(DSLContext ctx, List<Slot> slots, int scopedIdentifierId) {
-    final boolean autoCommit = CtxUtil.disableAutoCommit(ctx);
     List<de.dataelementhub.dal.jooq.tables.pojos.Slot> dalSlots = SlotHandler
         .convert(slots, scopedIdentifierId);
     saveSlots(ctx, dalSlots);
-    CtxUtil.commitAndSetAutoCommit(ctx, autoCommit);
   }
 
   /**

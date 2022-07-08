@@ -6,7 +6,6 @@ import de.dataelementhub.dal.jooq.enums.ElementType;
 import de.dataelementhub.dal.jooq.enums.Status;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
 import de.dataelementhub.dal.jooq.tables.records.IdentifiedElementRecord;
-import de.dataelementhub.model.CtxUtil;
 import de.dataelementhub.model.dto.element.DataElementGroup;
 import de.dataelementhub.model.dto.element.Element;
 import de.dataelementhub.model.dto.element.section.Identification;
@@ -64,7 +63,6 @@ public class DataElementGroupHandler extends ElementHandler {
       }
     }
 
-    final boolean autoCommit = CtxUtil.disableAutoCommit(ctx);
     de.dataelementhub.dal.jooq.tables.pojos.Element element =
         new de.dataelementhub.dal.jooq.tables.pojos.Element();
     element.setElementType(ElementType.DATAELEMENTGROUP);
@@ -84,7 +82,7 @@ public class DataElementGroupHandler extends ElementHandler {
     if (dataElementGroup.getMembers() != null) {
       MemberHandler.create(ctx, userId, members, scopedIdentifier.getId());
     }
-    CtxUtil.commitAndSetAutoCommit(ctx, autoCommit);
+
     return scopedIdentifier;
   }
 

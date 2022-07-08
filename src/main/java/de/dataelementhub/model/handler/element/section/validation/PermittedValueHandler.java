@@ -5,7 +5,6 @@ import de.dataelementhub.dal.jooq.enums.ElementType;
 import de.dataelementhub.dal.jooq.enums.Status;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
 import de.dataelementhub.dal.jooq.tables.records.IdentifiedElementRecord;
-import de.dataelementhub.model.CtxUtil;
 import de.dataelementhub.model.DaoUtil;
 import de.dataelementhub.model.dto.element.Element;
 import de.dataelementhub.model.dto.element.section.Identification;
@@ -62,7 +61,6 @@ public class PermittedValueHandler {
       throw new IllegalAccessException("User has no write access to namespace.");
     }
 
-    final boolean autoCommit = CtxUtil.disableAutoCommit(ctx);
     de.dataelementhub.dal.jooq.tables.pojos.Element element = convert(permittedValue);
     element.setCreatedBy(userId);
     if (element.getUuid() == null) {
@@ -86,7 +84,6 @@ public class PermittedValueHandler {
           .save(ctx, permittedValue.getConceptAssociations(), userId, scopedIdentifier.getId());
     }
 
-    CtxUtil.commitAndSetAutoCommit(ctx, autoCommit);
     return scopedIdentifier;
   }
 

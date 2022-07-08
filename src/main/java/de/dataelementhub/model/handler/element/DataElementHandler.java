@@ -8,7 +8,6 @@ import de.dataelementhub.dal.jooq.enums.Status;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifierHierarchy;
 import de.dataelementhub.dal.jooq.tables.records.IdentifiedElementRecord;
-import de.dataelementhub.model.CtxUtil;
 import de.dataelementhub.model.DaoUtil;
 import de.dataelementhub.model.dto.element.DataElement;
 import de.dataelementhub.model.dto.element.Element;
@@ -69,8 +68,6 @@ public class DataElementHandler extends ElementHandler {
       }
     }
 
-    final boolean autoCommit = CtxUtil.disableAutoCommit(ctx);
-
     ScopedIdentifier valueDomainIdentifier;
     if (dataElement.getValueDomain() != null) {
       // An identification object is needed but not supplied when created this way
@@ -89,7 +86,6 @@ public class DataElementHandler extends ElementHandler {
       valueDomainIdentifier = IdentificationHandler
           .getScopedIdentifier(ctx, dataElement.getValueDomainUrn());
       if (valueDomainIdentifier == null) {
-        CtxUtil.rollbackAndSetAutoCommit(ctx, autoCommit);
         throw new IllegalArgumentException("ValueDomain urn not found");
       }
       // If the scoped identifier of the value domain is in another namespace than the dataelement,
@@ -134,7 +130,6 @@ public class DataElementHandler extends ElementHandler {
       try {
         IdentificationHandler.canBeReleased(ctx, userId, identification);
       } catch (IllegalStateException e) {
-        CtxUtil.rollbackAndSetAutoCommit(ctx, autoCommit);
         throw(e);
       }
     }
@@ -149,7 +144,6 @@ public class DataElementHandler extends ElementHandler {
           .save(ctx, dataElement.getConceptAssociations(), userId, scopedIdentifier.getId());
     }
 
-    CtxUtil.commitAndSetAutoCommit(ctx, autoCommit);
     return scopedIdentifier;
   }
 
@@ -200,7 +194,6 @@ public class DataElementHandler extends ElementHandler {
       throw new UnsupportedOperationException("Validation changes are not allowed during update.");
     }
 
-    final boolean autoCommit = CtxUtil.disableAutoCommit(ctx);
     List<ScopedIdentifierHierarchy> scopedIdentifierHierarchyList = null;
     final ScopedIdentifier previousScopedIdentifier;
     //update scopedIdentifier if status != DRAFT
@@ -227,7 +220,6 @@ public class DataElementHandler extends ElementHandler {
       try {
         IdentificationHandler.canBeReleased(ctx, userId, releasedElementIdentification);
       } catch (IllegalStateException e) {
-        CtxUtil.rollbackAndSetAutoCommit(ctx, autoCommit);
         throw e;
       }
     }
@@ -246,7 +238,6 @@ public class DataElementHandler extends ElementHandler {
       MemberHandler.addHierarchyEntries(ctx, scopedIdentifierHierarchyList);
     }
 
-    CtxUtil.commitAndSetAutoCommit(ctx, autoCommit);
     return dataElement.getIdentification();
   }
 

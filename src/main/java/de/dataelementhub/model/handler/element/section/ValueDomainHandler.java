@@ -9,7 +9,6 @@ import de.dataelementhub.dal.jooq.enums.ValidationType;
 import de.dataelementhub.dal.jooq.tables.pojos.Element;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
 import de.dataelementhub.dal.jooq.tables.records.IdentifiedElementRecord;
-import de.dataelementhub.model.CtxUtil;
 import de.dataelementhub.model.DaoUtil;
 import de.dataelementhub.model.dto.element.section.Identification;
 import de.dataelementhub.model.dto.element.section.ValueDomain;
@@ -149,7 +148,6 @@ public class ValueDomainHandler extends ElementHandler {
           "Can't create released enumerated value domain without permitted values.");
     }
 
-    final boolean autoCommit = CtxUtil.disableAutoCommit(ctx);
     de.dataelementhub.dal.jooq.tables.pojos.Element element = convert(valueDomain);
 
     element.setCreatedBy(userId);
@@ -179,7 +177,6 @@ public class ValueDomainHandler extends ElementHandler {
           .create(ctx, userId, valueDomain.getPermittedValues(), scopedIdentifier);
     }
 
-    CtxUtil.commitAndSetAutoCommit(ctx, autoCommit);
     return scopedIdentifier;
   }
 

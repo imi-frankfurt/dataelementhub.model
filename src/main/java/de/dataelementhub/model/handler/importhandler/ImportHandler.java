@@ -35,9 +35,11 @@ import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
+import lombok.extern.slf4j.Slf4j;
 import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import org.eclipse.persistence.jaxb.JAXBContextProperties;
+import org.everit.json.schema.ValidationException;
 import org.everit.json.schema.loader.SchemaLoader;
 import org.jooq.DSLContext;
 import org.jooq.Record2;
@@ -45,10 +47,12 @@ import org.jooq.impl.SQLDataType;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 import org.springframework.http.MediaType;
+import org.xml.sax.SAXException;
 
 /**
  * Import Handler.
  */
+@Slf4j
 public class ImportHandler {
 
   /** Create import directory and return it. */
@@ -192,9 +196,11 @@ public class ImportHandler {
         org.everit.json.schema.Schema schema = SchemaLoader.load(jsonSchema);
         schema.validate(jsonSubject);
       }
-    } catch (Exception e) {
+    } catch (SAXException e) {
       throw new IOException("The import file you submitted did not pass validation.\n"
           + e.getMessage());
+    } catch (ValidationException e) {
+      e.getAllMessages().forEach(msg -> log.warn(msg));
     }
   }
 
