@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.0] - 2022-07-05
+## [2.0.0] - 2022-07-12
 ### Added
 - Method to enable importing elements to a staging area
 - Method to retrieve all imports
@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Method to return all available paths for a given element
 ### Changed
 - Separate namespaceService from elementService
+- replaced CloseableDSLContext with DSLContext
 ### Removed
 - element type "STAGED"
 ### Security
