@@ -6,7 +6,7 @@ import de.dataelementhub.dal.jooq.enums.SourceType;
 import de.dataelementhub.dal.jooq.tables.pojos.Source;
 import de.dataelementhub.dal.jooq.tables.records.SourceRecord;
 import java.util.List;
-import org.jooq.CloseableDSLContext;
+import org.jooq.DSLContext;
 
 /**
  * Source Handler.
@@ -16,7 +16,7 @@ public class SourceHandler {
   /**
    * Get the source object for the local dataelementhub.
    */
-  public static Source getLocalDeHubSource(CloseableDSLContext ctx, int userId) {
+  public static Source getLocalDeHubSource(DSLContext ctx, int userId) {
     return ctx.selectFrom(SOURCE)
         .where(SOURCE.NAME.eq("local"))
         .and(SOURCE.PREFIX.eq("local"))
@@ -28,7 +28,7 @@ public class SourceHandler {
   /**
    * Returns all available sources.
    */
-  public static List<Source> getSources(CloseableDSLContext ctx) {
+  public static List<Source> getSources(DSLContext ctx) {
     return
         ctx.selectFrom(SOURCE).fetchInto(Source.class);
   }
@@ -36,7 +36,7 @@ public class SourceHandler {
   /**
    * Returns source with provided id.
    */
-  public static Source getSourceById(CloseableDSLContext ctx, int sourceId) {
+  public static Source getSourceById(DSLContext ctx, int sourceId) {
     return
         ctx.selectFrom(SOURCE)
             .where(SOURCE.ID.eq(sourceId))
@@ -46,7 +46,7 @@ public class SourceHandler {
   /**
    * Returns all available sources of the provided type.
    */
-  public static List<Source> getSourcesByType(CloseableDSLContext ctx, SourceType sourceType) {
+  public static List<Source> getSourcesByType(DSLContext ctx, SourceType sourceType) {
     return
         ctx.selectFrom(SOURCE)
             .where(SOURCE.TYPE.eq(sourceType))
@@ -56,7 +56,7 @@ public class SourceHandler {
   /**
    * Insert a new source and return the id.
    */
-  public static int create(CloseableDSLContext ctx, Source source) {
+  public static int create(DSLContext ctx, Source source) {
     SourceRecord sourceRecord = ctx.newRecord(SOURCE, source);
     sourceRecord.store();
     sourceRecord.refresh();

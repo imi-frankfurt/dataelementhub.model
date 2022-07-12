@@ -40,7 +40,7 @@ import de.dataelementhub.model.handler.element.section.validation.PermittedValue
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import org.jooq.CloseableDSLContext;
+import org.jooq.DSLContext;
 import org.springframework.stereotype.Service;
 
 /**
@@ -52,7 +52,7 @@ public class ElementService {
   /**
    * Create a new Element and return its new ID.
    */
-  public ScopedIdentifier create(CloseableDSLContext ctx, int userId, Element element)
+  public ScopedIdentifier create(DSLContext ctx, int userId, Element element)
       throws IllegalAccessException, IllegalArgumentException {
 
     // When creating new elements, remove user submitted values for identifier and revision. They
@@ -85,7 +85,7 @@ public class ElementService {
   /**
    * Get an Element by its urn.
    */
-  public Element read(CloseableDSLContext ctx, int userId, String urn) {
+  public Element read(DSLContext ctx, int userId, String urn) {
     Identification identification = IdentificationHandler.fromUrn(ctx, urn);
     if (identification == null) {
       throw new NoSuchElementException(urn);
@@ -115,7 +115,7 @@ public class ElementService {
   /**
    * Get the ValueDomain of an Element by the elements urn.
    */
-  public Element readValueDomain(CloseableDSLContext ctx, int userId, String elementUrn) {
+  public Element readValueDomain(DSLContext ctx, int userId, String elementUrn) {
     if (!IdentificationHandler.isUrn(elementUrn)) {
       throw new IllegalArgumentException("Not a URN: " + elementUrn);
     } else {
@@ -130,7 +130,7 @@ public class ElementService {
   /**
    * Get the Definitions of an Element by the elements urn.
    */
-  public List<Definition> readDefinitions(CloseableDSLContext ctx, int userId, String elementUrn) {
+  public List<Definition> readDefinitions(DSLContext ctx, int userId, String elementUrn) {
     if (!IdentificationHandler.isUrn(elementUrn)) {
       throw new IllegalArgumentException("Not a URN: " + elementUrn);
     } else {
@@ -146,7 +146,7 @@ public class ElementService {
   /**
    * Get the Slots of an Element by the elements urn.
    */
-  public List<Slot> readSlots(CloseableDSLContext ctx, int userId, String elementUrn) {
+  public List<Slot> readSlots(DSLContext ctx, int userId, String elementUrn) {
     if (!IdentificationHandler.isUrn(elementUrn)) {
       throw new IllegalArgumentException("Not a URN: " + elementUrn);
     } else {
@@ -162,7 +162,7 @@ public class ElementService {
   /**
    * Get the Identification of an Element by the elements urn.
    */
-  public Identification readIdentification(CloseableDSLContext ctx, int userId, String elementUrn) {
+  public Identification readIdentification(DSLContext ctx, int userId, String elementUrn) {
     if (!IdentificationHandler.isUrn(elementUrn)) {
       throw new IllegalArgumentException("Not a URN: " + elementUrn);
     } else {
@@ -176,7 +176,7 @@ public class ElementService {
    * Get the Concept Associations of an Element by the elements urn.
    */
   public List<ConceptAssociation> readConceptAssociations(
-      CloseableDSLContext ctx, int userId, String elementUrn) {
+      DSLContext ctx, int userId, String elementUrn) {
     if (!IdentificationHandler.isUrn(elementUrn)) {
       throw new IllegalArgumentException("Not a URN: " + elementUrn);
     } else {
@@ -189,7 +189,7 @@ public class ElementService {
    * Get the Relations of an Element by the elements urn.
    */
   public List<de.dataelementhub.model.dto.ElementRelation> readRelations(
-      CloseableDSLContext ctx, int userId, String elementUrn) {
+      DSLContext ctx, int userId, String elementUrn) {
     if (!IdentificationHandler.isUrn(elementUrn)) {
       throw new IllegalArgumentException("Not a URN: " + elementUrn);
     } else {
@@ -198,24 +198,21 @@ public class ElementService {
       // no access rights to the namespace. TODO: Solve this in a sane way.
       Namespace namespace = NamespaceHandler.getByUrn(ctx, userId,
           identification.getNamespaceUrn());
-      List<de.dataelementhub.model.dto.ElementRelation> elementRelations =
-          ElementRelationHandler.getElementRelations(ctx, elementUrn, null);
-      return elementRelations;
+      return ElementRelationHandler.getElementRelations(ctx, elementUrn, null);
     }
   }
 
   /**
    * Get dataElementGroup or record members.
    */
-  public List<Member> readMembers(CloseableDSLContext ctx, int userId, String urn) {
+  public List<Member> readMembers(DSLContext ctx, int userId, String urn) {
     try {
       Identification identification = IdentificationHandler.fromUrn(ctx, urn);
       // This variable is currently not used - however this throws an exception when the user has
       // no access rights to the namespace. TODO: Solve this in a sane way.
       Namespace namespace = NamespaceHandler.getByUrn(ctx, userId,
           identification.getNamespaceUrn());
-      List<Member> members = MemberHandler.get(ctx, identification);
-      return members;
+      return MemberHandler.get(ctx, identification);
     } catch (NumberFormatException e) {
       throw new NoSuchElementException();
     }
@@ -224,7 +221,7 @@ public class ElementService {
   /**
    * Update an Element and return its urn.
    */
-  public Identification update(CloseableDSLContext ctx, int userId, Element element)
+  public Identification update(DSLContext ctx, int userId, Element element)
       throws IllegalAccessException, NoSuchMethodException {
     if (element.getIdentification().getElementType() != ElementType.NAMESPACE) {
       // check if namespace status and element status are compatible
@@ -257,7 +254,7 @@ public class ElementService {
   /**
    * Delete an identifier with the given urn.
    */
-  public void delete(CloseableDSLContext ctx, int userId, String urn) {
+  public void delete(DSLContext ctx, int userId, String urn) {
     Identification identification = IdentificationHandler.fromUrn(ctx, urn);
     if (identification == null) {
       throw new NoSuchElementException(urn);
@@ -268,7 +265,7 @@ public class ElementService {
   /**
    * Release an Element.
    */
-  public void release(CloseableDSLContext ctx, int userId, String urn) {
+  public void release(DSLContext ctx, int userId, String urn) {
     Identification identification = IdentificationHandler.fromUrn(ctx, urn);
 
     IdentificationHandler.canBeReleased(ctx, userId, identification);
@@ -299,7 +296,7 @@ public class ElementService {
    *
    * @return the new urn if at least one member has new version - otherwise return the old one.
    */
-  public String updateMembers(CloseableDSLContext ctx, int userId, String urn)
+  public String updateMembers(DSLContext ctx, int userId, String urn)
       throws IllegalAccessException, IllegalArgumentException {
     ScopedIdentifier scopedIdentifier = IdentificationHandler.getScopedIdentifier(ctx, urn);
     AccessLevelType accessLevel = AccessLevelHandler
@@ -314,7 +311,7 @@ public class ElementService {
         return RecordHandler.updateMembers(ctx, userId, scopedIdentifier).getUrn();
       default:
         throw new IllegalArgumentException("Element Type is not supported. "
-            + "Only dataELementGroup and record are accepted!");
+            + "Only dataElementGroup and record are accepted!");
     }
   }
 
@@ -322,7 +319,7 @@ public class ElementService {
    * Get all available paths for a given element.
    */
   public List<List<SimplifiedElementIdentification>> getElementPaths(
-      CloseableDSLContext ctx, int userId, String urn, String languages) {
+      DSLContext ctx, int userId, String urn, String languages) {
     return ElementPathHandler.getElementPaths(ctx, userId, urn, languages);
   }
 }

@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.jooq.CloseableDSLContext;
+import org.jooq.DSLContext;
 
 /**
  * StagedElement Handler.
@@ -26,7 +26,7 @@ public class StagedElementHandler {
    * Converts dehub elements to StagedElements.
    **/
   public static List<StagedElement> elementsToStagedElements(
-      CloseableDSLContext ctx, List<String> elementUrns, int userId, Boolean fullExport) {
+      DSLContext ctx, List<String> elementUrns, int userId, Boolean fullExport) {
     List<StagedElement> stagedElements = new ArrayList<>();
     List<Member> exportMembers = new ArrayList<>();
     for (String elementUrn : elementUrns) {

@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import org.jooq.CloseableDSLContext;
+import org.jooq.DSLContext;
 import org.springframework.stereotype.Service;
 
 /**
@@ -30,7 +30,7 @@ public class NamespaceService {
   /**
    * Create a new Namespace and return its new ID.
    */
-  public ScopedIdentifier create(CloseableDSLContext ctx, int userId, Element element)
+  public ScopedIdentifier create(DSLContext ctx, int userId, Element element)
       throws IllegalAccessException, IllegalArgumentException {
     // When creating new elements, remove user submitted values for identifier and revision. They
     // will be assigned by the backend.
@@ -45,7 +45,7 @@ public class NamespaceService {
   /**
    * Get a Namespace by its identifier.
    */
-  public Element read(CloseableDSLContext ctx, int userId, String identifier) {
+  public Element read(DSLContext ctx, int userId, String identifier) {
     try {
       Namespace namespace = NamespaceHandler.getByIdentifier(ctx, userId,
           Integer.parseInt(identifier));
@@ -62,7 +62,7 @@ public class NamespaceService {
   /**
    * Get all Namespaces a user has access to.
    */
-  public Map<AccessLevelType, List<Namespace>> readNamespaces(CloseableDSLContext ctx, int userId) {
+  public Map<AccessLevelType, List<Namespace>> readNamespaces(DSLContext ctx, int userId) {
     Map<AccessLevelType, List<Namespace>> namespaceMap = new HashMap<>();
 
     if (userId < 0) {
@@ -99,7 +99,7 @@ public class NamespaceService {
   /**
    * Get all Namespaces a user has the given access right to.
    */
-  public Map<AccessLevelType, List<Namespace>> readNamespaces(CloseableDSLContext ctx, int userId,
+  public Map<AccessLevelType, List<Namespace>> readNamespaces(DSLContext ctx, int userId,
       AccessLevelType accessLevel) throws IllegalAccessException {
     Map<AccessLevelType, List<Namespace>> namespaceMap = new HashMap<>();
 
@@ -140,10 +140,10 @@ public class NamespaceService {
   }
 
   /**
-   * Get all Members of a given type from the given Namespace Scoped Identifier Identifier.
+   * Get all Members of a given type from the given Namespace Scoped Identifier.
    */
   public List<Member> readNamespaceMembers(
-      CloseableDSLContext ctx, int userId, Integer namespaceSiIdentifier,
+      DSLContext ctx, int userId, Integer namespaceSiIdentifier,
       List<String> elementTypesString, Boolean hideSubElements) {
     try {
 
@@ -161,7 +161,7 @@ public class NamespaceService {
   /**
    * Get Namespace members in listview representation.
    */
-  public List<NamespaceMember> getNamespaceMembersListview(CloseableDSLContext ctx, int userId,
+  public List<NamespaceMember> getNamespaceMembersListview(DSLContext ctx, int userId,
       Integer namespaceSiIdentifier, List<String> elementTypesString, Boolean hideSubElements) {
     try {
 
@@ -180,7 +180,7 @@ public class NamespaceService {
    * Read the list of users that have access to a given namespace.
    */
   public List<DeHubUserPermission> readUserAccessList(
-      CloseableDSLContext ctx, int userId, int namespaceIdentifier)
+      DSLContext ctx, int userId, int namespaceIdentifier)
       throws IllegalAccessException {
     return NamespaceHandler.getUserAccessForNamespace(ctx, userId, namespaceIdentifier);
   }
@@ -188,7 +188,7 @@ public class NamespaceService {
   /**
    * Update a Namespace and return its identification.
    */
-  public Identification update(CloseableDSLContext ctx, int userId, Element element)
+  public Identification update(DSLContext ctx, int userId, Element element)
       throws IllegalAccessException, NoSuchMethodException {
     if (element.getIdentification().getElementType() == ElementType.NAMESPACE) {
       return NamespaceHandler.update(ctx, userId, (Namespace) element);
@@ -199,7 +199,7 @@ public class NamespaceService {
   /**
    * Delete an identifier with the given urn.
    */
-  public void delete(CloseableDSLContext ctx, int userId, String urn) {
+  public void delete(DSLContext ctx, int userId, String urn) {
     if (!IdentificationHandler.isUrn(urn)) {
       throw new IllegalArgumentException();
     } else {
@@ -214,7 +214,7 @@ public class NamespaceService {
   /**
    * Release a Namespace.
    */
-  public void release(CloseableDSLContext ctx, int userId, String urn) {
+  public void release(DSLContext ctx, int userId, String urn) {
     Identification identification = IdentificationHandler.fromUrn(ctx, urn);
 
     IdentificationHandler.canBeReleased(ctx, userId, identification);

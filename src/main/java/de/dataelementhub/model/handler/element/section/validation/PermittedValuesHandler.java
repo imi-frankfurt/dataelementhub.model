@@ -18,7 +18,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.jooq.CloseableDSLContext;
+import org.jooq.DSLContext;
 
 /**
  * Permitted Values Handler.
@@ -58,7 +58,7 @@ public class PermittedValuesHandler {
   /**
    * Create new permitted values in the db.
    */
-  public static void create(CloseableDSLContext ctx, int userId,
+  public static void create(DSLContext ctx, int userId,
       List<PermittedValue> permittedValues, ScopedIdentifier parentScopedIdentifier)
       throws IllegalAccessException {
 
@@ -101,7 +101,7 @@ public class PermittedValuesHandler {
   /**
    * Get a list of permitted values.
    */
-  public static List<PermittedValue> get(CloseableDSLContext ctx, int userId,
+  public static List<PermittedValue> get(DSLContext ctx, int userId,
       Identification valueDomainIdentification) {
 
     List<PermittedValue> permittedValues = new ArrayList<>();
@@ -128,7 +128,7 @@ public class PermittedValuesHandler {
   /**
    * Create relations between scoped identifiers.
    */
-  public static void createRelations(CloseableDSLContext ctx, int valueDomainScopedIdentifierId,
+  public static void createRelations(DSLContext ctx, int valueDomainScopedIdentifierId,
       List<ScopedIdentifier> permittedValuesScopedIdentifiers) {
 
     List<ValueDomainPermissibleValueRecord> recordList = permittedValuesScopedIdentifiers.stream()
