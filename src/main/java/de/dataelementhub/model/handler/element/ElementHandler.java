@@ -287,7 +287,7 @@ public abstract class ElementHandler {
     Status namespaceStatus = namespace.getIdentification().getStatus();
 
     if (namespaceStatus.equals(Status.DRAFT)) {
-      return elementStatus.equals(Status.DRAFT);
+      return !elementStatus.equals(Status.DRAFT);
     } else {
       // released or outdated namespace can contain elements in any status
       return false;
