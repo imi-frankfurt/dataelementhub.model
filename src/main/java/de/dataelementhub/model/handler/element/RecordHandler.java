@@ -6,7 +6,6 @@ import de.dataelementhub.dal.jooq.enums.ElementType;
 import de.dataelementhub.dal.jooq.enums.Status;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
 import de.dataelementhub.dal.jooq.tables.records.IdentifiedElementRecord;
-import de.dataelementhub.model.CtxUtil;
 import de.dataelementhub.model.dto.element.Element;
 import de.dataelementhub.model.dto.element.Record;
 import de.dataelementhub.model.dto.element.section.Identification;
@@ -17,15 +16,19 @@ import de.dataelementhub.model.handler.element.section.MemberHandler;
 import de.dataelementhub.model.handler.element.section.SlotHandler;
 import java.util.List;
 import java.util.UUID;
-import org.jooq.CloseableDSLContext;
+import lombok.extern.slf4j.Slf4j;
+import org.jooq.DSLContext;
 
+/**
+ * Record Handler.
+ */
+@Slf4j
 public class RecordHandler extends ElementHandler {
 
   /**
    * Get a record by its urn.
    */
-  public static Record get(CloseableDSLContext ctx, int userId, String urn) {
-    Identification identification = IdentificationHandler.fromUrn(urn);
+  public static Record get(DSLContext ctx, int userId, Identification identification) {
     IdentifiedElementRecord identifiedElementRecord = ElementHandler
         .getIdentifiedElementRecord(ctx, identification);
     Element element = ElementHandler.convertToElement(ctx, identification, identifiedElementRecord);
@@ -41,7 +44,7 @@ public class RecordHandler extends ElementHandler {
 
   /** Create a new Record and return its new Scoped identifier. */
   public static ScopedIdentifier create(
-      CloseableDSLContext ctx, int userId, Record record)
+      DSLContext ctx, int userId, Record record)
       throws IllegalArgumentException {
 
     // Check if all member urns are present
@@ -52,7 +55,13 @@ public class RecordHandler extends ElementHandler {
       throw new IllegalArgumentException();
     }
 
-    final boolean autoCommit = CtxUtil.disableAutoCommit(ctx);
+    if (record.getIdentification().getStatus() == Status.RELEASED) {
+      if (members.stream().anyMatch(m -> m.getIdentification().getStatus() == Status.DRAFT)) {
+        throw new IllegalArgumentException(
+            "Released Record may not contain draft members.");
+      }
+    }
+
     de.dataelementhub.dal.jooq.tables.pojos.Element element =
         new de.dataelementhub.dal.jooq.tables.pojos.Element();
     element.setElementType(ElementType.RECORD);
@@ -72,16 +81,14 @@ public class RecordHandler extends ElementHandler {
     if (record.getMembers() != null) {
       MemberHandler.create(ctx, userId, members, scopedIdentifier.getId());
     }
-    CtxUtil.commitAndSetAutoCommit(ctx, autoCommit);
     return scopedIdentifier;
   }
 
   /**
    * Update an identifier.
    */
-  public static Identification update(CloseableDSLContext ctx, int userId, Record record)
-      throws IllegalAccessException {
-    Record previousRecord = get(ctx, userId, record.getIdentification().getUrn());
+  public static Identification update(DSLContext ctx, int userId,
+      Record record, Record previousRecord) throws IllegalAccessException {
 
     // If the members changed in any way, an update is not allowed
     if (!record.getMembers().equals(previousRecord.getMembers())) {
@@ -90,18 +97,49 @@ public class RecordHandler extends ElementHandler {
 
     //update scopedIdentifier if status != DRAFT
     if (previousRecord.getIdentification().getStatus() != Status.DRAFT) {
-
       ScopedIdentifier scopedIdentifier =
           IdentificationHandler.update(ctx, userId, record.getIdentification(),
-              ElementHandler.getIdentifiedElementRecord(ctx,record.getIdentification()).getId());
-      record.setIdentification(IdentificationHandler.convert(scopedIdentifier));
-      record.getIdentification().setNamespaceId(
-          Integer.parseInt(previousRecord.getIdentification().getUrn().split(":")[1]));
+              ElementHandler.getIdentifiedElementRecord(ctx, record.getIdentification()).getId());
+      record.setIdentification(IdentificationHandler.convert(ctx, scopedIdentifier));
+
+      record.getIdentification().setNamespaceId(IdentificationHandler.getScopedIdentifier(ctx,
+          previousRecord.getIdentification().getUrn()).getNamespaceId());
     }
 
     delete(ctx, userId, previousRecord.getIdentification().getUrn());
     create(ctx, userId, record);
 
     return record.getIdentification();
+  }
+
+  /**
+   * Update record members.
+   *
+   * @return the new record identification if at least one member has new version -
+   *     otherwise the old identification is returned
+   */
+  public static Identification updateMembers(DSLContext ctx, int userId,
+      ScopedIdentifier scopedIdentifier) {
+    Identification identification = IdentificationHandler.convert(ctx, scopedIdentifier);
+    if (MemberHandler.newMemberVersionExists(ctx, scopedIdentifier)) {
+      Record record = get(ctx, userId, identification);
+      if (record.getIdentification().getStatus() != Status.DRAFT) {
+        ScopedIdentifier newsScopedIdentifier =
+            IdentificationHandler.update(ctx, userId, identification,
+                scopedIdentifier.getElementId());
+        record.setIdentification(IdentificationHandler
+            .convert(ctx, newsScopedIdentifier));
+        record.getIdentification()
+            .setNamespaceId(scopedIdentifier.getNamespaceId());
+      }
+      try {
+        delete(ctx, userId, identification.getUrn());
+        ScopedIdentifier si = create(ctx, userId, record);
+        MemberHandler.updateMembers(ctx, si);
+      } catch (IllegalStateException e) {
+        log.debug("No need to delete already outdated element.");
+      }
+    }
+    return identification;
   }
 }

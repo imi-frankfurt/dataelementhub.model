@@ -8,6 +8,9 @@ import java.io.Serializable;
 import java.util.Objects;
 import lombok.Data;
 
+/**
+ * Identification DTO.
+ */
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Identification implements Serializable {

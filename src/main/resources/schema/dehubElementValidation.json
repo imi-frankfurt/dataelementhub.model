@@ -230,7 +230,16 @@
             "type": "object",
             "properties": {
               "identification": {
-                "$ref": "#/definitions/identification"
+                "allOf": [{ "$ref": "#/definitions/identification" }],
+                "properties": {
+                  "elementType": {
+                    "type": "string",
+                    "required": ["namespaceUrn"],
+                    "enum": [
+                      "PERMISSIBLE_VALUE"
+                    ]
+                  }
+                }
               },
               "definitions": {
                 "$ref": "#/definitions/definitions"
@@ -246,7 +255,8 @@
               "urn": {
                 "title": "urn",
                 "description": "",
-                "type": "string"
+                "type": "string",
+                "pattern": "(?i)permittedvalue"
               },
               "conceptAssociations": {
                 "$ref": "#/definitions/conceptAssociations"

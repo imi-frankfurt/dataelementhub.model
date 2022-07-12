@@ -6,7 +6,6 @@ import de.dataelementhub.dal.jooq.enums.ElementType;
 import de.dataelementhub.dal.jooq.enums.Status;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
 import de.dataelementhub.dal.jooq.tables.records.IdentifiedElementRecord;
-import de.dataelementhub.model.CtxUtil;
 import de.dataelementhub.model.dto.element.DataElementGroup;
 import de.dataelementhub.model.dto.element.Element;
 import de.dataelementhub.model.dto.element.section.Identification;
@@ -17,15 +16,20 @@ import de.dataelementhub.model.handler.element.section.MemberHandler;
 import de.dataelementhub.model.handler.element.section.SlotHandler;
 import java.util.List;
 import java.util.UUID;
-import org.jooq.CloseableDSLContext;
+import lombok.extern.slf4j.Slf4j;
+import org.jooq.DSLContext;
 
+/**
+ * Dataelement Group Handler.
+ */
+@Slf4j
 public class DataElementGroupHandler extends ElementHandler {
 
   /**
    *  Create a new DataElementGroup and return its new ID.
    */
-  public static DataElementGroup get(CloseableDSLContext ctx, int userId, String urn) {
-    Identification identification = IdentificationHandler.fromUrn(urn);
+  public static DataElementGroup get(
+      DSLContext ctx, int userId, Identification identification) {
     IdentifiedElementRecord identifiedElementRecord = ElementHandler
         .getIdentifiedElementRecord(ctx, identification);
     Element element = ElementHandler.convertToElement(ctx, identification, identifiedElementRecord);
@@ -40,18 +44,25 @@ public class DataElementGroupHandler extends ElementHandler {
 
   /** Create a new DataElementGroup and return its new ID. */
   public static ScopedIdentifier create(
-      CloseableDSLContext ctx, int userId, DataElementGroup dataElementGroup)
+      DSLContext ctx, int userId, DataElementGroup dataElementGroup)
       throws IllegalArgumentException {
 
     // Check if all member urns are present
     List<Element> members = ElementHandler
         .fetchByUrns(ctx, userId, dataElementGroup.getMembers().stream().map(Member::getElementUrn)
             .collect(toList()));
+
     if (members.size() != dataElementGroup.getMembers().size()) {
       throw new IllegalArgumentException();
     }
 
-    final boolean autoCommit = CtxUtil.disableAutoCommit(ctx);
+    if (dataElementGroup.getIdentification().getStatus() == Status.RELEASED) {
+      if (members.stream().anyMatch(m -> m.getIdentification().getStatus() == Status.DRAFT)) {
+        throw new IllegalArgumentException(
+            "Released DataelementGroup may not contain draft members.");
+      }
+    }
+
     de.dataelementhub.dal.jooq.tables.pojos.Element element =
         new de.dataelementhub.dal.jooq.tables.pojos.Element();
     element.setElementType(ElementType.DATAELEMENTGROUP);
@@ -71,29 +82,28 @@ public class DataElementGroupHandler extends ElementHandler {
     if (dataElementGroup.getMembers() != null) {
       MemberHandler.create(ctx, userId, members, scopedIdentifier.getId());
     }
-    CtxUtil.commitAndSetAutoCommit(ctx, autoCommit);
+
     return scopedIdentifier;
   }
 
   /**
    * Update a dataelementgroup.
    */
-  public static Identification update(CloseableDSLContext ctx, int userId,
-      DataElementGroup dataElementGroup)
+  public static Identification update(DSLContext ctx, int userId,
+      DataElementGroup dataElementGroup, DataElementGroup previousDataElementGroup)
       throws IllegalAccessException {
-    DataElementGroup previousDataElementGroup = get(ctx, userId,
-        dataElementGroup.getIdentification().getUrn());
 
     //update scopedIdentifier if status != DRAFT
     if (previousDataElementGroup.getIdentification().getStatus() != Status.DRAFT) {
-
       ScopedIdentifier scopedIdentifier =
           IdentificationHandler.update(ctx, userId, dataElementGroup.getIdentification(),
               ElementHandler.getIdentifiedElementRecord(ctx, dataElementGroup.getIdentification())
                   .getId());
-      dataElementGroup.setIdentification(IdentificationHandler.convert(scopedIdentifier));
+      dataElementGroup.setIdentification(IdentificationHandler.convert(ctx, scopedIdentifier));
+
       dataElementGroup.getIdentification().setNamespaceId(
-          Integer.parseInt(previousDataElementGroup.getIdentification().getUrn().split(":")[1]));
+          IdentificationHandler.getScopedIdentifier(ctx,
+              previousDataElementGroup.getIdentification().getUrn()).getNamespaceId());
     }
 
     delete(ctx, userId, previousDataElementGroup.getIdentification().getUrn());
@@ -102,4 +112,44 @@ public class DataElementGroupHandler extends ElementHandler {
     return dataElementGroup.getIdentification();
   }
 
+  /**
+   * Update dataElementGroup members.
+   *
+   * @return the new dataElementGroup identification if at least one member has new version -
+   *     otherwise the old identification is returned
+   */
+  public static Identification updateMembers(DSLContext ctx, int userId,
+      ScopedIdentifier scopedIdentifier) {
+    Identification identification = IdentificationHandler.convert(ctx, scopedIdentifier);
+
+    for (Member member : MemberHandler.get(ctx, identification)) {
+      if (member.getElementUrn().contains("dataelementgroup") || member.getElementUrn()
+          .contains("record")) {
+        ScopedIdentifier memberScopedIdentifier = IdentificationHandler.getScopedIdentifier(ctx,
+            member.getElementUrn());
+        updateMembers(ctx, userId, memberScopedIdentifier);
+      }
+    }
+
+    if (MemberHandler.newMemberVersionExists(ctx, scopedIdentifier)) {
+      DataElementGroup dataElementGroup = get(ctx, userId, identification);
+      if (dataElementGroup.getIdentification().getStatus() != Status.DRAFT) {
+        ScopedIdentifier newsScopedIdentifier =
+            IdentificationHandler.update(ctx, userId, identification,
+                scopedIdentifier.getElementId());
+        dataElementGroup.setIdentification(IdentificationHandler
+            .convert(ctx, newsScopedIdentifier));
+        dataElementGroup.getIdentification()
+            .setNamespaceId(scopedIdentifier.getNamespaceId());
+      }
+      try {
+        delete(ctx, userId, identification.getUrn());
+        ScopedIdentifier si = create(ctx, userId, dataElementGroup);
+        MemberHandler.updateMembers(ctx, si);
+      } catch (IllegalStateException e) {
+        log.debug("No need to delete already outdated element.");
+      }
+    }
+    return identification;
+  }
 }

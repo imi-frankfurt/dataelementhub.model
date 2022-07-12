@@ -4,6 +4,9 @@ import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+/**
+ * Definition DTO.
+ */
 @Data
 @EqualsAndHashCode
 public class Definition implements Serializable {

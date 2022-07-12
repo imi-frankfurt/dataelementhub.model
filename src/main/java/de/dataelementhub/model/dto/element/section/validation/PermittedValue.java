@@ -7,6 +7,9 @@ import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+/**
+ * PermittedValue Validation DTO.
+ */
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class PermittedValue extends Element implements Serializable {

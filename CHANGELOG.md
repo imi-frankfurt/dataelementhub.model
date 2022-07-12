@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2022-07-12
+### Added
+- Method to enable importing elements to a staging area
+- Method to retrieve all imports
+- Method to get import status by ID
+- Method to get all import members
+- Method to get an imported element by id
+- Method to get all members of a stagedElement by id
+- Method to enable converting the stagedElements to drafts
+- Method to delete an import by id
+- Method to update the members of dataElementGroup/record
+- Method to return all available paths for a given element
+### Changed
+- Separate namespaceService from elementService
+- replaced CloseableDSLContext with DSLContext
+### Removed
+- element type "STAGED"
+### Security
+- updated libraries
+
 ## [1.2.1] - 2021-12-09
 ### Fixed
 - correctly return namespace members

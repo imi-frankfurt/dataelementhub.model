@@ -7,7 +7,6 @@ import static de.dataelementhub.dal.jooq.Tables.ELEMENT;
 import static de.dataelementhub.dal.jooq.Tables.SCOPED_IDENTIFIER;
 import static de.dataelementhub.dal.jooq.Tables.SLOT;
 
-import de.dataelementhub.dal.ResourceManager;
 import de.dataelementhub.dal.jooq.enums.ElementType;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
 import de.dataelementhub.model.dto.element.Element;
@@ -15,84 +14,86 @@ import de.dataelementhub.model.dto.search.SearchRequest;
 import de.dataelementhub.model.handler.element.section.IdentificationHandler;
 import java.util.ArrayList;
 import java.util.List;
-import org.jooq.CloseableDSLContext;
+import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-
+/**
+ * Search Service.
+ */
 @Service
 public class SearchService {
 
   private ElementService elementService;
+  private NamespaceService namespaceService;
 
   @Autowired
-  public SearchService(ElementService elementService) {
+  public SearchService(ElementService elementService, NamespaceService namespaceService) {
     this.elementService = elementService;
+    this.namespaceService = namespaceService;
   }
 
   /**
    * Returns search results matching all specifications in searchRequest as a list of
    * DataElementHubElements. If no results found an empty list will be returned.
    */
-  public List<Element> search(SearchRequest searchRequest, int userId) {
-    try (CloseableDSLContext ctx = ResourceManager.getDslContext()) {
-      List<ScopedIdentifier> scopedIdentifiers = new ArrayList<>();
-      if (searchRequest.getElementParts().contains("definition")) {
-        scopedIdentifiers.addAll(definitionSearch(ctx, searchRequest, "definition"));
-      }
-      if (searchRequest.getElementParts().contains("designation")) {
-        scopedIdentifiers.addAll(definitionSearch(ctx, searchRequest, "designation"));
-      }
-      if (searchRequest.getElementParts().contains("slotKey")) {
-        scopedIdentifiers.addAll(slotSearch(ctx, searchRequest, "key"));
-      }
-      if (searchRequest.getElementParts().contains("slotValue")) {
-        scopedIdentifiers.addAll(slotSearch(ctx, searchRequest, "value"));
-      }
-      if (searchRequest.getElementParts().contains("conceptAssociationSystem")) {
-        scopedIdentifiers.addAll(conceptsSearch(ctx, searchRequest, "system"));
-      }
-      if (searchRequest.getElementParts().contains("conceptAssociationTerm")) {
-        scopedIdentifiers.addAll(conceptsSearch(ctx, searchRequest, "term"));
-      }
-      if (searchRequest.getElementParts().contains("conceptAssociationText")) {
-        scopedIdentifiers.addAll(conceptsSearch(ctx, searchRequest, "text"));
-      }
-      if (searchRequest.getElementParts().contains("dataType")) {
-        scopedIdentifiers.addAll(elementSearch(ctx, searchRequest, "datatype"));
-      }
-      if (searchRequest.getElementParts().contains("valueDomainDescription")) {
-        scopedIdentifiers.addAll(elementSearch(ctx, searchRequest, "description"));
-      }
-      if (searchRequest.getElementParts().contains("unitOfMeasure")) {
-        scopedIdentifiers.addAll(elementSearch(ctx, searchRequest, "unit_of_measure"));
-      }
-      if (searchRequest.getElementParts().contains("format")) {
-        scopedIdentifiers.addAll(elementSearch(ctx, searchRequest, "format"));
-      }
-      return scopedIdentifiersToElements(userId, scopedIdentifiers);
+  public List<Element> search(DSLContext ctx, SearchRequest searchRequest, int userId) {
+    List<ScopedIdentifier> scopedIdentifiers = new ArrayList<>();
+    if (searchRequest.getElementParts().contains("definition")) {
+      scopedIdentifiers.addAll(definitionSearch(ctx, searchRequest, "definition"));
     }
+    if (searchRequest.getElementParts().contains("designation")) {
+      scopedIdentifiers.addAll(definitionSearch(ctx, searchRequest, "designation"));
+    }
+    if (searchRequest.getElementParts().contains("slotKey")) {
+      scopedIdentifiers.addAll(slotSearch(ctx, searchRequest, "key"));
+    }
+    if (searchRequest.getElementParts().contains("slotValue")) {
+      scopedIdentifiers.addAll(slotSearch(ctx, searchRequest, "value"));
+    }
+    if (searchRequest.getElementParts().contains("conceptAssociationSystem")) {
+      scopedIdentifiers.addAll(conceptsSearch(ctx, searchRequest, "system"));
+    }
+    if (searchRequest.getElementParts().contains("conceptAssociationTerm")) {
+      scopedIdentifiers.addAll(conceptsSearch(ctx, searchRequest, "term"));
+    }
+    if (searchRequest.getElementParts().contains("conceptAssociationText")) {
+      scopedIdentifiers.addAll(conceptsSearch(ctx, searchRequest, "text"));
+    }
+    if (searchRequest.getElementParts().contains("dataType")) {
+      scopedIdentifiers.addAll(elementSearch(ctx, searchRequest, "datatype"));
+    }
+    if (searchRequest.getElementParts().contains("valueDomainDescription")) {
+      scopedIdentifiers.addAll(elementSearch(ctx, searchRequest, "description"));
+    }
+    if (searchRequest.getElementParts().contains("unitOfMeasure")) {
+      scopedIdentifiers.addAll(elementSearch(ctx, searchRequest, "unit_of_measure"));
+    }
+    if (searchRequest.getElementParts().contains("format")) {
+      scopedIdentifiers.addAll(elementSearch(ctx, searchRequest, "format"));
+    }
+    return scopedIdentifiersToElements(ctx, userId, scopedIdentifiers);
   }
 
   /**
    * Converts a list of scopedIdentifiers to a list of DataElementHub Elements and removes
    * duplicates.
    */
-  public List<Element> scopedIdentifiersToElements(int userId,
+  public List<Element> scopedIdentifiersToElements(DSLContext ctx, int userId,
       List<ScopedIdentifier> scopedIdentifiers) {
     List<String> idList = new ArrayList<>();
     List<Element> results = new ArrayList<>();
     for (ScopedIdentifier scopedIdentifier : scopedIdentifiers) {
-      String urn = IdentificationHandler.toUrn(scopedIdentifier);
+      String urn = IdentificationHandler.toUrn(ctx, scopedIdentifier);
       if (scopedIdentifier.getElementType().equals(ElementType.NAMESPACE)
           && !idList.contains(urn)) {
         idList.add(urn);
-        results.add(elementService.read(userId,
-            IdentificationHandler.getIdentifierFromUrn(urn).toString()));
+        results.add(namespaceService.read(ctx, userId,
+            String.valueOf(scopedIdentifier.getIdentifier())));
       } else {
         if (!idList.contains(urn)) {
           idList.add(urn);
-          results.add(elementService.read(userId, urn));
+          results.add(elementService.read(ctx, userId, urn));
         }
       }
     }
@@ -103,7 +104,7 @@ public class SearchService {
   /**
    * Get scopedIdentifiers for related search results in definition table.
    */
-  public List<ScopedIdentifier> definitionSearch(CloseableDSLContext ctx,
+  public List<ScopedIdentifier> definitionSearch(DSLContext ctx,
       SearchRequest searchRequest, String column) {
     return ctx.select(SCOPED_IDENTIFIER.IDENTIFIER,
             SCOPED_IDENTIFIER.VERSION,
@@ -124,7 +125,7 @@ public class SearchService {
   /**
    * Get scopedIdentifiers for related search results in slot table.
    */
-  public List<ScopedIdentifier> slotSearch(CloseableDSLContext ctx,
+  public List<ScopedIdentifier> slotSearch(DSLContext ctx,
       SearchRequest searchRequest, String column) {
     return ctx.select(SCOPED_IDENTIFIER.IDENTIFIER,
             SCOPED_IDENTIFIER.VERSION,
@@ -145,7 +146,7 @@ public class SearchService {
   /**
    * Get scopedIdentifiers for related search results in concepts table.
    */
-  public List<ScopedIdentifier> conceptsSearch(CloseableDSLContext ctx,
+  public List<ScopedIdentifier> conceptsSearch(DSLContext ctx,
       SearchRequest searchRequest, String column) {
     return ctx.select(SCOPED_IDENTIFIER.IDENTIFIER,
             SCOPED_IDENTIFIER.VERSION,
@@ -167,7 +168,7 @@ public class SearchService {
   /**
    * Get scopedIdentifiers for related search results in element table.
    */
-  public List<ScopedIdentifier> elementSearch(CloseableDSLContext ctx,
+  public List<ScopedIdentifier> elementSearch(DSLContext ctx,
       SearchRequest searchRequest, String column) {
     return ctx.select(SCOPED_IDENTIFIER.IDENTIFIER,
             SCOPED_IDENTIFIER.VERSION,
