@@ -93,6 +93,17 @@
       <groupId>com.github.erosb</groupId>
       <artifactId>everit-json-schema</artifactId>
       <version>1.14.1</version>
+      <exclusions>
+        <exclusion>
+          <groupId>commons-collections</groupId>
+          <artifactId>commons-collections</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-collections4</artifactId>
+      <version>4.4</version>
     </dependency>
     <dependency>
       <groupId>org.springframework</groupId>
