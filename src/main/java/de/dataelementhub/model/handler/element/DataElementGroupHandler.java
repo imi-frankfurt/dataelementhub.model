@@ -6,7 +6,6 @@ import de.dataelementhub.dal.jooq.enums.ElementType;
 import de.dataelementhub.dal.jooq.enums.Status;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
 import de.dataelementhub.dal.jooq.tables.records.IdentifiedElementRecord;
-import de.dataelementhub.model.CtxUtil;
 import de.dataelementhub.model.dto.element.DataElementGroup;
 import de.dataelementhub.model.dto.element.Element;
 import de.dataelementhub.model.dto.element.section.Identification;
@@ -18,7 +17,7 @@ import de.dataelementhub.model.handler.element.section.SlotHandler;
 import java.util.List;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
-import org.jooq.CloseableDSLContext;
+import org.jooq.DSLContext;
 
 /**
  * Dataelement Group Handler.
@@ -30,7 +29,7 @@ public class DataElementGroupHandler extends ElementHandler {
    *  Create a new DataElementGroup and return its new ID.
    */
   public static DataElementGroup get(
-      CloseableDSLContext ctx, int userId, Identification identification) {
+      DSLContext ctx, int userId, Identification identification) {
     IdentifiedElementRecord identifiedElementRecord = ElementHandler
         .getIdentifiedElementRecord(ctx, identification);
     Element element = ElementHandler.convertToElement(ctx, identification, identifiedElementRecord);
@@ -45,7 +44,7 @@ public class DataElementGroupHandler extends ElementHandler {
 
   /** Create a new DataElementGroup and return its new ID. */
   public static ScopedIdentifier create(
-      CloseableDSLContext ctx, int userId, DataElementGroup dataElementGroup)
+      DSLContext ctx, int userId, DataElementGroup dataElementGroup)
       throws IllegalArgumentException {
 
     // Check if all member urns are present
@@ -64,7 +63,6 @@ public class DataElementGroupHandler extends ElementHandler {
       }
     }
 
-    final boolean autoCommit = CtxUtil.disableAutoCommit(ctx);
     de.dataelementhub.dal.jooq.tables.pojos.Element element =
         new de.dataelementhub.dal.jooq.tables.pojos.Element();
     element.setElementType(ElementType.DATAELEMENTGROUP);
@@ -84,14 +82,14 @@ public class DataElementGroupHandler extends ElementHandler {
     if (dataElementGroup.getMembers() != null) {
       MemberHandler.create(ctx, userId, members, scopedIdentifier.getId());
     }
-    CtxUtil.commitAndSetAutoCommit(ctx, autoCommit);
+
     return scopedIdentifier;
   }
 
   /**
    * Update a dataelementgroup.
    */
-  public static Identification update(CloseableDSLContext ctx, int userId,
+  public static Identification update(DSLContext ctx, int userId,
       DataElementGroup dataElementGroup, DataElementGroup previousDataElementGroup)
       throws IllegalAccessException {
 
@@ -120,7 +118,7 @@ public class DataElementGroupHandler extends ElementHandler {
    * @return the new dataElementGroup identification if at least one member has new version -
    *     otherwise the old identification is returned
    */
-  public static Identification updateMembers(CloseableDSLContext ctx, int userId,
+  public static Identification updateMembers(DSLContext ctx, int userId,
       ScopedIdentifier scopedIdentifier) {
     Identification identification = IdentificationHandler.convert(ctx, scopedIdentifier);
 

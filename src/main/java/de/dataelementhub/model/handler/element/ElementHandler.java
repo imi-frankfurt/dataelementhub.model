@@ -24,7 +24,7 @@ import de.dataelementhub.model.handler.element.section.validation.PermittedValue
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import org.jooq.CloseableDSLContext;
+import org.jooq.DSLContext;
 
 /**
  * Element Handler.
@@ -34,7 +34,7 @@ public abstract class ElementHandler {
   /**
    * Get a Sub Element by its urn.
    */
-  public static Element readSubElement(CloseableDSLContext ctx, int userId, String urn) {
+  public static Element readSubElement(DSLContext ctx, int userId, String urn) {
     if (!IdentificationHandler.isUrn(urn)) {
       try {
         Namespace namespace = NamespaceHandler.getByIdentifier(ctx, userId, Integer.parseInt(urn));
@@ -73,7 +73,7 @@ public abstract class ElementHandler {
   /**
    * Get dataElementGroup or record members.
    */
-  public static List<Member> readMembers(CloseableDSLContext ctx, int userId, String urn) {
+  public static List<Member> readMembers(DSLContext ctx, int userId, String urn) {
     Identification identification = IdentificationHandler.fromUrn(ctx, urn);
     return MemberHandler.get(ctx, identification);
   }
@@ -81,7 +81,7 @@ public abstract class ElementHandler {
   /**
    * Fetch a unique record that has <code>id = value</code>.
    */
-  public static Element fetchOneByIdentification(CloseableDSLContext ctx, int userId,
+  public static Element fetchOneByIdentification(DSLContext ctx, int userId,
       Identification identification) {
 
     if (identification == null) {
@@ -97,7 +97,7 @@ public abstract class ElementHandler {
   /**
    * Get an identified element record by its identification.
    */
-  public static IdentifiedElementRecord getIdentifiedElementRecord(CloseableDSLContext ctx,
+  public static IdentifiedElementRecord getIdentifiedElementRecord(DSLContext ctx,
       Identification identification) {
     return ctx.fetchOne(IDENTIFIED_ELEMENT,
         IDENTIFIED_ELEMENT.SI_IDENTIFIER.equal(identification.getIdentifier())
@@ -110,7 +110,7 @@ public abstract class ElementHandler {
   /**
    * Fetch a unique record that has <code>id = value</code>.
    */
-  public static Element fetchOneByUrn(CloseableDSLContext ctx, int userId, String urn) {
+  public static Element fetchOneByUrn(DSLContext ctx, int userId, String urn) {
     Identification identification = IdentificationHandler.fromUrn(ctx, urn);
     if (identification != null) {
       return fetchOneByIdentification(ctx, userId, identification);
@@ -122,7 +122,7 @@ public abstract class ElementHandler {
   /**
    * Get an identified element record by its urn.
    */
-  public static IdentifiedElementRecord getIdentifiedElementRecordByUrn(CloseableDSLContext ctx,
+  public static IdentifiedElementRecord getIdentifiedElementRecordByUrn(DSLContext ctx,
       String urn) {
     return getIdentifiedElementRecord(ctx, IdentificationHandler.fromUrn(ctx, urn));
   }
@@ -130,7 +130,7 @@ public abstract class ElementHandler {
   /**
    * Get all elements from a list of urns.
    */
-  public static List<Element> fetchByUrns(CloseableDSLContext ctx, int userId, List<String> urns) {
+  public static List<Element> fetchByUrns(DSLContext ctx, int userId, List<String> urns) {
     List<Element> elements = new ArrayList<>();
     for (String urn : urns) {
       Element element =
@@ -145,7 +145,7 @@ public abstract class ElementHandler {
   /**
    * Convert an identified element record to an element.
    */
-  public static Element convertToElement(CloseableDSLContext ctx, Identification identification,
+  public static Element convertToElement(DSLContext ctx, Identification identification,
       IdentifiedElementRecord identifiedElementRecord) {
     Element element = new Element();
     identification.setStatus(identifiedElementRecord.getSiStatus());
@@ -159,7 +159,7 @@ public abstract class ElementHandler {
   /**
    * Save an element in the database.
    */
-  public static int saveElement(CloseableDSLContext ctx,
+  public static int saveElement(DSLContext ctx,
                                 de.dataelementhub.dal.jooq.tables.pojos.Element element) {
 
     return ctx.insertInto(ELEMENT)
@@ -173,7 +173,7 @@ public abstract class ElementHandler {
    * Outdates or deletes the given element. Depending on the status of the element. Drafts are
    * deleted, released elements are outdated.
    */
-  public static void delete(CloseableDSLContext ctx, int userId, String urn) {
+  public static void delete(DSLContext ctx, int userId, String urn) {
     Element element = fetchOneByUrn(ctx, userId, urn);
 
     if (element == null) {
@@ -201,7 +201,7 @@ public abstract class ElementHandler {
    * Outdates or deletes the given element. Depending on the status of the element. Drafts are
    * deleted, released elements are outdated.
    */
-  public static void delete(CloseableDSLContext ctx, int userId, Identification identification) {
+  public static void delete(DSLContext ctx, int userId, Identification identification) {
     Element element = fetchOneByIdentification(ctx, userId, identification);
 
     if (element == null) {
@@ -228,7 +228,7 @@ public abstract class ElementHandler {
    * This imports the scoped identifier of the permitted value itself, all linked definitions,
    * slots and concept associations into the value domain namespace.
    */
-  public static ScopedIdentifier importIntoParentNamespace(CloseableDSLContext ctx, int userId,
+  public static ScopedIdentifier importIntoParentNamespace(DSLContext ctx, int userId,
       int targetNamespaceId, String urn) {
 
     ScopedIdentifier sourceScopedIdentifier = IdentificationHandler
@@ -271,7 +271,7 @@ public abstract class ElementHandler {
    * Check if the element can be created in this namespace.
    * Draft/staged namespaces can only contain draft/staged elements.
    */
-  public static boolean statusMismatch(CloseableDSLContext ctx, int userId, Element element) {
+  public static boolean statusMismatch(DSLContext ctx, int userId, Element element) {
 
     Namespace namespace = NamespaceHandler.getByUrn(ctx, userId,
         element.getIdentification().getNamespaceUrn());
@@ -285,7 +285,7 @@ public abstract class ElementHandler {
     Status namespaceStatus = namespace.getIdentification().getStatus();
 
     if (namespaceStatus.equals(Status.DRAFT)) {
-      return elementStatus.equals(Status.DRAFT);
+      return !elementStatus.equals(Status.DRAFT);
     } else {
       // released or outdated namespace can contain elements in any status
       return false;

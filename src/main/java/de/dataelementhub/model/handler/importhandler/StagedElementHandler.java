@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
-import org.jooq.CloseableDSLContext;
+import org.jooq.DSLContext;
 import org.jooq.Result;
 
 /**
@@ -39,7 +39,7 @@ public class StagedElementHandler {
 
   /** Get stagedElement Members by ID. */
   public static List<de.dataelementhub.model.dto.listviews.StagedElement> getStagedElementMembers(
-      CloseableDSLContext ctx, int importId, int userId, String stagedElementId) {
+      DSLContext ctx, int importId, int userId, String stagedElementId) {
     List<String> stagedElementMembersIds = List.of(ctx.select(STAGING.MEMBERS)
             .from(STAGING)
             .where(STAGING.IMPORT_ID.eq(importId))
@@ -57,7 +57,7 @@ public class StagedElementHandler {
 
   /** Get stagedElement by ID. */
   public static de.dataelementhub.model.dto.element.StagedElement getStagedElement(
-      CloseableDSLContext ctx, int importId, int userId, String stagedElementId) {
+      DSLContext ctx, int importId, int userId, String stagedElementId) {
     String stagedElementAsString = String.valueOf(ctx.select(STAGING.DATA)
         .from(STAGING)
         .where(STAGING.IMPORT_ID.eq(importId))
@@ -74,7 +74,7 @@ public class StagedElementHandler {
   }
 
   /** Converts StagedElement to draft. */
-  public static String stagedElementToElement(CloseableDSLContext ctx, StagedElement stagedElement,
+  public static String stagedElementToElement(DSLContext ctx, StagedElement stagedElement,
       String namespaceUrn, int userId, int importId) throws IllegalAccessException {
     Identification identification = new Identification();
     identification.setNamespaceUrn(namespaceUrn);
@@ -165,7 +165,7 @@ public class StagedElementHandler {
 
   /** Check if members are already converted to Drafts. */
   public static List<Member> handleMembers(
-      CloseableDSLContext ctx, int importId, String namespaceUrn,
+      DSLContext ctx, int importId, String namespaceUrn,
       int userId, List<Member> members) {
     members.forEach(
         (member -> {
@@ -190,7 +190,7 @@ public class StagedElementHandler {
 
   /** Check if stagedElement is already converted to Draft and was not deleted. */
   public static String getUrnIfConvertedAndDraftStillAvailable(
-      CloseableDSLContext ctx, int importId, String stagedElementId) {
+      DSLContext ctx, int importId, String stagedElementId) {
     try {
       Integer scopedIdentifierId = ctx.selectFrom(STAGING).where(STAGING.IMPORT_ID.eq(importId))
           .and(STAGING.STAGED_ELEMENT_ID.eq(stagedElementId))
@@ -211,7 +211,7 @@ public class StagedElementHandler {
 
   /** Mark a stagedElement as converted and save conversion details. */
   public static void markAsConverted(
-      CloseableDSLContext ctx, int userId, int importId, String stagedElementId,
+      DSLContext ctx, int userId, int importId, String stagedElementId,
       ScopedIdentifier scopedIdentifier) {
     Timestamp timestamp = new Timestamp(System.currentTimeMillis()
         - TimeZone.getDefault().getOffset(new Date().getTime()));
@@ -226,7 +226,7 @@ public class StagedElementHandler {
 
   /** Convert a list of stagingRecords to list of stagedElements as Listview. */
   public static List<de.dataelementhub.model.dto.listviews.StagedElement>
-      stagingRecordsToStagedElements(CloseableDSLContext ctx,
+      stagingRecordsToStagedElements(DSLContext ctx,
       Result<org.jooq.Record> stagingRecords) {
     List<de.dataelementhub.model.dto.listviews.StagedElement> stagedElements = new ArrayList<>();
     for (org.jooq.Record sr : stagingRecords) {

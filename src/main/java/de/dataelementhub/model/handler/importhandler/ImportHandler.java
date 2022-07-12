@@ -35,20 +35,24 @@ import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
+import lombok.extern.slf4j.Slf4j;
 import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.exception.ZipException;
 import org.eclipse.persistence.jaxb.JAXBContextProperties;
+import org.everit.json.schema.ValidationException;
 import org.everit.json.schema.loader.SchemaLoader;
-import org.jooq.CloseableDSLContext;
+import org.jooq.DSLContext;
 import org.jooq.Record2;
 import org.jooq.impl.SQLDataType;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 import org.springframework.http.MediaType;
+import org.xml.sax.SAXException;
 
 /**
  * Import Handler.
  */
+@Slf4j
 public class ImportHandler {
 
   /** Create import directory and return it. */
@@ -83,7 +87,7 @@ public class ImportHandler {
 
   /** Detect file type (xml/json) then handle importing it.*/
   public static void startImportAccordingToFileType(
-      CloseableDSLContext ctx, int importId, File[] allFilesInFolder) throws Exception {
+      DSLContext ctx, int importId, File[] allFilesInFolder) throws Exception {
     for (File file : Objects.requireNonNull(allFilesInFolder)) {
       if (file.isFile() && !file.getName().contains(".zip")) {
         String fileAbsolutePath = file.getAbsolutePath();
@@ -98,7 +102,7 @@ public class ImportHandler {
 
   /** handles importing xml file. */
   public static void importXml(
-      CloseableDSLContext ctx, String fileToImport, int importId)
+      DSLContext ctx, String fileToImport, int importId)
       throws Exception {
     File file = new File(fileToImport);
     JAXBContext jaxbContext = JAXBContext.newInstance(ImportExport.class);
@@ -109,7 +113,7 @@ public class ImportHandler {
 
   /** handles importing json file. */
   public static void importJson(
-      CloseableDSLContext ctx, String fileToImport, int importId)
+      DSLContext ctx, String fileToImport, int importId)
       throws Exception {
     System.setProperty(
         "javax.xml.bind.context.factory", "org.eclipse.persistence.jaxb.JAXBContextFactory");
@@ -125,7 +129,7 @@ public class ImportHandler {
 
   /** Convert stagedElements to elements and save them. */
   public static void saveElements(
-      CloseableDSLContext ctx, List<StagedElement> stagedElements, int importId) {
+      DSLContext ctx, List<StagedElement> stagedElements, int importId) {
     ctx.update(IMPORT)
         .set(IMPORT.NUMBER_OF_ELEMENTS, stagedElements.size())
         .where(IMPORT.ID.eq(importId))
@@ -192,14 +196,16 @@ public class ImportHandler {
         org.everit.json.schema.Schema schema = SchemaLoader.load(jsonSchema);
         schema.validate(jsonSubject);
       }
-    } catch (Exception e) {
+    } catch (SAXException e) {
       throw new IOException("The import file you submitted did not pass validation.\n"
           + e.getMessage());
+    } catch (ValidationException e) {
+      e.getAllMessages().forEach(msg -> log.warn(msg));
     }
   }
 
   /** Convert StagedElements to drafts. */
-  public static void convertToDrafts(CloseableDSLContext ctx, int importId, int userId,
+  public static void convertToDrafts(DSLContext ctx, int importId, int userId,
       List<String> stagedElementsIds) {
     Integer namespaceId = Objects.requireNonNull(
             ctx.select().from(IMPORT).where(IMPORT.ID.eq(importId)).fetchOne())
@@ -224,7 +230,7 @@ public class ImportHandler {
 
   /** Convert an importRecord to importInfo. */
   public static ImportInfo importRecordToImportInfo(
-      CloseableDSLContext ctx, ImportRecord importRecord) {
+      DSLContext ctx, ImportRecord importRecord) {
     ImportInfo importInfo = new ImportInfo();
     double conversionProcess;
     double stagingProcess;

@@ -17,7 +17,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
-import org.jooq.CloseableDSLContext;
+import org.jooq.DSLContext;
 
 /**
  * Element Path Handler.
@@ -28,7 +28,7 @@ public class ElementPathHandler {
    * Get all available paths for a given element.
    */
   public static List<List<SimplifiedElementIdentification>> getElementPaths(
-      CloseableDSLContext ctx, int userId, String urn, String languages) {
+      DSLContext ctx, int userId, String urn, String languages) {
     List<List<SimplifiedElementIdentification>> elementPaths = new ArrayList<>();
     List<List<String>> pathUrnsList = completePaths(ctx, userId,
         Collections.singletonList(Collections.singletonList(urn)));
@@ -50,7 +50,7 @@ public class ElementPathHandler {
   /**
    * Complete a given path until the namespace.
    */
-  public static List<List<String>> completePaths(CloseableDSLContext ctx, int userId,
+  public static List<List<String>> completePaths(DSLContext ctx, int userId,
       List<List<String>> startPartialPaths) {
     List<List<String>> partialPaths = new ArrayList<>(startPartialPaths);
     for (int i = 0; i < partialPaths.size(); i++) {
@@ -115,7 +115,7 @@ public class ElementPathHandler {
   /**
    * Get the designations for all urns in a path.
    */
-  public static List<List<String>> getDesignations(CloseableDSLContext ctx,
+  public static List<List<String>> getDesignations(DSLContext ctx,
       List<List<String>> paths, String languages) {
     List<List<String>> allDesignations = new ArrayList<>();
     for (int pathIndex = 0; pathIndex < paths.size(); pathIndex++) {
@@ -134,7 +134,7 @@ public class ElementPathHandler {
   /**
    * Get element designation by scopedIdentifierId.
    */
-  public static String getDesignation(CloseableDSLContext ctx,
+  public static String getDesignation(DSLContext ctx,
       int scopedIdentifierId, String languages) {
     Element element = new Element();
     element.setDefinitions(DefinitionHandler.get(ctx, scopedIdentifierId));
@@ -146,7 +146,7 @@ public class ElementPathHandler {
    * Return list of scopedIdentifiers for all parent elements.
    */
   public static List<ScopedIdentifier> getParentScopedIdentifiers(
-      CloseableDSLContext ctx, String urn) {
+      DSLContext ctx, String urn) {
     ScopedIdentifier scopedIdentifier = IdentificationHandler.getScopedIdentifier(ctx, urn);
     if (scopedIdentifier == null) {
       throw new NoSuchElementException("Element not found: " + urn);

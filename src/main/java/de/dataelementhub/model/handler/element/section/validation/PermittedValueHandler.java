@@ -5,7 +5,6 @@ import de.dataelementhub.dal.jooq.enums.ElementType;
 import de.dataelementhub.dal.jooq.enums.Status;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
 import de.dataelementhub.dal.jooq.tables.records.IdentifiedElementRecord;
-import de.dataelementhub.model.CtxUtil;
 import de.dataelementhub.model.DaoUtil;
 import de.dataelementhub.model.dto.element.Element;
 import de.dataelementhub.model.dto.element.section.Identification;
@@ -18,7 +17,7 @@ import de.dataelementhub.model.handler.element.section.DefinitionHandler;
 import de.dataelementhub.model.handler.element.section.IdentificationHandler;
 import de.dataelementhub.model.handler.element.section.SlotHandler;
 import java.util.UUID;
-import org.jooq.CloseableDSLContext;
+import org.jooq.DSLContext;
 
 /**
  * Permitted Value Handler.
@@ -29,7 +28,7 @@ public class PermittedValueHandler {
    * Get the permitted value for an identifier.
    */
   public static PermittedValue get(
-      CloseableDSLContext ctx, int userId, Identification identification) {
+      DSLContext ctx, int userId, Identification identification) {
     IdentifiedElementRecord identifiedElementRecord = ElementHandler
         .getIdentifiedElementRecord(ctx, identification);
     Element element = ElementHandler.convertToElement(ctx, identification, identifiedElementRecord);
@@ -50,7 +49,7 @@ public class PermittedValueHandler {
   /**
    * Create a Permitted Value.
    */
-  public static ScopedIdentifier create(CloseableDSLContext ctx, int userId,
+  public static ScopedIdentifier create(DSLContext ctx, int userId,
       PermittedValue permittedValue)
       throws IllegalAccessException {
 
@@ -62,7 +61,6 @@ public class PermittedValueHandler {
       throw new IllegalAccessException("User has no write access to namespace.");
     }
 
-    final boolean autoCommit = CtxUtil.disableAutoCommit(ctx);
     de.dataelementhub.dal.jooq.tables.pojos.Element element = convert(permittedValue);
     element.setCreatedBy(userId);
     if (element.getUuid() == null) {
@@ -86,7 +84,6 @@ public class PermittedValueHandler {
           .save(ctx, permittedValue.getConceptAssociations(), userId, scopedIdentifier.getId());
     }
 
-    CtxUtil.commitAndSetAutoCommit(ctx, autoCommit);
     return scopedIdentifier;
   }
 
@@ -120,7 +117,7 @@ public class PermittedValueHandler {
   /**
    * Update a permitted value in the db.
    */
-  public static Identification update(CloseableDSLContext ctx, int userId,
+  public static Identification update(DSLContext ctx, int userId,
       PermittedValue permittedValue, PermittedValue previousPermittedValue)
       throws IllegalAccessException {
 

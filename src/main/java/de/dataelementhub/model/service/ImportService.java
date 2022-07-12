@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import org.jooq.CloseableDSLContext;
+import org.jooq.DSLContext;
 import org.jooq.Record;
 import org.jooq.Result;
 import org.springframework.scheduling.annotation.Async;
@@ -41,7 +41,7 @@ public class ImportService {
    * Execute an import.
    **/
   public void execute(
-      CloseableDSLContext ctx, List<MultipartFile> files,
+      DSLContext ctx, List<MultipartFile> files,
       String importDirectory, int userId, int importId)
       throws IOException {
     String destination = ImportHandler.createImportDirectory(importDirectory, userId, importId);
@@ -58,7 +58,7 @@ public class ImportService {
    * Save stagedElements to the staging area.
    **/
   @Async
-  public void importToStagingArea(CloseableDSLContext ctx, File[] allFilesInFolder, int importId) {
+  public void importToStagingArea(DSLContext ctx, File[] allFilesInFolder, int importId) {
     try {
       ImportHandler.startImportAccordingToFileType(ctx, importId, allFilesInFolder);
     } catch (Exception e) {
@@ -75,7 +75,7 @@ public class ImportService {
    **/
   @Async
   public void convertToDraft(
-      CloseableDSLContext ctx, List<String> stagedElementsIds, int userId, int importId) throws
+      DSLContext ctx, List<String> stagedElementsIds, int userId, int importId) throws
       IllegalAccessException {
     if (!importExists(ctx, importId)) {
       throw new NoSuchElementException();
@@ -88,7 +88,7 @@ public class ImportService {
 
   /** Check user grants then delete staged import. */
   public void deleteStagedImport(
-      CloseableDSLContext ctx, int userId, int importId) throws IllegalAccessException,
+      DSLContext ctx, int userId, int importId) throws IllegalAccessException,
       NoSuchElementException {
     if (!importExists(ctx, importId)) {
       throw new NoSuchElementException();
@@ -105,7 +105,7 @@ public class ImportService {
   }
 
   /** Generate importId. */
-  public int generateImportId(CloseableDSLContext ctx, String namespaceUrn, int userId,
+  public int generateImportId(DSLContext ctx, String namespaceUrn, int userId,
       List<MultipartFile> files, String importDirectory) throws IOException {
     int namespaceId = IdentificationHandler
         .getScopedIdentifier(ctx, namespaceUrn).getNamespaceId();
@@ -127,7 +127,7 @@ public class ImportService {
   }
 
   /** Returns all Imports. */
-  public List<ImportInfo> listAllImports(CloseableDSLContext ctx, int userId) {
+  public List<ImportInfo> listAllImports(DSLContext ctx, int userId) {
     List<ImportInfo> importInfoList = new ArrayList<>();
     List<ImportRecord> imports = ctx.selectFrom(IMPORT).where(IMPORT.CREATED_BY.eq(userId)
         .or(IMPORT.NAMESPACE_ID.in(DaoUtil.getUserNamespaceAccessQuery(ctx, userId,
@@ -142,7 +142,7 @@ public class ImportService {
   }
 
   /** Get import info by ID. */
-  public ImportInfo getImportInfo(CloseableDSLContext ctx, int importId, int userId)
+  public ImportInfo getImportInfo(DSLContext ctx, int importId, int userId)
       throws IllegalAccessException, NoSuchElementException {
     if (!importExists(ctx, importId)) {
       throw new NoSuchElementException();
@@ -160,7 +160,7 @@ public class ImportService {
 
   /** Get Import members. */
   public List<StagedElement> getImportMembersListView(
-      CloseableDSLContext ctx, int importId, int userId,
+      DSLContext ctx, int importId, int userId,
       Boolean hideSubElements, Boolean onlyConverted)
       throws IllegalAccessException, NoSuchElementException {
     Result<Record> stagingRecords;
@@ -204,7 +204,7 @@ public class ImportService {
 
   /** Get StagedElement Members. */
   public List<StagedElement> getStagedElementMembers(
-      CloseableDSLContext ctx, int importId, int userId,
+      DSLContext ctx, int importId, int userId,
       String stagedElementId, Boolean onlyConverted) throws IllegalAccessException {
     List<StagedElement> stagedElementMembers;
     if (!importAccessGranted(ctx, importId, userId)) {
@@ -221,7 +221,7 @@ public class ImportService {
 
   /** Get StagedElement by ID from specified Import. */
   public de.dataelementhub.model.dto.element.StagedElement getStagedElement(
-      CloseableDSLContext ctx, int importId, int userId, String stagedElementId)
+      DSLContext ctx, int importId, int userId, String stagedElementId)
       throws IllegalAccessException {
     if (!importAccessGranted(ctx, importId, userId)) {
       throw new IllegalAccessException();
@@ -230,12 +230,12 @@ public class ImportService {
   }
 
   /** Check if an import exists by ID. */
-  private boolean importExists(CloseableDSLContext ctx, int importId) {
+  private boolean importExists(DSLContext ctx, int importId) {
     return ctx.fetchExists(ctx.selectFrom(IMPORT).where(IMPORT.ID.eq(importId)));
   }
 
   /** Check if user is allowed to access an import. */
-  private boolean importAccessGranted(CloseableDSLContext ctx, int importId, int userId) {
+  private boolean importAccessGranted(DSLContext ctx, int importId, int userId) {
     return ctx.fetchExists(ctx.selectFrom(IMPORT).where(IMPORT.CREATED_BY.eq(userId)
         .or(IMPORT.NAMESPACE_ID.in(DaoUtil.getUserNamespaceAccessQuery(ctx, userId,
             allowedAccessLevelTypes())))).and(IMPORT.ID.eq(importId)));

@@ -14,7 +14,7 @@ import de.dataelementhub.model.dto.element.section.ConceptAssociation;
 import de.dataelementhub.model.dto.element.section.Identification;
 import java.util.ArrayList;
 import java.util.List;
-import org.jooq.CloseableDSLContext;
+import org.jooq.DSLContext;
 
 /**
  * Concept Association Handler.
@@ -26,7 +26,7 @@ public class ConceptAssociationHandler {
    *
    * @param identifier of the element associated to the concept association to get
    */
-  public static List<ConceptAssociation> get(CloseableDSLContext ctx, Identification identifier) {
+  public static List<ConceptAssociation> get(DSLContext ctx, Identification identifier) {
     de.dataelementhub.dal.jooq.tables.ConceptElementAssociations conceptElementAssociations
         = CONCEPT_ELEMENT_ASSOCIATIONS.as("ceassociation");
     de.dataelementhub.dal.jooq.tables.Concepts concepts = CONCEPTS.as("concepts");
@@ -83,14 +83,14 @@ public class ConceptAssociationHandler {
   /**
    * Get a List of concept association.
    */
-  public static List<ConceptAssociation> get(CloseableDSLContext ctx, String urn) {
+  public static List<ConceptAssociation> get(DSLContext ctx, String urn) {
     return get(ctx, IdentificationHandler.fromUrn(ctx, urn));
   }
 
   /**
    * Saves the given list of concept associations in the database.
    */
-  public static void save(CloseableDSLContext ctx,
+  public static void save(DSLContext ctx,
       List<ConceptAssociation> conceptAssociations, Integer userId, int scopedIdentifierId) {
     if (conceptAssociations != null) {
       for (ConceptAssociation conceptAssociation : conceptAssociations) {
@@ -106,7 +106,7 @@ public class ConceptAssociationHandler {
    *
    * @param conceptAssociation the concept association to store
    */
-  public static void save(CloseableDSLContext ctx, ConceptAssociation conceptAssociation,
+  public static void save(DSLContext ctx, ConceptAssociation conceptAssociation,
       Integer userId, int scopedIdentifier) {
     de.dataelementhub.dal.jooq.tables.pojos.ConceptElementAssociations conceptElementAssociations =
         new de.dataelementhub.dal.jooq.tables.pojos.ConceptElementAssociations();
@@ -149,7 +149,7 @@ public class ConceptAssociationHandler {
   /**
    * Copy concept associations from one scoped identifier to another.
    */
-  public static void copyConceptElementAssociations(CloseableDSLContext ctx, Integer userId,
+  public static void copyConceptElementAssociations(DSLContext ctx, Integer userId,
       Integer sourceId, Integer targetId) {
     List<de.dataelementhub.dal.jooq.tables.pojos.ConceptElementAssociations>
         conceptElementAssociations =

@@ -10,7 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import org.jooq.CloseableDSLContext;
+import org.jooq.DSLContext;
 import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -23,7 +23,7 @@ public class ExportService {
 
   /** Generates an Export file for defined elements. */
   @Async
-  public void exportService(CloseableDSLContext ctx, ExportRequest exportRequest,
+  public void exportService(DSLContext ctx, ExportRequest exportRequest,
       int userId, MediaType mediaType,
       Boolean fullExport, String timestamp, String exportDirectory) {
     ExportHandler.export(
