@@ -194,6 +194,10 @@ public class DataElementHandler extends ElementHandler {
       throw new UnsupportedOperationException("Validation changes are not allowed during update.");
     }
 
+    if (dataElement.getIdentification().getStatus() == Status.RELEASED) {
+      IdentificationHandler.canBeReleased(ctx, userId, dataElement.getIdentification());
+    }
+
     List<ScopedIdentifierHierarchy> scopedIdentifierHierarchyList = null;
     final ScopedIdentifier previousScopedIdentifier;
     //update scopedIdentifier if status != DRAFT
@@ -216,13 +220,7 @@ public class DataElementHandler extends ElementHandler {
     delete(ctx, userId, previousDataElement.getIdentification().getUrn());
     create(ctx, userId, dataElement);
 
-    if (releasedElementIdentification.getStatus() == Status.RELEASED) {
-      try {
-        IdentificationHandler.canBeReleased(ctx, userId, releasedElementIdentification);
-      } catch (IllegalStateException e) {
-        throw e;
-      }
-    }
+
 
     if (scopedIdentifierHierarchyList != null) {
       ScopedIdentifier newScopedIdentifier = IdentificationHandler.getScopedIdentifier(ctx,
