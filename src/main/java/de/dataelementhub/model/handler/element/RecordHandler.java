@@ -90,9 +90,10 @@ public class RecordHandler extends ElementHandler {
   public static Identification update(DSLContext ctx, int userId,
       Record record, Record previousRecord) throws IllegalAccessException {
 
-    // If the members changed in any way, an update is not allowed
-    if (!record.getMembers().equals(previousRecord.getMembers())) {
-      throw new IllegalArgumentException();
+    // If the members changed in any way and the status is not draft, an update is not allowed
+    if (!record.getMembers().equals(previousRecord.getMembers())
+        && previousRecord.getIdentification().getStatus() != Status.DRAFT) {
+      throw new IllegalArgumentException("Updating members is only allowed for DRAFT records");
     }
 
     //update scopedIdentifier if status != DRAFT
