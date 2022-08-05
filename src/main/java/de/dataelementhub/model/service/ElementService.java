@@ -235,6 +235,12 @@ public class ElementService {
         throw new IllegalStateException("Unreleased namespaces can't contain released elements");
       }
     }
+
+    if (hasDuplicateLanguageDefinitions(element)) {
+      throw new IllegalArgumentException(
+              "Your element contains multiple definitions of at least one language");
+    }
+
     Element previousElement = read(ctx, userId, element.getIdentification().getUrn());
     switch (element.getIdentification().getElementType()) {
       case DATAELEMENT:
