@@ -60,6 +60,12 @@ public class DataElementHandler extends ElementHandler {
         throw new NoSuchElementException(
             "ValueDomainUrn: " + dataElement.getValueDomainUrn() + " does not exist!");
       }
+      if ((valueDomainIdentification.getStatus() == Status.DRAFT) && (
+          dataElement.getIdentification().getStatus() == Status.RELEASED
+              || dataElement.getIdentification().getStatus() == Status.OUTDATED)) {
+        throw new IllegalArgumentException(
+            "Released elements may not contain draft value domains.");
+      }
       ElementType elementType = valueDomainIdentification.getElementType();
       if (elementType != ElementType.ENUMERATED_VALUE_DOMAIN
           && elementType != ElementType.DESCRIBED_VALUE_DOMAIN) {
