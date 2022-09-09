@@ -79,6 +79,14 @@ public class DataElementHandler extends ElementHandler {
       // An identification object is needed but not supplied when created this way
       Identification valueDomainIdentification = new Identification();
       valueDomainIdentification.setNamespaceUrn(dataElement.getIdentification().getNamespaceUrn());
+
+      if (dataElement.getValueDomain().getType().equalsIgnoreCase(ValueDomain.TYPE_TBD) && (
+          dataElement.getIdentification().getStatus() == Status.RELEASED
+              || dataElement.getIdentification().getStatus() == Status.OUTDATED)) {
+        throw new IllegalArgumentException(
+            "Can't create released dataelement with TBD value domain.");
+      }
+
       if (dataElement.getValueDomain().getType()
           .equalsIgnoreCase(ValueDomain.TYPE_ENUMERATED)) {
         valueDomainIdentification.setElementType(ElementType.ENUMERATED_VALUE_DOMAIN);
