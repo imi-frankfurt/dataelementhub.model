@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.3] - 2022-11-03
+### Security
+- Update parent.pom to update to spring boot 2.7.5
+
 ## [2.2.2] - 2022-11-03
 ### Security
 - Update dependencies, including jackson lib due to [CVE-2022-42003](https://devhub.checkmarx.com/cve-details/CVE-2022-42003/) and [CVE-2022-42004](https://devhub.checkmarx.com/cve-details/CVE-2022-42004/)
