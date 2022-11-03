@@ -86,6 +86,7 @@ public class SearchService {
     List<Element> results = new ArrayList<>();
     for (ScopedIdentifier scopedIdentifier : scopedIdentifiers) {
       String urn = IdentificationHandler.toUrn(ctx, scopedIdentifier);
+
       if (scopedIdentifier.getElementType().equals(ElementType.NAMESPACE)
           && !idList.contains(urn)) {
         idList.add(urn);
@@ -98,7 +99,11 @@ public class SearchService {
       } else {
         if (!idList.contains(urn)) {
           idList.add(urn);
-          results.add(elementService.read(ctx, userId, urn));
+          try {
+            results.add(elementService.read(ctx, userId, urn));
+          } catch (NoSuchElementException e) {
+            // This most likely means the user has no access to this element. This can be ignored.
+          }
         }
       }
     }
