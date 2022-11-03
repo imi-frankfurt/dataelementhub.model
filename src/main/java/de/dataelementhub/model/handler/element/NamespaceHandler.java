@@ -129,11 +129,14 @@ public class NamespaceHandler extends ElementHandler {
           .fetchOneInto(Integer.class);
 
       Namespace namespace = getByDatabaseId(ctx, userId, namespaceId);
-      namespace.setSlots(SlotHandler.get(ctx, namespace.getIdentification()));
-      return namespace;
+      if (namespace != null) {
+        namespace.setSlots(SlotHandler.get(ctx, namespace.getIdentification()));
+        return namespace;
+      }
     } catch (NullPointerException e) {
       throw new NoSuchElementException();
     }
+    return null;
   }
 
 
