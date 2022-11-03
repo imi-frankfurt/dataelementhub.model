@@ -14,6 +14,7 @@ import de.dataelementhub.model.dto.search.SearchRequest;
 import de.dataelementhub.model.handler.element.section.IdentificationHandler;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import org.jooq.DSLContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -85,15 +86,24 @@ public class SearchService {
     List<Element> results = new ArrayList<>();
     for (ScopedIdentifier scopedIdentifier : scopedIdentifiers) {
       String urn = IdentificationHandler.toUrn(ctx, scopedIdentifier);
+
       if (scopedIdentifier.getElementType().equals(ElementType.NAMESPACE)
           && !idList.contains(urn)) {
         idList.add(urn);
-        results.add(namespaceService.read(ctx, userId,
-            String.valueOf(scopedIdentifier.getIdentifier())));
+        try {
+          results.add(namespaceService.read(ctx, userId,
+              String.valueOf(scopedIdentifier.getIdentifier())));
+        } catch (NoSuchElementException e) {
+          // This most likely means the user has no access to this namespace. This can be ignored.
+        }
       } else {
         if (!idList.contains(urn)) {
           idList.add(urn);
-          results.add(elementService.read(ctx, userId, urn));
+          try {
+            results.add(elementService.read(ctx, userId, urn));
+          } catch (NoSuchElementException e) {
+            // This most likely means the user has no access to this element. This can be ignored.
+          }
         }
       }
     }

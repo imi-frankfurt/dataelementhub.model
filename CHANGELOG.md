@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.1] - 2022-11-03
+### Fixed
+- There was a bug in the search function that occurred when private namespaces from other users are present [[#105](https://github.com/mig-frankfurt/dataelementhub.model/issues/105)]
+
 ## [2.2.0] - 2022-09-29
 ### Fixed
 - Elements can no longer have multiple definitions of the same language [[#95](https://github.com/mig-frankfurt/dataelementhub.model/issues/95)] [[#100](https://github.com/mig-frankfurt/dataelementhub.model/issues/100)]
