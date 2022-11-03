@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.2] - 2022-11-03
+### Security
+- Update dependencies, including jackson lib due to [CVE-2022-42003](https://devhub.checkmarx.com/cve-details/CVE-2022-42003/) and [CVE-2022-42004](https://devhub.checkmarx.com/cve-details/CVE-2022-42004/)
+
 ## [2.2.1] - 2022-11-03
 ### Fixed
 - There was a bug in the search function that occurred when private namespaces from other users are present [[#105](https://github.com/mig-frankfurt/dataelementhub.model/issues/105)]
