@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.4] - 2022-11-23
+### Changed
+- Do not ignore element path if the parent is outdated
+### Fixed
+- Do not skip already converted value domains on import
+
 ## [2.2.3] - 2022-11-03
 ### Security
 - Update parent.pom to update to spring boot 2.7.5
