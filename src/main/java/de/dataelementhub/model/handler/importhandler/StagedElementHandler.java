@@ -84,7 +84,7 @@ public class StagedElementHandler {
     ScopedIdentifier scopedIdentifier;
     List<Member> members;
     String convertedUrn = getUrnIfConvertedAndDraftStillAvailable(ctx,
-        importId, stagedElement.getValueDomainUrn());
+        importId, stagedElement.getUrn());
     if (!convertedUrn.equals("")) { // if element already exist return urn
       return convertedUrn;
     }
