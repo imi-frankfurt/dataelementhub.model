@@ -60,8 +60,7 @@ public class ElementPathHandler {
         continue;
       }
       List<ScopedIdentifier> parentScopedIdentifiers = getParentScopedIdentifiers(ctx,
-          partialPath.get(0)).stream().filter(p ->
-          p.getStatus() != Status.OUTDATED).collect(Collectors.toList());
+          partialPath.get(0));
       partialPaths.remove(partialPath);
       if (parentScopedIdentifiers.size() > 0) {
         for (ScopedIdentifier parentScopedIdentifier : parentScopedIdentifiers) {
