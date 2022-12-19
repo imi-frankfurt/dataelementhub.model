@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Locale.LanguageRange;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -18,7 +19,6 @@ import lombok.EqualsAndHashCode;
  * Element DTO.
  */
 @Data
-@EqualsAndHashCode
 @JsonInclude(Include.NON_NULL)
 public class Element implements Serializable {
 
@@ -74,5 +74,24 @@ public class Element implements Serializable {
     });
 
     setDefinitions(filteredDefinitions);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    Element element = (Element) o;
+    return Objects.equals(definitions, element.definitions) && Objects.equals(
+        slots, element.slots) && Objects.equals(identification.getElementType(),
+        element.getIdentification().getElementType());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(definitions, slots);
   }
 }

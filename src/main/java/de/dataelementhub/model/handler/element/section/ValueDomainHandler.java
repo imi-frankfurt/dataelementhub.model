@@ -19,9 +19,13 @@ import de.dataelementhub.model.handler.element.section.validation.DatetimeHandle
 import de.dataelementhub.model.handler.element.section.validation.NumericHandler;
 import de.dataelementhub.model.handler.element.section.validation.PermittedValuesHandler;
 import de.dataelementhub.model.handler.element.section.validation.TextHandler;
+import java.util.ArrayList;
 import java.util.UUID;
+import lombok.extern.slf4j.Slf4j;
 import org.jooq.DSLContext;
 
+
+@Slf4j
 /**
  * ValueDomain Handler.
  */
@@ -186,6 +190,20 @@ public class ValueDomainHandler extends ElementHandler {
   public static Identification update(DSLContext ctx, int userId, ValueDomain valueDomain,
       ValueDomain oldValueDomain) throws NoSuchMethodException, IllegalAccessException {
 
+    if (valueDomain.getDefinitions() == null) {
+      valueDomain.setDefinitions(new ArrayList<>());
+    }
+    if (valueDomain.getSlots() == null) {
+      valueDomain.setSlots(new ArrayList<>());
+    }
+    if (valueDomain.getConceptAssociations() == null) {
+      valueDomain.setConceptAssociations(new ArrayList<>());
+    }
+    if (oldValueDomain.equals(valueDomain)) {
+      log.debug("No changes were made. Returning old identification");
+      return oldValueDomain.getIdentification();
+    }
+
     if (oldValueDomain.getIdentification().getStatus() == Status.DRAFT) {
 
       if (valueDomain.getIdentification().getStatus() == Status.RELEASED && valueDomain.getType()
@@ -198,8 +216,25 @@ public class ValueDomainHandler extends ElementHandler {
       create(ctx, userId, valueDomain);
       return valueDomain.getIdentification();
     } else {
-      throw new NoSuchMethodException(
-          "Updating released value domains is currently not supported.");
+      // Modifying the value domain itself is not allowed (changing validation or adding/removing
+      // permitted values). This must always result in a new value domain. However, changing slots,
+      // designation or concept associations is fine.
+      if (valueDomain.validationsDiffer(oldValueDomain)) {
+        throw new IllegalArgumentException(
+            "Validation must not be changed for non-draft elements."
+                + " Create a new ValueDomain instead.");
+      }
+
+      delete(ctx, userId, oldValueDomain.getIdentification().getUrn());
+
+      valueDomain.setIdentification(oldValueDomain.getIdentification());
+      valueDomain.getIdentification()
+          .setRevision(oldValueDomain.getIdentification().getRevision() + 1);
+      valueDomain.getIdentification().updateRevisionInUrn();
+
+      create(ctx, userId, valueDomain);
+      return valueDomain.getIdentification();
     }
   }
+
 }

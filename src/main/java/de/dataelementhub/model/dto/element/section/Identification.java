@@ -25,6 +25,14 @@ public class Identification implements Serializable {
   private Status status;
   private Boolean hideNamespace;
 
+  /**
+   * Updates the urn to use the current revision.
+   * Simple method that does not depend on anything else.
+   */
+  public void updateRevisionInUrn() {
+    this.urn = this.urn.substring(0, this.urn.lastIndexOf(":")) + ":" + revision;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
