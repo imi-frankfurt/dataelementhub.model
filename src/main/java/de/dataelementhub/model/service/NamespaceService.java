@@ -7,6 +7,7 @@ import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
 import de.dataelementhub.model.dto.DeHubUserPermission;
 import de.dataelementhub.model.dto.element.Element;
 import de.dataelementhub.model.dto.element.Namespace;
+import de.dataelementhub.model.dto.element.section.Definition;
 import de.dataelementhub.model.dto.element.section.Identification;
 import de.dataelementhub.model.dto.element.section.Member;
 import de.dataelementhub.model.dto.listviews.NamespaceMember;
@@ -37,6 +38,10 @@ public class NamespaceService {
     element.setIdentification(IdentificationHandler.removeUserSubmittedIdentifierAndRevision(
         element.getIdentification()));
     if (element.getIdentification().getElementType() == ElementType.NAMESPACE) {
+      if (hasDuplicateLanguageDefinitions(element)) {
+        throw new IllegalArgumentException(
+            "Your namespace contains multiple definitions of at least one language");
+      }
       return NamespaceHandler.create(ctx, userId, (Namespace) element);
     }
     throw new IllegalArgumentException("Element Type is not supported");
@@ -191,6 +196,10 @@ public class NamespaceService {
   public Identification update(DSLContext ctx, int userId, Element element)
       throws IllegalAccessException, NoSuchMethodException {
     if (element.getIdentification().getElementType() == ElementType.NAMESPACE) {
+      if (hasDuplicateLanguageDefinitions(element)) {
+        throw new IllegalArgumentException(
+            "Your namespace contains multiple definitions of at least one language");
+      }
       return NamespaceHandler.update(ctx, userId, (Namespace) element);
     }
     throw new IllegalArgumentException("Element Type is not supported");
@@ -225,5 +234,21 @@ public class NamespaceService {
       throw new IllegalArgumentException(
           "Element Type is not supported: " + identification.getElementType());
     }
+  }
+
+  /**
+   * Check for duplicate languages in definitions.
+   */
+  private boolean hasDuplicateLanguageDefinitions(Element element) {
+    List<String> languages = new ArrayList<>();
+    boolean hasDuplicates = false;
+    for (Definition definition : element.getDefinitions()) {
+      if (languages.contains(definition.getLanguage().toLowerCase())) {
+        hasDuplicates = true;
+        break;
+      }
+      languages.add(definition.getLanguage().toLowerCase());
+    }
+    return hasDuplicates;
   }
 }
