@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import org.jooq.DSLContext;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,19 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class ExportService {
+
+  @Value("${dehub.export.expirationPeriodInDays}")
+  public int expirationPeriodInDays;
+
+  @Value("${dehub.export.exportDirectory}")
+  private String defaultExportDirectory;
+
+  /**
+   * Get predefined export expiration period.
+   */
+  public int getExpirationPeriodInDays() {
+    return expirationPeriodInDays;
+  }
 
   /** Generates an Export file for defined elements. */
   @Async
@@ -77,5 +91,16 @@ public class ExportService {
           ? 1 : ExportHandler.exportProgress);
     }
     return exportDescriptions;
+  }
+
+  /**
+   * Get export directory.
+   */
+  public String getExportDirectory() {
+    if (defaultExportDirectory == null) {
+      return System.getProperty("java.io.tmpdir")
+          + "/exports".replace('/', File.separatorChar);
+    }
+    return defaultExportDirectory;
   }
 }
