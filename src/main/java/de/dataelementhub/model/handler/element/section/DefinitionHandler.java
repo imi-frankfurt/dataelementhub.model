@@ -5,6 +5,7 @@ import static de.dataelementhub.dal.jooq.Tables.DEFINITION;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
 import de.dataelementhub.dal.jooq.tables.records.DefinitionRecord;
 import de.dataelementhub.model.dto.element.section.Definition;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.jooq.DSLContext;
@@ -170,5 +171,21 @@ public class DefinitionHandler {
     deleteDefinitionsByElementUrnId(ctx, userId, elementScopedIdentifier);
     create(ctx, definitions, elementScopedIdentifier.getElementId(),
         elementScopedIdentifier.getId());
+  }
+
+  /**
+   * Check for duplicate languages in definitions.
+   */
+  public static boolean hasDuplicateLanguage(List<Definition> definitions) {
+    List<String> languages = new ArrayList<>();
+    boolean hasDuplicates = false;
+    for (Definition definition : definitions) {
+      if (languages.contains(definition.getLanguage().toLowerCase())) {
+        hasDuplicates = true;
+        break;
+      }
+      languages.add(definition.getLanguage().toLowerCase());
+    }
+    return hasDuplicates;
   }
 }
