@@ -177,6 +177,9 @@ public class DefinitionHandler {
    * Check for duplicate languages in definitions.
    */
   public static boolean hasDuplicateLanguage(List<Definition> definitions) {
+    if (definitions == null) {
+      return false;
+    }
     List<String> languages = new ArrayList<>();
     boolean hasDuplicates = false;
     for (Definition definition : definitions) {
