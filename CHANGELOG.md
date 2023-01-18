@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.6] - 2023-01-18
+### Fixed
+- Environment variables are not working in the controller classes [[#111](https://github.com/imi-frankfurt/dataelementhub.model/issues/111)]
+  - This bug was the reason why the environment variable exportDirectory was not working
+- Prevent multiple definitions of the same language when creating namespaces [[#113](https://github.com/imi-frankfurt/dataelementhub.model/issues/113)]
+  - It should not be possible to store more than one definition per language and namespace
+
 ## [2.2.5] - 2022-11-29
 ### Security
 - Updated tomcat-embed-core and dehub-dal
