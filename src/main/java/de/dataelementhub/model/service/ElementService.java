@@ -66,7 +66,7 @@ public class ElementService {
       }
     }
 
-    if (hasDuplicateLanguageDefinitions(element)) {
+    if (DefinitionHandler.hasDuplicateLanguageDefinitions(element.getDefinitions())) {
       throw new IllegalArgumentException(
           "Your element contains multiple definitions of at least one language");
     }
@@ -236,7 +236,7 @@ public class ElementService {
       }
     }
 
-    if (hasDuplicateLanguageDefinitions(element)) {
+    if (DefinitionHandler.hasDuplicateLanguageDefinitions(element.getDefinitions())) {
       throw new IllegalArgumentException(
               "Your element contains multiple definitions of at least one language");
     }
@@ -333,21 +333,5 @@ public class ElementService {
   public List<List<SimplifiedElementIdentification>> getElementPaths(
       DSLContext ctx, int userId, String urn, String languages) {
     return ElementPathHandler.getElementPaths(ctx, userId, urn, languages);
-  }
-
-  /**
-   * Check for duplicate languages in definitions.
-   */
-  private boolean hasDuplicateLanguageDefinitions(Element element) {
-    List<String> languages = new ArrayList<>();
-    boolean hasDuplicates = false;
-    for (Definition definition : element.getDefinitions()) {
-      if (languages.contains(definition.getLanguage().toLowerCase())) {
-        hasDuplicates = true;
-        break;
-      }
-      languages.add(definition.getLanguage().toLowerCase());
-    }
-    return hasDuplicates;
   }
 }

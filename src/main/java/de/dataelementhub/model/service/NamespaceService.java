@@ -7,13 +7,13 @@ import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
 import de.dataelementhub.model.dto.DeHubUserPermission;
 import de.dataelementhub.model.dto.element.Element;
 import de.dataelementhub.model.dto.element.Namespace;
-import de.dataelementhub.model.dto.element.section.Definition;
 import de.dataelementhub.model.dto.element.section.Identification;
 import de.dataelementhub.model.dto.element.section.Member;
 import de.dataelementhub.model.dto.listviews.NamespaceMember;
 import de.dataelementhub.model.handler.element.ElementHandler;
 import de.dataelementhub.model.handler.element.NamespaceHandler;
 import de.dataelementhub.model.handler.element.section.IdentificationHandler;
+import de.dataelementhub.model.handler.element.section.DefinitionHandler;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -38,7 +38,7 @@ public class NamespaceService {
     element.setIdentification(IdentificationHandler.removeUserSubmittedIdentifierAndRevision(
         element.getIdentification()));
     if (element.getIdentification().getElementType() == ElementType.NAMESPACE) {
-      if (hasDuplicateLanguageDefinitions(element)) {
+      if (DefinitionHandler.hasDuplicateLanguageDefinitions(element.getDefinitions())) {
         throw new IllegalArgumentException(
             "Your namespace contains multiple definitions of at least one language");
       }
@@ -196,7 +196,7 @@ public class NamespaceService {
   public Identification update(DSLContext ctx, int userId, Element element)
       throws IllegalAccessException, NoSuchMethodException {
     if (element.getIdentification().getElementType() == ElementType.NAMESPACE) {
-      if (hasDuplicateLanguageDefinitions(element)) {
+      if (DefinitionHandler.hasDuplicateLanguageDefinitions(element.getDefinitions())) {
         throw new IllegalArgumentException(
             "Your namespace contains multiple definitions of at least one language");
       }
@@ -234,21 +234,5 @@ public class NamespaceService {
       throw new IllegalArgumentException(
           "Element Type is not supported: " + identification.getElementType());
     }
-  }
-
-  /**
-   * Check for duplicate languages in definitions.
-   */
-  private boolean hasDuplicateLanguageDefinitions(Element element) {
-    List<String> languages = new ArrayList<>();
-    boolean hasDuplicates = false;
-    for (Definition definition : element.getDefinitions()) {
-      if (languages.contains(definition.getLanguage().toLowerCase())) {
-        hasDuplicates = true;
-        break;
-      }
-      languages.add(definition.getLanguage().toLowerCase());
-    }
-    return hasDuplicates;
   }
 }
