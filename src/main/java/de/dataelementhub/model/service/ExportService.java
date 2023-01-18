@@ -26,7 +26,7 @@ public class ExportService {
   public int expirationPeriodInDays;
 
   @Value("${dehub.export.exportDirectory}")
-  private String defaultExportDirectory;
+  private String exportDirectory;
 
   /**
    * Get predefined export expiration period.
@@ -48,7 +48,9 @@ public class ExportService {
    **/
   public ExportInfo exportInfo(String identifier, int userId, String exportDirectory) {
     new File(exportDirectory + File.separator + userId).mkdir();
-    File[] exports = Objects.requireNonNull(new File(exportDirectory + File.separator + userId)
+    File[] exports =
+        Objects
+            .requireNonNull(new File(exportDirectory + File.separator + userId)
         .listFiles(File::isDirectory));
     ExportInfo exportInfo = new ExportInfo();
     exportInfo.setStatus("NOT DEFINED");
@@ -97,10 +99,10 @@ public class ExportService {
    * Get export directory.
    */
   public String getExportDirectory() {
-    if (defaultExportDirectory == null) {
+    if (exportDirectory == null) {
       return System.getProperty("java.io.tmpdir")
           + "/exports".replace('/', File.separatorChar);
     }
-    return defaultExportDirectory;
+    return exportDirectory;
   }
 }
