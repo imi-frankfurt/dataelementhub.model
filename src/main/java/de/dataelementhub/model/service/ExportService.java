@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import org.jooq.DSLContext;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,19 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class ExportService {
+
+  @Value("${dehub.export.expirationPeriodInDays}")
+  public int expirationPeriodInDays;
+
+  @Value("${dehub.export.exportDirectory}")
+  private String exportDirectory;
+
+  /**
+   * Get predefined export expiration period.
+   */
+  public int getExpirationPeriodInDays() {
+    return expirationPeriodInDays;
+  }
 
   /** Generates an Export file for defined elements. */
   @Async
@@ -34,7 +48,9 @@ public class ExportService {
    **/
   public ExportInfo exportInfo(String identifier, int userId, String exportDirectory) {
     new File(exportDirectory + File.separator + userId).mkdir();
-    File[] exports = Objects.requireNonNull(new File(exportDirectory + File.separator + userId)
+    File[] exports =
+        Objects
+            .requireNonNull(new File(exportDirectory + File.separator + userId)
         .listFiles(File::isDirectory));
     ExportInfo exportInfo = new ExportInfo();
     exportInfo.setStatus("NOT DEFINED");
@@ -77,5 +93,16 @@ public class ExportService {
           ? 1 : ExportHandler.exportProgress);
     }
     return exportDescriptions;
+  }
+
+  /**
+   * Get export directory.
+   */
+  public String getExportDirectory() {
+    if (exportDirectory == null) {
+      return System.getProperty("java.io.tmpdir")
+          + "/exports".replace('/', File.separatorChar);
+    }
+    return exportDirectory;
   }
 }
