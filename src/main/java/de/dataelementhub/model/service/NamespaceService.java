@@ -12,6 +12,7 @@ import de.dataelementhub.model.dto.element.section.Member;
 import de.dataelementhub.model.dto.listviews.NamespaceMember;
 import de.dataelementhub.model.handler.element.ElementHandler;
 import de.dataelementhub.model.handler.element.NamespaceHandler;
+import de.dataelementhub.model.handler.element.section.DefinitionHandler;
 import de.dataelementhub.model.handler.element.section.IdentificationHandler;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,6 +38,10 @@ public class NamespaceService {
     element.setIdentification(IdentificationHandler.removeUserSubmittedIdentifierAndRevision(
         element.getIdentification()));
     if (element.getIdentification().getElementType() == ElementType.NAMESPACE) {
+      if (DefinitionHandler.hasDuplicateLanguage(element.getDefinitions())) {
+        throw new IllegalArgumentException(
+            "Your namespace contains multiple definitions of at least one language");
+      }
       return NamespaceHandler.create(ctx, userId, (Namespace) element);
     }
     throw new IllegalArgumentException("Element Type is not supported");
@@ -191,6 +196,10 @@ public class NamespaceService {
   public Identification update(DSLContext ctx, int userId, Element element)
       throws IllegalAccessException, NoSuchMethodException {
     if (element.getIdentification().getElementType() == ElementType.NAMESPACE) {
+      if (DefinitionHandler.hasDuplicateLanguage(element.getDefinitions())) {
+        throw new IllegalArgumentException(
+            "Your namespace contains multiple definitions of at least one language");
+      }
       return NamespaceHandler.update(ctx, userId, (Namespace) element);
     }
     throw new IllegalArgumentException("Element Type is not supported");
