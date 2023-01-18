@@ -38,7 +38,7 @@ public class NamespaceService {
     element.setIdentification(IdentificationHandler.removeUserSubmittedIdentifierAndRevision(
         element.getIdentification()));
     if (element.getIdentification().getElementType() == ElementType.NAMESPACE) {
-      if (DefinitionHandler.hasDuplicateLanguageDefinitions(element.getDefinitions())) {
+      if (DefinitionHandler.hasDuplicateLanguage(element.getDefinitions())) {
         throw new IllegalArgumentException(
             "Your namespace contains multiple definitions of at least one language");
       }
@@ -196,7 +196,7 @@ public class NamespaceService {
   public Identification update(DSLContext ctx, int userId, Element element)
       throws IllegalAccessException, NoSuchMethodException {
     if (element.getIdentification().getElementType() == ElementType.NAMESPACE) {
-      if (DefinitionHandler.hasDuplicateLanguageDefinitions(element.getDefinitions())) {
+      if (DefinitionHandler.hasDuplicateLanguage(element.getDefinitions())) {
         throw new IllegalArgumentException(
             "Your namespace contains multiple definitions of at least one language");
       }

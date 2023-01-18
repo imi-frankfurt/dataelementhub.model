@@ -66,7 +66,7 @@ public class ElementService {
       }
     }
 
-    if (DefinitionHandler.hasDuplicateLanguageDefinitions(element.getDefinitions())) {
+    if (DefinitionHandler.hasDuplicateLanguage(element.getDefinitions())) {
       throw new IllegalArgumentException(
           "Your element contains multiple definitions of at least one language");
     }
@@ -236,7 +236,7 @@ public class ElementService {
       }
     }
 
-    if (DefinitionHandler.hasDuplicateLanguageDefinitions(element.getDefinitions())) {
+    if (DefinitionHandler.hasDuplicateLanguage(element.getDefinitions())) {
       throw new IllegalArgumentException(
               "Your element contains multiple definitions of at least one language");
     }
