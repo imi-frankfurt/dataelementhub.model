@@ -5,10 +5,42 @@
   "definitions": {
     "identification": {
       "type": "object",
+      "required": [
+        "elementType"
+      ],
+      "definitions": {
+        "namespaceUrn": {
+          "type": "string",
+          "pattern": "^[uU][rR][nN]:[0-9]+:[nN][aA][mM][eE][sS][pP][aA][cC][eE]:[0-9]+:[0-9]+$"
+        },
+        "dataElementUrn": {
+          "type": "string",
+          "pattern": "^[uU][rR][nN]:[0-9]+:[dD][aA][tT][aA][eE][lL][eE][mM][eE][nN][tT]:[0-9]+:[0-9]+$"
+        },
+        "dataElementGroupUrn": {
+          "type": "string",
+          "pattern": "^[uU][rR][nN]:[0-9]+:[dD][aA][tT][aA][eE][lL][eE][mM][eE][nN][tT][gG][rR][oO][uU][pP]:[0-9]+:[0-9]+$"
+        },
+        "recordUrn": {
+          "type": "string",
+          "pattern": "^[uU][rR][nN]:[0-9]+:[rR][eE][cC][oO][rR][dD]:[0-9]+:[0-9]+$"
+        },
+        "permittedValueUrn": {
+          "type": "string",
+          "pattern": "^[uU][rR][nN]:[0-9]+:[pP][eE][rR][mM][iI][tT][tT][eE][dD][vV][aA][lL][uU][eE]:[0-9]+:[0-9]+$"
+        },
+        "valueDomainUrn": {
+          "type": "string",
+          "pattern": "^[uU][rR][nN]:[0-9]+:[vV][aA][lL][uU][eE][dD][oO][mM][aA][iI][nN]:[0-9]+:[0-9]+$"
+        }
+      },
+      "additionalProperties": false,
       "properties": {
         "elementType": {
           "type": "string",
-          "required": ["namespaceUrn"],
+          "required": [
+            "namespaceUrn"
+          ],
           "enum": [
             "DATAELEMENT",
             "DATAELEMENTGROUP",
@@ -45,280 +77,397 @@
           ]
         },
         "urn": {
-          "type": "string"
+          "type": "string",
+          "oneOf": [
+            {
+              "$ref": "#/definitions/identification/definitions/namespaceUrn"
+            },
+            {
+              "$ref": "#/definitions/identification/definitions/dataElementUrn"
+            },
+            {
+              "$ref": "#/definitions/identification/definitions/dataElementGroupUrn"
+            },
+            {
+              "$ref": "#/definitions/identification/definitions/recordUrn"
+            },
+            {
+              "$ref": "#/definitions/identification/definitions/valueDomainUrn"
+            },
+            {
+              "$ref": "#/definitions/identification/definitions/permittedValueUrn"
+            }
+          ]
         }
       }
     },
     "definitions": {
-      "title": "Definitions",
-      "description": "",
       "type": "array",
       "minItems": 1,
-      "items": {
-        "title": "The Items Schema",
-        "description": "",
-        "type": "object",
-        "required": [
-          "designation",
-          "language"
-        ],
-        "properties": {
-          "designation": {
-            "title": "Designation",
-            "description": "",
-            "type": "string"
-          },
-          "definition": {
-            "title": "Definition",
-            "description": "",
-            "type": "string"
-          },
-          "language": {
-            "title": "Language",
-            "description": "",
-            "enum": [
-              "en",
-              "bg",
-              "es",
-              "cz",
-              "da",
-              "de",
-              "et",
-              "el",
-              "fr",
-              "ga",
-              "hr",
-              "it",
-              "lv",
-              "lt",
-              "hu",
-              "mt",
-              "nl",
-              "pl",
-              "pt",
-              "ro",
-              "sk",
-              "sl",
-              "fi",
-              "sv"
-            ]
+      "definitions": {
+        "definition": {
+          "type": "object",
+          "required": [
+            "designation",
+            "language"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "designation": {
+              "type": "string"
+            },
+            "definition": {
+              "type": "string"
+            },
+            "language": {
+              "enum": [
+                "en",
+                "bg",
+                "es",
+                "cz",
+                "da",
+                "de",
+                "et",
+                "el",
+                "fr",
+                "ga",
+                "hr",
+                "it",
+                "lv",
+                "lt",
+                "hu",
+                "mt",
+                "nl",
+                "pl",
+                "pt",
+                "ro",
+                "sk",
+                "sl",
+                "fi",
+                "sv"
+              ]
+            }
           }
         }
+      },
+      "items": {
+        "$ref": "#/definitions/definitions/definitions/definition"
       }
-
     },
     "slots": {
-      "title": "Slots",
-      "description": "",
       "type": "array",
-      "items": {
-        "title": "The Items Schema",
-        "description": "",
-        "type": "object",
-        "required": [
-          "name",
-          "value"
-        ],
-        "properties": {
-          "slot_name": {
-            "title": "name",
-            "description": "",
-            "type": "string"
-          },
-          "slot_value": {
-            "title": "value",
-            "description": "",
-            "type": "string"
+      "definitions": {
+        "slot": {
+          "type": "object",
+          "required": [
+            "name",
+            "value"
+          ],
+          "properties": {
+            "slot_name": {
+              "type": "string"
+            },
+            "slot_value": {
+              "type": "string"
+            }
           }
+        }
+      },
+      "items": {
+        "$ref": "#/definitions/slots/definitions/slot"
+      }
+    },
+    "permittedValue": {
+      "type": "object",
+      "required": ["identification"],
+      "oneOf": [
+        {
+          "required": [
+            "definitions",
+            "value"
+          ]
+        },
+        {
+          "required": [
+            "urn"
+          ]
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "identification": {
+          "required": ["elementType", "namespaceUrn", "status"],
+          "not": {
+            "required": ["hideNamespace"]
+          },
+          "additionalProperties": false,
+          "properties": {
+            "elementType": {
+              "enum": [
+                "PERMISSIBLE_VALUE"
+              ]
+            },
+            "hideNamespace": {
+              "$ref": "#/definitions/identification/properties/hideNamespace"
+            },
+            "identifier": {
+              "$ref": "#/definitions/identification/properties/identifier"
+            },
+            "namespaceId": {
+              "$ref": "#/definitions/identification/properties/namespaceId"
+            },
+            "namespaceUrn": {
+              "$ref": "#/definitions/identification/properties/namespaceUrn"
+            },
+            "revision": {
+              "$ref": "#/definitions/identification/properties/revision"
+            },
+            "status": {
+              "$ref": "#/definitions/identification/properties/status"
+            },
+            "urn": {
+              "$ref": "#/definitions/identification/definitions/permittedValueUrn"
+            }
+          }
+        },
+        "definitions": {
+          "$ref": "#/definitions/definitions"
+        },
+        "slots": {
+          "$ref": "#/definitions/slots"
+        },
+        "value": {
+          "type": "string"
+        },
+        "urn": {
+          "type": "string"
+        },
+        "conceptAssociations": {
+          "$ref": "#/definitions/conceptAssociations"
         }
       }
     },
     "valueDomain": {
-      "title": "valueDomain",
-      "description": "",
       "type": "object",
-      "required": ["type"],
+      "required": [
+        "identification",
+        "definitions",
+        "type"
+      ],
       "definitions": {
         "text": {
-          "title": "text",
-          "description": "",
           "type": "object",
           "required": [
             "useRegEx",
             "useMaximumLength"
           ],
+          "additionalProperties": false,
           "properties": {
             "useRegEx": {
-              "title": "useRegEx",
-              "description": "",
               "type": "boolean"
             },
             "useMaximumLength": {
-              "title": "useMaximumLength",
-              "description": "",
               "type": "boolean"
+            },
+            "regEx": {
+              "type": "string"
+            },
+            "maximumLength": {
+              "type": "number"
             }
           },
           "allOf": [
             {
               "if": {
-                "properties": { "useRegEx": { "const": true } }
-              },
-              "then": {
-                "required": ["regEx"],
                 "properties": {
-                  "regEx": {
-                    "type": "string"
+                  "useRegEx": {
+                    "const": true
                   }
                 }
+              },
+              "then": {
+                "required": [
+                  "regEx"
+                ]
               }
             },
             {
               "if": {
-                "properties": { "useMaximumLength": { "const": true } }
-              },
-              "then": {
-                "required": ["maximumLength"],
                 "properties": {
-                  "maximumLength": {
-                    "type": "number"
+                  "useMaximumLength": {
+                    "const": true
                   }
                 }
+              },
+              "then": {
+                "required": [
+                  "maximumLength"
+                ]
               }
             }
           ]
         },
         "dateTime": {
-          "title": "dateTime",
-          "description": "",
           "type": "object",
-          "required": [],
+          "oneOf": [
+            {
+              "required": ["date"]
+            },
+            {
+              "required": ["date", "time", "hourFormat"]
+            },
+            {
+              "required": ["time", "hourFormat"]
+            }
+          ],
+          "additionalProperties": false,
           "properties": {
             "date": {
-              "title": "date",
-              "description": "",
               "oneOf": [
-                { "type": "string", "pattern": "^YYYY-MM-DD$" },
-                { "type": "string", "pattern": "^YYYY-MM$" },
-                { "type": "string", "pattern": "^DD.MM.YYYY$" },
-                { "type": "string", "pattern": "^MM.YYYY$" }
+                {
+                  "type": "string",
+                  "pattern": "^YYYY-MM-DD$"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^YYYY-MM$"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^DD.MM.YYYY$"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^MM.YYYY$"
+                }
               ]
             },
             "time": {
-              "title": "time",
-              "description": "",
               "oneOf": [
-                { "type": "string", "pattern": "^hh:mm:ss$" },
-                { "type": "string", "pattern": "^hh:mm$" }
+                {
+                  "type": "string",
+                  "pattern": "^hh:mm:ss$"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^hh:mm$"
+                }
               ]
             },
             "hourFormat": {
-              "title": "hourFormat",
-              "description": "",
               "type": "string",
               "pattern": "^24h|12h$"
             }
           }
         },
         "permittedValues": {
-          "title": "permittedValues",
-          "description": "",
           "type": "array",
           "items": {
-            "title": "The Items Schema",
-            "description": "",
-            "type": "object",
-            "properties": {
-              "identification": {
-                "allOf": [{ "$ref": "#/definitions/identification" }],
-                "properties": {
-                  "elementType": {
-                    "type": "string",
-                    "required": ["namespaceUrn"],
-                    "enum": [
-                      "PERMISSIBLE_VALUE"
-                    ]
-                  }
-                }
-              },
-              "definitions": {
-                "$ref": "#/definitions/definitions"
-              },
-              "slots": {
-                "$ref": "#/definitions/slots"
-              },
-              "value": {
-                "title": "value",
-                "description": "",
-                "type": "string"
-              },
-              "urn": {
-                "title": "urn",
-                "description": "",
-                "type": "string",
-                "pattern": "(?i)permittedvalue"
-              },
-              "conceptAssociations": {
-                "$ref": "#/definitions/conceptAssociations"
-              }
-            },
-            "oneOf": [
-              {
-                "required": [
-                  "definitions",
-                  "value"
-                ]
-              },
-              {
-                "required": [
-                  "urn"
-                ]
-              }
-            ]
+            "$ref": "#/definitions/permittedValue"
           }
         },
         "numeric": {
-          "title": "numeric",
-          "description": "",
           "type": "object",
-          "required": ["type"],
+          "required": [
+            "type"
+          ],
+          "additionalProperties": false,
           "properties": {
-            "type": { "type":  "string"},
-            "useMinimum": { "type": "boolean" },
-            "useMaximum": { "type": "boolean" },
-            "unitOfMeasure": { "type": "string" }
+            "type": {
+              "type": "string"
+            },
+            "useMinimum": {
+              "type": "boolean"
+            },
+            "useMaximum": {
+              "type": "boolean"
+            },
+            "unitOfMeasure": {
+              "type": "string"
+            },
+            "minimum": {
+              "type": "number"
+            },
+            "maximum": {
+              "type": "number"
+            }
           },
           "allOf": [
             {
               "if": {
-                "properties": { "useMinimum": { "const": true } }
-              },
-              "then": {
-                "required": ["minimum"],
                 "properties": {
-                  "minimum": {
-                    "type": "number"
+                  "useMinimum": {
+                    "const": true
                   }
                 }
+              },
+              "then": {
+                "required": [
+                  "minimum"
+                ]
               }
             },
             {
               "if": {
-                "properties": { "useMaximum": { "const": true } }
-              },
-              "then": {
-                "required": ["maximum"],
                 "properties": {
-                  "maximum": {
-                    "type": "number"
+                  "useMaximum": {
+                    "const": true
                   }
                 }
+              },
+              "then": {
+                "required": [
+                  "maximum"
+                ]
               }
             }
           ]
         }
       },
+      "additionalProperties": false,
       "properties": {
+        "identification": {
+          "required": ["namespaceUrn", "status"],
+          "not": {
+            "required": ["hideNamespace"]
+          },
+          "additionalProperties": false,
+          "properties": {
+            "elementType": {
+              "enum": [
+                "DESCRIBED_VALUE_DOMAIN",
+                "ENUMERATED_VALUE_DOMAIN"
+              ]
+            },
+            "hideNamespace": {
+              "$ref": "#/definitions/identification/properties/hideNamespace"
+            },
+            "identifier": {
+              "$ref": "#/definitions/identification/properties/identifier"
+            },
+            "namespaceId": {
+              "$ref": "#/definitions/identification/properties/namespaceId"
+            },
+            "namespaceUrn": {
+              "$ref": "#/definitions/identification/properties/namespaceUrn"
+            },
+            "revision": {
+              "$ref": "#/definitions/identification/properties/revision"
+            },
+            "status": {
+              "$ref": "#/definitions/identification/properties/status"
+            },
+            "urn": {
+              "$ref": "#/definitions/identification/definitions/valueDomainUrn"
+            }
+          }
+        },
+        "definitions": {
+          "$ref": "#/definitions/definitions"
+        },
+        "slots": {
+          "$ref": "#/definitions/slots"
+        },
         "type": {
           "type": "string",
           "enum": [
@@ -332,6 +481,15 @@
             "TBD"
           ]
         },
+        "numeric": {
+          "$ref": "#/definitions/valueDomain/definitions/numeric"
+        },
+        "text": {
+          "$ref": "#/definitions/valueDomain/definitions/text"
+        },
+        "permittedValues": {
+          "$ref": "#/definitions/valueDomain/definitions/permittedValues"
+        },
         "conceptAssociations": {
           "$ref": "#/definitions/conceptAssociations"
         }
@@ -339,52 +497,58 @@
       "allOf": [
         {
           "if": {
-            "properties": { "type": { "const": "FLOAT" } }
+            "properties": {
+              "type": {
+                "enum": ["FLOAT", "INTEGER"]
+              }
+            }
           },
           "then": {
-            "required": ["numeric"],
-            "properties": {
-              "numeric": {
-                "$ref": "#/definitions/valueDomain/definitions/numeric"
-              }
+            "required": [
+              "numeric"
+            ],
+            "not": {
+              "required": ["text", "permittedValues", "datetime"]
             }
           }
         },
         {
           "if": {
-            "properties": { "type": { "const": "INTEGER" } }
+            "properties": {
+              "type": {
+                "const": "STRING"
+              }
+            }
           },
           "then": {
-            "required": ["numeric"],
-            "properties": {
-              "numeric": {
-                "$ref": "#/definitions/valueDomain/definitions/numeric"
-              }
+            "required": [
+              "text"
+            ],
+            "not": {
+              "required": ["numeric", "permittedValues", "datetime"]
             }
           }
         },
         {
           "if": {
-            "properties": { "type": { "const": "STRING" } }
-          },
-          "then": {
-            "required": ["text"],
             "properties": {
-              "text": {
-                "$ref": "#/definitions/valueDomain/definitions/text"
+              "type": {
+                "const": "DATE"
               }
             }
-          }
-        },
-        {
-          "if": {
-            "properties": { "type": { "const": "DATE" } }
           },
           "then": {
-            "required": ["datetime"],
+            "required": [
+              "datetime"
+            ],
+            "not": {
+              "required": ["text", "permittedValues", "numeric"]
+            },
             "properties": {
               "datetime": {
-                "required": ["date"],
+                "required": [
+                  "date"
+                ],
                 "$ref": "#/definitions/valueDomain/definitions/dateTime"
               }
             }
@@ -392,13 +556,26 @@
         },
         {
           "if": {
-            "properties": { "type": { "const": "DATETIME" } }
+            "properties": {
+              "type": {
+                "const": "DATETIME"
+              }
+            }
           },
           "then": {
-            "required": ["datetime"],
+            "required": [
+              "datetime"
+            ],
+            "not": {
+              "required": ["text", "permittedValues", "numeric"]
+            },
             "properties": {
               "datetime": {
-                "required": ["date", "time", "hourFormat"],
+                "required": [
+                  "date",
+                  "time",
+                  "hourFormat"
+                ],
                 "$ref": "#/definitions/valueDomain/definitions/dateTime"
               }
             }
@@ -406,13 +583,25 @@
         },
         {
           "if": {
-            "properties": { "type": { "const": "TIME" } }
+            "properties": {
+              "type": {
+                "const": "TIME"
+              }
+            }
           },
           "then": {
-            "required": ["datetime"],
+            "required": [
+              "datetime"
+            ],
+            "not": {
+              "required": ["text", "permittedValues", "numeric"]
+            },
             "properties": {
               "datetime": {
-                "required": ["time", "hourFormat"],
+                "required": [
+                  "time",
+                  "hourFormat"
+                ],
                 "$ref": "#/definitions/valueDomain/definitions/dateTime"
               }
             }
@@ -420,234 +609,431 @@
         },
         {
           "if": {
-            "properties": { "type": { "const": "ENUMERATED" } }
+            "properties": {
+              "type": {
+                "const": "ENUMERATED"
+              }
+            }
           },
           "then": {
-            "required": ["permittedValues"],
-            "properties": {
-              "permittedValues": {
-                "$ref": "#/definitions/valueDomain/definitions/permittedValues"
-              }
+            "required": [
+              "permittedValues"
+            ],
+            "not": {
+              "required": ["text", "datetime", "numeric"]
             }
           }
         }
       ]
     },
     "conceptAssociations": {
-      "title": "conceptAssociations",
-      "description": "",
       "type": "array",
-      "items": {
-
-        "title": "The Items Schema",
-        "description": "",
-        "type": "object",
-        "required": [
-          "system",
-          "version",
-          "term",
-          "text",
-          "linktype"
-        ],
-        "properties": {
-          "system": {
-            "title": "system",
-            "description": "",
-            "type": "string"
-          },
-          "version": {
-            "title": "version",
-            "description": "",
-            "type": "string"
-          },
-          "term": {
-            "title": "term",
-            "description": "",
-            "type": "string"
-          },
-          "text": {
-            "title": "text",
-            "description": "",
-            "type": "string"
-          },
-          "linktype": {
-            "title": "linktype",
-            "description": "",
-            "enum": [
-              "undefined",
-              "equal",
-              "equivalent",
-              "wider",
-              "subsumes",
-              "narrower",
-              "specializes",
-              "inexact"
-            ]
+      "definitions": {
+        "conceptAssociation": {
+          "type": "object",
+          "required": [
+            "system",
+            "version",
+            "term",
+            "text",
+            "linktype"
+          ],
+          "properties": {
+            "system": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            },
+            "term": {
+              "type": "string"
+            },
+            "text": {
+              "type": "string"
+            },
+            "linktype": {
+              "enum": [
+                "undefined",
+                "equal",
+                "equivalent",
+                "wider",
+                "subsumes",
+                "narrower",
+                "specializes",
+                "inexact"
+              ]
+            }
           }
         }
+      },
+      "items": {
+        "$ref": "#/definitions/conceptAssociations/definitions/conceptAssociation"
       }
     },
     "members": {
       "type": "array",
-      "items": {
-        "type": "object",
-        "required": ["elementUrn"],
-        "properties": {
-          "elementUrn": {
-            "type": "string"
-          },
-          "order": {
-            "type": "integer"
-          },
-          "status": {
-            "$ref": "#/definitions/identification/properties/status"
+      "definitions": {
+        "member": {
+          "type": "object",
+          "required": [
+            "elementUrn"
+          ],
+          "properties": {
+            "elementUrn": {
+              "$ref": "#/definitions/identification/properties/urn"
+            },
+            "order": {
+              "type": "integer"
+            },
+            "status": {
+              "$ref": "#/definitions/identification/properties/status"
+            }
           }
+        }
+      },
+      "items": {
+        "$ref": "#/definitions/members/definitions/member"
+      }
+    },
+    "dataElement": {
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "required": ["valueDomain"]
+        },
+        {
+          "required": ["valueDomainUrn"]
+        }
+      ],
+      "required": ["identification", "definitions"],
+      "properties": {
+        "identification": {
+          "required": ["status", "namespaceUrn"],
+          "not": {
+            "required": ["hideNamespace"]
+          },
+          "additionalProperties": false,
+          "properties": {
+            "elementType": {
+              "enum": [
+                "DATAELEMENT"
+              ]
+            },
+            "hideNamespace": {
+              "$ref": "#/definitions/identification/properties/hideNamespace"
+            },
+            "identifier": {
+              "$ref": "#/definitions/identification/properties/identifier"
+            },
+            "namespaceId": {
+              "$ref": "#/definitions/identification/properties/namespaceId"
+            },
+            "namespaceUrn": {
+              "$ref": "#/definitions/identification/properties/namespaceUrn"
+            },
+            "revision": {
+              "$ref": "#/definitions/identification/properties/revision"
+            },
+            "status": {
+              "$ref": "#/definitions/identification/properties/status"
+            },
+            "urn": {
+              "$ref": "#/definitions/identification/definitions/dataElementUrn"
+            }
+          }
+        },
+        "definitions": {
+          "$ref": "#/definitions/definitions"
+        },
+        "slots": {
+          "$ref": "#/definitions/slots"
+        },
+        "valueDomain": {
+          "$ref": "#/definitions/valueDomain"
+        },
+        "valueDomainUrn": {
+          "$ref": "#/definitions/identification/definitions/valueDomainUrn"
+        },
+        "conceptAssociations": {
+          "$ref": "#/definitions/conceptAssociations"
+        }
+      }
+    },
+    "namespace": {
+      "additionalProperties": false,
+      "required": ["identification", "definitions"],
+      "properties": {
+        "identification": {
+          "required": ["status"],
+          "additionalProperties": false,
+          "properties": {
+            "elementType": {
+              "enum": [
+                "NAMESPACE"
+              ]
+            },
+            "hideNamespace": {
+              "$ref": "#/definitions/identification/properties/hideNamespace"
+            },
+            "identifier": {
+              "$ref": "#/definitions/identification/properties/identifier"
+            },
+            "namespaceId": {
+              "$ref": "#/definitions/identification/properties/namespaceId"
+            },
+            "namespaceUrn": {
+              "$ref": "#/definitions/identification/properties/namespaceUrn"
+            },
+            "revision": {
+              "$ref": "#/definitions/identification/properties/revision"
+            },
+            "status": {
+              "$ref": "#/definitions/identification/properties/status"
+            },
+            "urn": {
+              "$ref": "#/definitions/identification/definitions/namespaceUrn"
+            }
+          }
+        },
+        "definitions": {
+          "$ref": "#/definitions/definitions"
+        },
+        "slots": {
+          "$ref": "#/definitions/slots"
+        }
+      }
+    },
+    "dataElementGroup": {
+      "additionalProperties": false,
+      "required": ["identification", "definitions"],
+      "properties": {
+        "identification": {
+          "required": ["namespaceUrn", "status"],
+          "not": {
+            "required": ["hideNamespace"]
+          },
+          "additionalProperties": false,
+          "properties": {
+            "elementType": {
+              "enum": [
+                "DATAELEMENTGROUP"
+              ]
+            },
+            "hideNamespace": {
+              "$ref": "#/definitions/identification/properties/hideNamespace"
+            },
+            "identifier": {
+              "$ref": "#/definitions/identification/properties/identifier"
+            },
+            "namespaceId": {
+              "$ref": "#/definitions/identification/properties/namespaceId"
+            },
+            "namespaceUrn": {
+              "$ref": "#/definitions/identification/properties/namespaceUrn"
+            },
+            "revision": {
+              "$ref": "#/definitions/identification/properties/revision"
+            },
+            "status": {
+              "$ref": "#/definitions/identification/properties/status"
+            },
+            "urn": {
+              "$ref": "#/definitions/identification/definitions/dataElementGroupUrn"
+            }
+          }
+        },
+        "definitions": {
+          "$ref": "#/definitions/definitions"
+        },
+        "slots": {
+          "$ref": "#/definitions/slots"
+        },
+        "members": {
+          "$ref": "#/definitions/members"
+        }
+      }
+    },
+    "record": {
+      "additionalProperties": false,
+      "required": ["identification", "definitions"],
+      "properties": {
+        "identification": {
+          "required": ["namespaceUrn", "status"],
+          "not": {
+            "required": ["hideNamespace"]
+          },
+          "additionalProperties": false,
+          "properties": {
+            "elementType": {
+              "enum": [
+                "RECORD"
+              ]
+            },
+            "hideNamespace": {
+              "$ref": "#/definitions/identification/properties/hideNamespace"
+            },
+            "identifier": {
+              "$ref": "#/definitions/identification/properties/identifier"
+            },
+            "namespaceId": {
+              "$ref": "#/definitions/identification/properties/namespaceId"
+            },
+            "namespaceUrn": {
+              "$ref": "#/definitions/identification/properties/namespaceUrn"
+            },
+            "revision": {
+              "$ref": "#/definitions/identification/properties/revision"
+            },
+            "status": {
+              "$ref": "#/definitions/identification/properties/status"
+            },
+            "urn": {
+              "$ref": "#/definitions/identification/definitions/recordUrn"
+            }
+          }
+        },
+        "definitions": {
+          "$ref": "#/definitions/definitions"
+        },
+        "slots": {
+          "$ref": "#/definitions/slots"
+        },
+        "members": {
+          "$ref": "#/definitions/members"
         }
       }
     }
   },
-  "required": ["identification"],
+  "required": [
+    "identification"
+  ],
   "properties": {
     "identification": {
-      "$ref": "#/definitions/identification"
-    },
-    "definitions": {
-      "$ref": "#/definitions/definitions"
-    },
-    "slots": {
-      "$ref": "#/definitions/slots"
+      "properties": {
+        "elementType": {
+          "type": "string",
+          "enum": [
+            "DATAELEMENT",
+            "DATAELEMENTGROUP",
+            "RECORD",
+            "NAMESPACE",
+            "DESCRIBED_VALUE_DOMAIN",
+            "ENUMERATED_VALUE_DOMAIN",
+            "PERMISSIBLE_VALUE"
+          ]
+        }
+      }
     }
   },
   "allOf": [
     {
       "if": {
-        "properties": { "identification": { "properties": {
-          "elementType": { "enum": [
-            "NAMESPACE"
-          ] }
-        } } }
-      },
-      "then": {
-        "required": ["definitions"]
-      }
-    },
-    {
-      "if": {
-        "properties": { "identification": { "properties": {
-          "elementType": { "enum": [
-            "DATAELEMENT"
-          ] }
-        } } }
-      },
-      "then": {
-        "required": ["definitions"],
         "properties": {
-          "valueDomain": {
-            "$ref": "#/definitions/valueDomain"
-          },
-          "valueDomainUrn": {
-            "type": "string"
-          },
-          "conceptAssociations": {
-            "$ref": "#/definitions/conceptAssociations"
+          "identification": {
+            "properties": {
+              "elementType": {
+                "enum": [
+                  "NAMESPACE"
+                ]
+              }
+            }
           }
         }
+      },
+      "then": {
+        "$ref": "#/definitions/namespace"
       }
     },
     {
       "if": {
-        "properties": { "identification": { "properties": {
-          "elementType": { "enum": [
-            "DATAELEMENTGROUP"
-          ] }
-        } } }
-      },
-      "then": {
-        "required": ["definitions"],
         "properties": {
-          "members": {
-            "$ref": "#/definitions/members"
+          "identification": {
+            "properties": {
+              "elementType": {
+                "enum": [
+                  "DATAELEMENT"
+                ]
+              }
+            }
           }
         }
+      },
+      "then": {
+        "$ref": "#/definitions/dataElement"
       }
     },
     {
       "if": {
-        "properties": { "identification": { "properties": {
-          "elementType": { "enum": [
-            "RECORD"
-          ] }
-        } } }
-      },
-      "then": {
-        "required": ["definitions"],
         "properties": {
-          "members": {
-            "$ref": "#/definitions/members"
+          "identification": {
+            "properties": {
+              "elementType": {
+                "enum": [
+                  "DATAELEMENTGROUP"
+                ]
+              }
+            }
           }
         }
+      },
+      "then": {
+        "$ref": "#/definitions/dataElementGroup"
       }
     },
     {
       "if": {
-        "properties": { "identification": { "properties": {
-          "elementType": { "enum": [
-            "PERMISSIBLE_VALUE"
-          ] }
-        } } }
-      },
-      "then": {
         "properties": {
-          "value": {
-            "type": "string"
-          },
-          "urn": {
-            "type": "string"
-          },
-          "conceptAssociations": {
-            "$ref": "#/definitions/conceptAssociations"
+          "identification": {
+            "properties": {
+              "elementType": {
+                "enum": [
+                  "RECORD"
+                ]
+              }
+            }
           }
-        },
-        "oneOf": [
-          {
-            "required": [
-              "definitions",
-              "value"
-            ]
-          },
-          {
-            "required": [
-              "urn"
-            ]
-          }
-        ]
+        }
+      },
+      "then": {
+        "$ref": "#/definitions/record"
       }
     },
     {
       "if": {
-        "properties": { "identification": { "properties": {
-          "elementType": { "enum": [
-            "DESCRIBED_VALUE_DOMAIN"
-          ] }
-        } } }
+        "properties": {
+          "identification": {
+            "properties": {
+              "elementType": {
+                "enum": [
+                  "PERMISSIBLE_VALUE"
+                ]
+              }
+            }
+          }
+        }
       },
       "then": {
-        "$ref": "#/definitions/valueDomain"
+        "$ref": "#/definitions/permittedValue"
       }
     },
     {
       "if": {
-        "properties": { "identification": { "properties": {
-          "elementType": { "enum": [
-            "ENUMERATED_VALUE_DOMAIN"
-          ] }
-        } } }
+        "properties": {
+          "identification": {
+            "properties": {
+              "elementType": {
+                "enum": [
+                  "DESCRIBED_VALUE_DOMAIN",
+                  "ENUMERATED_VALUE_DOMAIN"
+                ]
+              }
+            }
+          }
+        }
       },
       "then": {
-        "required": ["definitions"],
         "$ref": "#/definitions/valueDomain"
       }
     }
   ]
-
 }
