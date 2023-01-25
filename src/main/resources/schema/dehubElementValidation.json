@@ -62,7 +62,7 @@
           "type": "integer"
         },
         "namespaceUrn": {
-          "type": "string"
+          "$ref": "#/definitions/identification/definitions/namespaceUrn"
         },
         "revision": {
           "type": "integer"
