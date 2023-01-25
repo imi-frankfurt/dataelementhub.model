@@ -141,4 +141,20 @@ public class PermittedValueHandler {
 
     return permittedValue.getIdentification();
   }
+
+  /**
+   *  Inside the function:
+   *    A permittedValue can be represented in two ways:
+   *      1. The whole permittedValue which include at least the identification and value.
+   *      2. A pointer which include only the urn
+   *    This function converts 1. into 2.
+   *
+   * @param permittedValue the permittedValue that has to be converted
+   * @return the converted permittedValue
+   */
+  public static PermittedValue convertToOnlyUrnVersion(PermittedValue permittedValue) {
+    PermittedValue newPermittedValue = new PermittedValue();
+    newPermittedValue.setUrn(permittedValue.getIdentification().getUrn());
+    return newPermittedValue;
+  }
 }
