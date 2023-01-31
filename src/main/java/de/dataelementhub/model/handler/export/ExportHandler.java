@@ -94,7 +94,7 @@ public class ExportHandler {
         };
     jaxbMarshaller.setProperty(NAMESPACE_PREFIX_MAPPER, mapper);
     jaxbMarshaller.setProperty(JAXBContextProperties.MEDIA_TYPE, mediaType.toString());
-    jaxbMarshaller.setProperty(JAXBContextProperties.JSON_INCLUDE_ROOT, true);
+    jaxbMarshaller.setProperty(JAXBContextProperties.JSON_WRAPPER_AS_ARRAY_NAME, true);
     jaxbMarshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
     jaxbMarshaller.marshal(export, file);
     FileHandler.zip(file.getParent(), file.getParent() + "/" + timestamp
