@@ -98,6 +98,37 @@ public class PermittedValuesHandler {
     createRelations(ctx, parentScopedIdentifier.getId(), permittedValueIdentifierList);
   }
 
+
+  /**
+   * Inside the function:
+   *  1. Get valueDomainScopedIdentifier from its identification
+   *  2. Identify the associated permittedValues
+   *  3. Return their urns
+   *
+   * @param ctx configures jOOQ's behaviour when executing queries
+   * @param valueDomainIdentification to identify the valueDomain
+   * @return a list of all associated permittedValues (only urns)
+   */
+  public static List<String> getUrns(DSLContext ctx, Identification valueDomainIdentification) {
+
+    ScopedIdentifier valueDomainIdentifier = ctx
+        .selectQuery(getScopedIdentifierByUrn(valueDomainIdentification.getUrn()))
+        .fetchOneInto(ScopedIdentifier.class);
+
+    List<Integer> permittedValueIds = ctx
+        .select(VALUE_DOMAIN_PERMISSIBLE_VALUE.PERMISSIBLE_VALUE_SCOPED_IDENTIFIER_ID)
+        .from(VALUE_DOMAIN_PERMISSIBLE_VALUE)
+        .where(VALUE_DOMAIN_PERMISSIBLE_VALUE.VALUE_DOMAIN_SCOPED_IDENTIFIER_ID
+            .eq(valueDomainIdentifier.getId()))
+        .fetchInto(Integer.class);
+
+    List<de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier> scopedIdentifiers =
+        MemberHandler.getScopedIdentifiers(ctx, permittedValueIds);
+
+    return scopedIdentifiers.stream().map(si -> IdentificationHandler.toUrn(ctx, si)).collect(
+        Collectors.toList());
+  }
+
   /**
    * Get a list of permitted values.
    */
