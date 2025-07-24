@@ -4,6 +4,9 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * Build Information DTO.
+ */
 @Getter
 @Setter
 @EqualsAndHashCode

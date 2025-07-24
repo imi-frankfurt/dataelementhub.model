@@ -2,42 +2,48 @@ package de.dataelementhub.model.handler.element;
 
 import static de.dataelementhub.dal.jooq.Tables.ELEMENT;
 
+import de.dataelementhub.dal.jooq.enums.AccessLevelType;
 import de.dataelementhub.dal.jooq.enums.ElementType;
-import de.dataelementhub.dal.jooq.enums.GrantType;
 import de.dataelementhub.dal.jooq.enums.Status;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
+import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifierHierarchy;
 import de.dataelementhub.dal.jooq.tables.records.IdentifiedElementRecord;
-import de.dataelementhub.model.CtxUtil;
 import de.dataelementhub.model.DaoUtil;
 import de.dataelementhub.model.dto.element.DataElement;
 import de.dataelementhub.model.dto.element.Element;
 import de.dataelementhub.model.dto.element.Namespace;
 import de.dataelementhub.model.dto.element.section.Identification;
 import de.dataelementhub.model.dto.element.section.ValueDomain;
-import de.dataelementhub.model.handler.GrantTypeHandler;
+import de.dataelementhub.model.handler.AccessLevelHandler;
 import de.dataelementhub.model.handler.element.section.ConceptAssociationHandler;
 import de.dataelementhub.model.handler.element.section.DefinitionHandler;
 import de.dataelementhub.model.handler.element.section.IdentificationHandler;
+import de.dataelementhub.model.handler.element.section.MemberHandler;
 import de.dataelementhub.model.handler.element.section.SlotHandler;
 import de.dataelementhub.model.handler.element.section.ValueDomainHandler;
+import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.UUID;
-import org.jooq.CloseableDSLContext;
+import org.jooq.DSLContext;
 
+/**
+ * Dataelement Handler.
+ */
 public class DataElementHandler extends ElementHandler {
 
   /**
    * Create a new DataElement and return its new ID.
    */
-  public static ScopedIdentifier create(CloseableDSLContext ctx, int userId,
+  public static ScopedIdentifier create(DSLContext ctx, int userId,
       DataElement dataElement)
       throws IllegalAccessException {
 
     // Check if the user has the right to write to the namespace
-    GrantType grantType = GrantTypeHandler
-        .getGrantTypeByUserAndNamespaceUrn(ctx, userId,
+    AccessLevelType accessLevel = AccessLevelHandler
+        .getAccessLevelByUserAndNamespaceUrn(ctx, userId,
             dataElement.getIdentification().getNamespaceUrn());
-    if (!DaoUtil.WRITE_ACCESS_GRANTS.contains(grantType)) {
+    if (!DaoUtil.WRITE_ACCESS_TYPES.contains(accessLevel)) {
       throw new IllegalAccessException("User has no write access to namespace.");
     }
 
@@ -48,8 +54,19 @@ public class DataElementHandler extends ElementHandler {
     } else if (dataElement.getValueDomainUrn() != null && !dataElement.getValueDomainUrn()
         .isEmpty()) {
       // If value domain urn is used, check if it is of an allowed type (enumerated or described vd)
-      ElementType elementType = IdentificationHandler.fromUrn(dataElement.getValueDomainUrn())
-          .getElementType();
+      Identification valueDomainIdentification = IdentificationHandler.fromUrn(ctx,
+          dataElement.getValueDomainUrn());
+      if (valueDomainIdentification == null) {
+        throw new NoSuchElementException(
+            "ValueDomainUrn: " + dataElement.getValueDomainUrn() + " does not exist!");
+      }
+      if ((valueDomainIdentification.getStatus() == Status.DRAFT) && (
+          dataElement.getIdentification().getStatus() == Status.RELEASED
+              || dataElement.getIdentification().getStatus() == Status.OUTDATED)) {
+        throw new IllegalArgumentException(
+            "Released elements may not contain draft value domains.");
+      }
+      ElementType elementType = valueDomainIdentification.getElementType();
       if (elementType != ElementType.ENUMERATED_VALUE_DOMAIN
           && elementType != ElementType.DESCRIBED_VALUE_DOMAIN) {
         throw new IllegalArgumentException(
@@ -57,13 +74,19 @@ public class DataElementHandler extends ElementHandler {
       }
     }
 
-    final boolean autoCommit = CtxUtil.disableAutoCommit(ctx);
-
     ScopedIdentifier valueDomainIdentifier;
     if (dataElement.getValueDomain() != null) {
       // An identification object is needed but not supplied when created this way
       Identification valueDomainIdentification = new Identification();
       valueDomainIdentification.setNamespaceUrn(dataElement.getIdentification().getNamespaceUrn());
+
+      if (dataElement.getValueDomain().getType().equalsIgnoreCase(ValueDomain.TYPE_TBD) && (
+          dataElement.getIdentification().getStatus() == Status.RELEASED
+              || dataElement.getIdentification().getStatus() == Status.OUTDATED)) {
+        throw new IllegalArgumentException(
+            "Can't create released dataelement with TBD value domain.");
+      }
+
       if (dataElement.getValueDomain().getType()
           .equalsIgnoreCase(ValueDomain.TYPE_ENUMERATED)) {
         valueDomainIdentification.setElementType(ElementType.ENUMERATED_VALUE_DOMAIN);
@@ -77,7 +100,6 @@ public class DataElementHandler extends ElementHandler {
       valueDomainIdentifier = IdentificationHandler
           .getScopedIdentifier(ctx, dataElement.getValueDomainUrn());
       if (valueDomainIdentifier == null) {
-        CtxUtil.rollbackAndSetAutoCommit(ctx, autoCommit);
         throw new IllegalArgumentException("ValueDomain urn not found");
       }
       // If the scoped identifier of the value domain is in another namespace than the dataelement,
@@ -88,12 +110,18 @@ public class DataElementHandler extends ElementHandler {
       Integer vdNsIdentifier = IdentificationHandler.getNamespaceIdentifierFromUrn(
           dataElement.getValueDomainUrn());
 
-      if (!deNsIdentifier.equals(vdNsIdentifier)) {
-        Namespace targetNamespace = NamespaceHandler
-            .getByIdentifier(ctx, userId, deNsIdentifier);
-        valueDomainIdentifier = ElementHandler
-            .importIntoParentNamespace(ctx, userId, targetNamespace.getIdentification()
-                .getNamespaceId(), dataElement.getValueDomainUrn());
+      if (!Objects.equals(deNsIdentifier, vdNsIdentifier)) {
+        Namespace targetNamespace = NamespaceHandler.getByIdentifier(ctx, userId, deNsIdentifier);
+        // If value domain was previously imported into target namespace, use this scoped identifier
+        valueDomainIdentifier = IdentificationHandler.getScopedIdentifierFromAnotherNamespace(
+            ctx, userId, targetNamespace.getIdentification().getNamespaceId(),
+            valueDomainIdentifier
+        );
+        if (valueDomainIdentifier == null) {
+          valueDomainIdentifier = ElementHandler
+              .importIntoParentNamespace(ctx, userId, targetNamespace.getIdentification()
+                  .getNamespaceId(), dataElement.getValueDomainUrn());
+        }
       }
     }
 
@@ -110,6 +138,16 @@ public class DataElementHandler extends ElementHandler {
 
     ScopedIdentifier scopedIdentifier =
         IdentificationHandler.create(ctx, userId, dataElement.getIdentification(), element.getId());
+    Identification identification = IdentificationHandler.convert(ctx, scopedIdentifier);
+
+    if (scopedIdentifier.getStatus() == Status.RELEASED) {
+      try {
+        IdentificationHandler.canBeReleased(ctx, userId, identification);
+      } catch (IllegalStateException e) {
+        throw(e);
+      }
+    }
+
     DefinitionHandler.create(ctx, dataElement.getDefinitions(), element.getId(),
         scopedIdentifier.getId());
     if (dataElement.getSlots() != null) {
@@ -120,18 +158,15 @@ public class DataElementHandler extends ElementHandler {
           .save(ctx, dataElement.getConceptAssociations(), userId, scopedIdentifier.getId());
     }
 
-    CtxUtil.commitAndSetAutoCommit(ctx, autoCommit);
     return scopedIdentifier;
   }
 
   /**
    * Get a dataelement by its urn.
    */
-  public static DataElement get(CloseableDSLContext ctx, int userId, String urn) {
-    Identification identification = IdentificationHandler.fromUrn(urn);
-    if (identification == null) {
-      throw new NoSuchElementException(urn);
-    }
+  public static DataElement get(
+      DSLContext ctx, int userId, Identification identification) {
+    String urn = identification.getUrn();
     IdentifiedElementRecord identifiedElementRecord = ElementHandler
         .getIdentifiedElementRecord(ctx, identification);
     Element element = ElementHandler.convertToElement(ctx, identification, identifiedElementRecord);
@@ -141,7 +176,7 @@ public class DataElementHandler extends ElementHandler {
     dataElement.setDefinitions(element.getDefinitions());
     ScopedIdentifier valueDomainScopedIdentifier = ValueDomainHandler
         .getValueDomainScopedIdentifierByElementUrn(ctx, userId, urn);
-    dataElement.setValueDomainUrn(IdentificationHandler.toUrn(valueDomainScopedIdentifier));
+    dataElement.setValueDomainUrn(IdentificationHandler.toUrn(ctx, valueDomainScopedIdentifier));
     dataElement.setSlots(element.getSlots());
     dataElement
         .setConceptAssociations(ConceptAssociationHandler.get(ctx, element.getIdentification()));
@@ -151,7 +186,7 @@ public class DataElementHandler extends ElementHandler {
   /**
    * Save an element.
    */
-  public static int saveElement(CloseableDSLContext ctx,
+  public static int saveElement(DSLContext ctx,
       de.dataelementhub.dal.jooq.tables.pojos.Element dataElement) {
 
     return ctx.insertInto(ELEMENT)
@@ -163,10 +198,8 @@ public class DataElementHandler extends ElementHandler {
   /**
    * Update a dataelement.
    */
-  public static Identification update(CloseableDSLContext ctx, int userId, DataElement dataElement)
-      throws IllegalAccessException {
-    DataElement previousDataElement = get(ctx, userId, dataElement.getIdentification().getUrn());
-
+  public static Identification update(DSLContext ctx, int userId, DataElement dataElement,
+      DataElement previousDataElement) throws IllegalAccessException {
     if (dataElement.getValueDomain() != null) {
       throw new IllegalArgumentException("value domain field has to be empty.");
     }
@@ -175,21 +208,48 @@ public class DataElementHandler extends ElementHandler {
       throw new UnsupportedOperationException("Validation changes are not allowed during update.");
     }
 
-    final boolean autoCommit = CtxUtil.disableAutoCommit(ctx);
-    //update scopedIdentifier if status != DRAFT
-    if (previousDataElement.getIdentification().getStatus() != Status.DRAFT) {
+    if (dataElement.getIdentification().getStatus() == Status.RELEASED) {
+      IdentificationHandler.canBeReleased(ctx, userId, dataElement.getIdentification());
+    }
 
+    List<ScopedIdentifierHierarchy> scopedIdentifierHierarchyList = null;
+    final ScopedIdentifier previousScopedIdentifier;
+    //update scopedIdentifier if status != DRAFT
+    Identification releasedElementIdentification = new Identification();
+    if (previousDataElement.getIdentification().getStatus() == Status.DRAFT) {
+      previousScopedIdentifier = IdentificationHandler.getScopedIdentifier(ctx,
+          previousDataElement.getIdentification().getUrn());
+      scopedIdentifierHierarchyList
+          = MemberHandler.getHierarchyEntries(ctx, previousScopedIdentifier);
+    } else {
       ScopedIdentifier scopedIdentifier =
           IdentificationHandler.update(ctx, userId, dataElement.getIdentification(),
               ElementHandler.getIdentifiedElementRecord(ctx, dataElement.getIdentification())
                   .getId());
-      dataElement.setIdentification(IdentificationHandler.convert(scopedIdentifier));
+      releasedElementIdentification = IdentificationHandler.convert(ctx, scopedIdentifier);
+      dataElement.setIdentification(releasedElementIdentification);
+      previousScopedIdentifier = null;
     }
 
     delete(ctx, userId, previousDataElement.getIdentification().getUrn());
     create(ctx, userId, dataElement);
 
-    CtxUtil.commitAndSetAutoCommit(ctx, autoCommit);
+
+
+    if (scopedIdentifierHierarchyList != null) {
+      ScopedIdentifier newScopedIdentifier = IdentificationHandler.getScopedIdentifier(ctx,
+          dataElement.getIdentification().getUrn());
+      scopedIdentifierHierarchyList.forEach(sih -> {
+        if (Objects.equals(sih.getSuperId(), previousScopedIdentifier.getId())) {
+          sih.setSuperId(newScopedIdentifier.getId());
+        }
+        if (Objects.equals(sih.getSubId(), previousScopedIdentifier.getId())) {
+          sih.setSubId(newScopedIdentifier.getId());
+        }
+      });
+      MemberHandler.addHierarchyEntries(ctx, scopedIdentifierHierarchyList);
+    }
+
     return dataElement.getIdentification();
   }
 

@@ -13,19 +13,22 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import org.jooq.CloseableDSLContext;
 import org.jooq.Condition;
+import org.jooq.DSLContext;
 import org.jooq.lambda.tuple.Tuple3;
 import org.simpleflatmapper.jdbc.JdbcMapper;
 import org.simpleflatmapper.jdbc.JdbcMapperFactory;
 import org.simpleflatmapper.util.TypeReference;
 
+/**
+ * Element Relation Handler.
+ */
 public class ElementRelationHandler {
 
   /**
    * Insert a new relation between two local elements.
    */
-  public static void insertLocalRelation(CloseableDSLContext ctx, int userId, String leftUrn,
+  public static void insertLocalRelation(DSLContext ctx, int userId, String leftUrn,
       String rightUrn,
       RelationType relationType) {
 
@@ -38,7 +41,7 @@ public class ElementRelationHandler {
   /**
    * Insert a new relation between two elements.
    */
-  public static void insertRelation(CloseableDSLContext ctx, int userId, String leftUrn,
+  public static void insertRelation(DSLContext ctx, int userId, String leftUrn,
       int leftSourceId, String rightUrn, int rightSourceId, RelationType relationType) {
 
     ElementRelation elementRelation = new ElementRelation();
@@ -55,7 +58,7 @@ public class ElementRelationHandler {
   /**
    * Insert a new relation between two elements.
    */
-  public static void insertRelation(CloseableDSLContext ctx, int userId,
+  public static void insertRelation(DSLContext ctx, int userId,
       ElementRelation elementRelation) {
 
     elementRelation.setCreatedBy(userId);
@@ -63,17 +66,17 @@ public class ElementRelationHandler {
   }
 
   public static List<de.dataelementhub.model.dto.ElementRelation> getElementRelations(
-      CloseableDSLContext ctx) {
+      DSLContext ctx) {
     return getElementRelations(ctx, null, null);
   }
 
   public static List<de.dataelementhub.model.dto.ElementRelation> getElementRelations(
-      CloseableDSLContext ctx, List<RelationType> relationTypes) {
+      DSLContext ctx, List<RelationType> relationTypes) {
     return getElementRelations(ctx, null, relationTypes);
   }
 
   public static List<de.dataelementhub.model.dto.ElementRelation> getElementRelations(
-      CloseableDSLContext ctx, String elementUrn) {
+      DSLContext ctx, String elementUrn) {
     return getElementRelations(ctx, elementUrn, null);
   }
 
@@ -84,7 +87,7 @@ public class ElementRelationHandler {
    * @param relationTypes restrict to certain types of relation types or set to null for all
    */
   public static List<de.dataelementhub.model.dto.ElementRelation> getElementRelations(
-      CloseableDSLContext ctx, String elementUrn, List<RelationType> relationTypes) {
+      DSLContext ctx, String elementUrn, List<RelationType> relationTypes) {
     de.dataelementhub.dal.jooq.tables.Source leftSourceTable = SOURCE.as("left_source");
     de.dataelementhub.dal.jooq.tables.Source rightSourceTable = SOURCE.as("right_source");
     List<de.dataelementhub.model.dto.ElementRelation> elementRelations = new ArrayList<>();
@@ -170,7 +173,7 @@ public class ElementRelationHandler {
    * Update the supplied element relation to the new relation type.
    * TODO: Add access check for user
    */
-  public static boolean updateElementRelation(CloseableDSLContext ctx, int userId,
+  public static boolean updateElementRelation(DSLContext ctx, int userId,
       ElementRelation elementRelation) {
 
     int count = ctx.update(ELEMENT_RELATION)
@@ -187,7 +190,7 @@ public class ElementRelationHandler {
    * Delete an element relation from the database.
    * TODO: Add access check for user
    */
-  public static boolean deleteElementRelation(CloseableDSLContext ctx, int userId,
+  public static boolean deleteElementRelation(DSLContext ctx, int userId,
       ElementRelation elementRelation) {
 
     int count = ctx.deleteFrom(ELEMENT_RELATION)

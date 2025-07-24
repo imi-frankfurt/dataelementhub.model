@@ -6,6 +6,9 @@ import de.dataelementhub.model.dto.element.section.ValueDomain;
 import de.dataelementhub.model.dto.element.section.validation.Numeric;
 import java.util.Objects;
 
+/**
+ * Numeric Handler.
+ */
 public class NumericHandler {
 
   /**

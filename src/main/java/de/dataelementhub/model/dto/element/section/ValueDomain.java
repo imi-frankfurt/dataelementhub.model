@@ -12,6 +12,9 @@ import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+/**
+ * ValueDomain DTO.
+ */
 @Data
 @JsonInclude(Include.NON_NULL)
 @EqualsAndHashCode(callSuper = true)

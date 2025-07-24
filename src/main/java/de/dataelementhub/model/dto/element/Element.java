@@ -14,6 +14,9 @@ import java.util.stream.Collectors;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+/**
+ * Element DTO.
+ */
 @Data
 @EqualsAndHashCode
 @JsonInclude(Include.NON_NULL)

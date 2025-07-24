@@ -6,6 +6,9 @@ import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+/**
+ * Record DTO.
+ */
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class Record extends Element implements Serializable {

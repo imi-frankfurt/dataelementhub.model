@@ -7,6 +7,9 @@ import de.dataelementhub.model.dto.element.section.ValueDomain;
 import de.dataelementhub.model.dto.element.section.validation.Numeric;
 import de.dataelementhub.model.dto.element.section.validation.NumericInteger;
 
+/**
+ * Numeric Integer Handler.
+ */
 public class NumericIntegerHandler {
 
   /**

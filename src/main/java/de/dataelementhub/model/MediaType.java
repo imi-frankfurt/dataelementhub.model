@@ -1,5 +1,8 @@
 package de.dataelementhub.model;
 
+/**
+ * Media Type.
+ */
 public enum MediaType {
 
   JSON_DETAIL_VIEW("application/vnd+de.dataelementhub.detailview+json"),

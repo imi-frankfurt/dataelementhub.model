@@ -1,16 +1,17 @@
 package de.dataelementhub.model.dto;
 
-import de.dataelementhub.dal.jooq.enums.GrantType;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+/**
+ * Dehub User Permission DTO.
+ */
 @Data
 @EqualsAndHashCode
+@AllArgsConstructor
 public class DeHubUserPermission {
 
-  private String userName;
-  private String firstName;
-  private String lastName;
-  private String email;
-  private GrantType grantType;
+  private String userAuthId;
+  private String accessLevel;
 }

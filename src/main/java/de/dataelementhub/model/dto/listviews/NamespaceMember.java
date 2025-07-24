@@ -20,6 +20,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+/**
+ * Namespace Member Listview DTO.
+ */
 @Data
 @EqualsAndHashCode
 @NoArgsConstructor
@@ -48,7 +51,7 @@ public class NamespaceMember {
       this.revision = fullDataElement.getIdentification().getRevision();
       this.status = fullDataElement.getIdentification().getStatus();
       if (valueDomainElement != null) {
-        this.validationType = ((ValueDomain)valueDomainElement).getType();
+        this.validationType = ((ValueDomain) valueDomainElement).getType();
       }
       this.definitions = fullDataElement.getDefinitions();
     } else if (fullElement.getClass() == DataElementGroup.class) {

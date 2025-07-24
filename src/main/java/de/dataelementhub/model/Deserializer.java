@@ -15,6 +15,9 @@ import de.dataelementhub.model.dto.element.section.validation.PermittedValue;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
+/**
+ * Deserializer.
+ */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class Deserializer {
 

@@ -4,6 +4,9 @@ import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+/**
+ * NumericInteger Validation DTO.
+ */
 @Data
 @EqualsAndHashCode
 public class NumericInteger extends Numeric implements Serializable {

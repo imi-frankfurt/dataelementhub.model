@@ -8,6 +8,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+/**
+ * Concept Association DTO.
+ */
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode

@@ -10,6 +10,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+/**
+ * Namespace Listview DTO.
+ */
 @Data
 @EqualsAndHashCode
 @NoArgsConstructor

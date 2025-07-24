@@ -6,6 +6,9 @@ import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+/**
+ * DataelementGroup DTO.
+ */
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class DataElementGroup extends Element implements Serializable {

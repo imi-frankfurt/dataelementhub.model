@@ -1,41 +1,39 @@
 package de.dataelementhub.model.handler.element.section.validation;
 
+import de.dataelementhub.dal.jooq.enums.AccessLevelType;
 import de.dataelementhub.dal.jooq.enums.ElementType;
-import de.dataelementhub.dal.jooq.enums.GrantType;
 import de.dataelementhub.dal.jooq.enums.Status;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
 import de.dataelementhub.dal.jooq.tables.records.IdentifiedElementRecord;
-import de.dataelementhub.model.CtxUtil;
 import de.dataelementhub.model.DaoUtil;
 import de.dataelementhub.model.dto.element.Element;
 import de.dataelementhub.model.dto.element.section.Identification;
 import de.dataelementhub.model.dto.element.section.validation.PermittedValue;
-import de.dataelementhub.model.handler.GrantTypeHandler;
+import de.dataelementhub.model.handler.AccessLevelHandler;
 import de.dataelementhub.model.handler.element.ElementHandler;
 import de.dataelementhub.model.handler.element.NamespaceHandler;
 import de.dataelementhub.model.handler.element.section.ConceptAssociationHandler;
 import de.dataelementhub.model.handler.element.section.DefinitionHandler;
 import de.dataelementhub.model.handler.element.section.IdentificationHandler;
 import de.dataelementhub.model.handler.element.section.SlotHandler;
-import java.util.NoSuchElementException;
 import java.util.UUID;
-import org.jooq.CloseableDSLContext;
+import org.jooq.DSLContext;
 
+/**
+ * Permitted Value Handler.
+ */
 public class PermittedValueHandler {
 
   /**
    * Get the permitted value for an identifier.
    */
-  public static PermittedValue get(CloseableDSLContext ctx, int userId, String urn) {
-    Identification identification = IdentificationHandler.fromUrn(urn);
-    if (identification == null) {
-      throw new NoSuchElementException(urn);
-    }
+  public static PermittedValue get(
+      DSLContext ctx, int userId, Identification identification) {
     IdentifiedElementRecord identifiedElementRecord = ElementHandler
         .getIdentifiedElementRecord(ctx, identification);
     Element element = ElementHandler.convertToElement(ctx, identification, identifiedElementRecord);
     element.getIdentification().setNamespaceUrn(
-        NamespaceHandler.getNamespaceUrnById(element.getIdentification().getNamespaceId()));
+        NamespaceHandler.getNamespaceUrnById(ctx, element.getIdentification().getNamespaceId()));
 
     PermittedValue permittedValue = new PermittedValue();
     permittedValue.setValue(identifiedElementRecord.getPermittedValue());
@@ -51,19 +49,18 @@ public class PermittedValueHandler {
   /**
    * Create a Permitted Value.
    */
-  public static ScopedIdentifier create(CloseableDSLContext ctx, int userId,
+  public static ScopedIdentifier create(DSLContext ctx, int userId,
       PermittedValue permittedValue)
       throws IllegalAccessException {
 
     // Check if the user has the right to write to the namespace
-    GrantType grantType = GrantTypeHandler
-        .getGrantTypeByUserAndNamespaceUrn(ctx, userId,
+    AccessLevelType accessLevel = AccessLevelHandler
+        .getAccessLevelByUserAndNamespaceUrn(ctx, userId,
             permittedValue.getIdentification().getNamespaceUrn());
-    if (!DaoUtil.WRITE_ACCESS_GRANTS.contains(grantType)) {
+    if (!DaoUtil.WRITE_ACCESS_TYPES.contains(accessLevel)) {
       throw new IllegalAccessException("User has no write access to namespace.");
     }
 
-    final boolean autoCommit = CtxUtil.disableAutoCommit(ctx);
     de.dataelementhub.dal.jooq.tables.pojos.Element element = convert(permittedValue);
     element.setCreatedBy(userId);
     if (element.getUuid() == null) {
@@ -87,7 +84,6 @@ public class PermittedValueHandler {
           .save(ctx, permittedValue.getConceptAssociations(), userId, scopedIdentifier.getId());
     }
 
-    CtxUtil.commitAndSetAutoCommit(ctx, autoCommit);
     return scopedIdentifier;
   }
 
@@ -121,12 +117,9 @@ public class PermittedValueHandler {
   /**
    * Update a permitted value in the db.
    */
-  public static Identification update(CloseableDSLContext ctx, int userId,
-      PermittedValue permittedValue)
+  public static Identification update(DSLContext ctx, int userId,
+      PermittedValue permittedValue, PermittedValue previousPermittedValue)
       throws IllegalAccessException {
-
-    PermittedValue previousPermittedValue = get(ctx, userId,
-        permittedValue.getIdentification().getUrn());
 
     // If the validation differs, an update is not allowed.
     if (!previousPermittedValue.getValue().equals(permittedValue.getValue())) {
@@ -140,7 +133,7 @@ public class PermittedValueHandler {
           IdentificationHandler.update(ctx, userId, permittedValue.getIdentification(),
               ElementHandler.getIdentifiedElementRecord(ctx, permittedValue.getIdentification())
                   .getId());
-      permittedValue.setIdentification(IdentificationHandler.convert(scopedIdentifier));
+      permittedValue.setIdentification(IdentificationHandler.convert(ctx, scopedIdentifier));
     }
 
     ElementHandler.delete(ctx, userId, previousPermittedValue.getIdentification().getUrn());

@@ -4,6 +4,9 @@ import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+/**
+ * Slot DTO.
+ */
 @Data
 @EqualsAndHashCode
 public class Slot implements Serializable {

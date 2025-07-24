@@ -18,8 +18,11 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.jooq.CloseableDSLContext;
+import org.jooq.DSLContext;
 
+/**
+ * Permitted Values Handler.
+ */
 public class PermittedValuesHandler {
 
   /**
@@ -55,12 +58,13 @@ public class PermittedValuesHandler {
   /**
    * Create new permitted values in the db.
    */
-  public static void create(CloseableDSLContext ctx, int userId,
+  public static void create(DSLContext ctx, int userId,
       List<PermittedValue> permittedValues, ScopedIdentifier parentScopedIdentifier)
       throws IllegalAccessException {
 
     List<ScopedIdentifier> permittedValueIdentifierList = new ArrayList<>();
-    Identification parentIdentification = IdentificationHandler.convert(parentScopedIdentifier);
+    Identification parentIdentification =
+        IdentificationHandler.convert(ctx, parentScopedIdentifier);
     Identification fallbackIdentification = new Identification();
     fallbackIdentification.setStatus(parentIdentification.getStatus());
     fallbackIdentification.setNamespaceId(parentIdentification.getNamespaceId());
@@ -74,9 +78,13 @@ public class PermittedValuesHandler {
         // If the scoped identifier is in another namespace than the value domain, import the
         // permitted value to this namespace
         if (!scopedIdentifier.getNamespaceId().equals(parentIdentification.getNamespaceId())) {
-          scopedIdentifier = ElementHandler
-              .importIntoParentNamespace(ctx, userId, parentScopedIdentifier.getNamespaceId(),
-              permittedValue.getUrn());
+          scopedIdentifier = IdentificationHandler.getScopedIdentifierFromAnotherNamespace(ctx,
+              userId, parentScopedIdentifier.getNamespaceId(), scopedIdentifier);
+          if (scopedIdentifier == null) {
+            scopedIdentifier = ElementHandler
+                .importIntoParentNamespace(ctx, userId, parentScopedIdentifier.getNamespaceId(),
+                    permittedValue.getUrn());
+          }
         }
       } else {
         // If the permitted value itself has no identification supplied, use the one from its parent
@@ -93,7 +101,7 @@ public class PermittedValuesHandler {
   /**
    * Get a list of permitted values.
    */
-  public static List<PermittedValue> get(CloseableDSLContext ctx, int userId,
+  public static List<PermittedValue> get(DSLContext ctx, int userId,
       Identification valueDomainIdentification) {
 
     List<PermittedValue> permittedValues = new ArrayList<>();
@@ -112,7 +120,7 @@ public class PermittedValuesHandler {
         MemberHandler.getScopedIdentifiers(ctx, permittedValueIds);
 
     scopedIdentifiers.forEach(si -> permittedValues.add(PermittedValueHandler
-        .get(ctx, userId, IdentificationHandler.toUrn(si))));
+        .get(ctx, userId, IdentificationHandler.convert(ctx, si))));
 
     return permittedValues;
   }
@@ -120,7 +128,7 @@ public class PermittedValuesHandler {
   /**
    * Create relations between scoped identifiers.
    */
-  public static void createRelations(CloseableDSLContext ctx, int valueDomainScopedIdentifierId,
+  public static void createRelations(DSLContext ctx, int valueDomainScopedIdentifierId,
       List<ScopedIdentifier> permittedValuesScopedIdentifiers) {
 
     List<ValueDomainPermissibleValueRecord> recordList = permittedValuesScopedIdentifiers.stream()
