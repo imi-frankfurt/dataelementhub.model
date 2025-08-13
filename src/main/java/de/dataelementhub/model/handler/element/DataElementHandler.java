@@ -1,7 +1,5 @@
 package de.dataelementhub.model.handler.element;
 
-import static de.dataelementhub.dal.jooq.Tables.ELEMENT;
-
 import de.dataelementhub.dal.jooq.enums.AccessLevelType;
 import de.dataelementhub.dal.jooq.enums.ElementType;
 import de.dataelementhub.dal.jooq.enums.Status;
@@ -15,17 +13,15 @@ import de.dataelementhub.model.dto.element.Namespace;
 import de.dataelementhub.model.dto.element.section.Identification;
 import de.dataelementhub.model.dto.element.section.ValueDomain;
 import de.dataelementhub.model.handler.AccessLevelHandler;
-import de.dataelementhub.model.handler.element.section.ConceptAssociationHandler;
-import de.dataelementhub.model.handler.element.section.DefinitionHandler;
-import de.dataelementhub.model.handler.element.section.IdentificationHandler;
-import de.dataelementhub.model.handler.element.section.MemberHandler;
-import de.dataelementhub.model.handler.element.section.SlotHandler;
-import de.dataelementhub.model.handler.element.section.ValueDomainHandler;
+import de.dataelementhub.model.handler.element.section.*;
+import org.jooq.DSLContext;
+
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.UUID;
-import org.jooq.DSLContext;
+
+import static de.dataelementhub.dal.jooq.Tables.ELEMENT;
 
 /**
  * Dataelement Handler.
@@ -68,7 +64,8 @@ public class DataElementHandler extends ElementHandler {
       }
       ElementType elementType = valueDomainIdentification.getElementType();
       if (elementType != ElementType.ENUMERATED_VALUE_DOMAIN
-          && elementType != ElementType.DESCRIBED_VALUE_DOMAIN) {
+          && elementType != ElementType.DESCRIBED_VALUE_DOMAIN
+              && elementType != ElementType.DEFINED_VALUE_DOMAIN) {
         throw new IllegalArgumentException(
             "Value Domain urn must belong to an actual value domain.");
       }
@@ -90,6 +87,9 @@ public class DataElementHandler extends ElementHandler {
       if (dataElement.getValueDomain().getType()
           .equalsIgnoreCase(ValueDomain.TYPE_ENUMERATED)) {
         valueDomainIdentification.setElementType(ElementType.ENUMERATED_VALUE_DOMAIN);
+      } else if (dataElement.getValueDomain().getType()
+              .equalsIgnoreCase(ValueDomain.TYPE_DEFINED)) {
+        valueDomainIdentification.setElementType(ElementType.DEFINED_VALUE_DOMAIN);
       } else {
         valueDomainIdentification.setElementType(ElementType.DESCRIBED_VALUE_DOMAIN);
       }

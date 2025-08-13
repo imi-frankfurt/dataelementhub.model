@@ -3,13 +3,11 @@ package de.dataelementhub.model;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import de.dataelementhub.model.adapter.NumericValidationAdapter;
-import de.dataelementhub.model.dto.element.DataElement;
-import de.dataelementhub.model.dto.element.DataElementGroup;
-import de.dataelementhub.model.dto.element.Element;
-import de.dataelementhub.model.dto.element.Namespace;
 import de.dataelementhub.model.dto.element.Record;
+import de.dataelementhub.model.dto.element.*;
 import de.dataelementhub.model.dto.element.section.Identification;
 import de.dataelementhub.model.dto.element.section.ValueDomain;
+import de.dataelementhub.model.dto.element.section.validation.DefinedPermittedValue;
 import de.dataelementhub.model.dto.element.section.validation.Numeric;
 import de.dataelementhub.model.dto.element.section.validation.PermittedValue;
 import lombok.AccessLevel;
@@ -56,9 +54,12 @@ public class Deserializer {
         return gson.fromJson(content, Record.class);
       case DESCRIBED_VALUE_DOMAIN:
       case ENUMERATED_VALUE_DOMAIN:
+      case DEFINED_VALUE_DOMAIN:
         return gson.fromJson(content, ValueDomain.class);
       case PERMISSIBLE_VALUE:
         return gson.fromJson(content, PermittedValue.class);
+      case DEFINED_PERMISSIBLE_VALUE:
+        return gson.fromJson(content, DefinedPermittedValue.class);
       default:
         throw new IllegalArgumentException("Element Type is not supported");
     }

@@ -1,14 +1,15 @@
 package de.dataelementhub.model.dto.element.section.validation;
 
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+
+import java.io.Serializable;
 
 /**
  * NumericInteger Validation DTO.
  */
 @Data
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = true)
 public class NumericInteger extends Numeric implements Serializable {
 
   private Long minimum;

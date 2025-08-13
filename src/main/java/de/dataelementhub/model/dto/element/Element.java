@@ -5,14 +5,15 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import de.dataelementhub.model.dto.element.section.Definition;
 import de.dataelementhub.model.dto.element.section.Identification;
 import de.dataelementhub.model.dto.element.section.Slot;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Locale.LanguageRange;
 import java.util.stream.Collectors;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 /**
  * Element DTO.
@@ -25,6 +26,7 @@ public class Element implements Serializable {
   private Identification identification;
   private List<Definition> definitions;
   private List<Slot> slots;
+
 
   /**
    * Filter definitions to only contain the requested languages.

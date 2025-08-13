@@ -3,7 +3,7 @@
   "type": "object",
   "title": "The DataElementHub-element Schema",
   "definitions": {
-    "identification": {
+    "identification":  {
       "type": "object",
       "properties": {
         "elementType": {
@@ -16,7 +16,9 @@
             "NAMESPACE",
             "DESCRIBED_VALUE_DOMAIN",
             "ENUMERATED_VALUE_DOMAIN",
-            "PERMISSIBLE_VALUE"
+            "DEFINED_VALUE_DOMAIN",
+            "PERMISSIBLE_VALUE",
+            "DEFINED_PERMISSIBLE_VALUE"
           ]
         },
         "hideNamespace": {
@@ -277,6 +279,60 @@
             ]
           }
         },
+        "definedPermittedValues": {
+          "title": "definedPermittedValues",
+          "description": "",
+          "type": "array",
+          "items": {
+            "title": "The Items Schema",
+            "description": "",
+            "type": "object",
+            "properties": {
+              "identification": {
+                "allOf": [{ "$ref": "#/definitions/identification" }],
+                "properties": {
+                  "elementType": {
+                    "type": "string",
+                    "required": ["namespaceUrn"],
+                    "enum": [
+                      "DEFINED_PERMISSIBLE_VALUE"
+                    ]
+                  }
+                }
+              },
+              "definitions": {
+                "$ref": "#/definitions/definitions"
+              },
+              "slots": {
+                "$ref": "#/definitions/slots"
+              },
+              "value": {
+                "title": "value",
+                "description": "",
+                "type": "string"
+              },
+              "urn": {
+                "title": "urn",
+                "description": "",
+                "type": "string",
+                "pattern": "(?i)definedPermittedvalue"
+              }
+            },
+            "oneOf": [
+              {
+                "required": [
+                  "definitions",
+                  "value"
+                ]
+              },
+              {
+                "required": [
+                  "urn"
+                ]
+              }
+            ]
+          }
+        },
         "numeric": {
           "title": "numeric",
           "description": "",
@@ -316,6 +372,22 @@
               }
             }
           ]
+        },
+        "valueDomainReference": {
+          "type": "object",
+          "properties": {
+            "codeSystem": {
+              "type": "object",
+              "properties": {
+                "version": { "type": "string" }
+              },
+              "required": ["version"]
+            },
+            "subsetUri": {
+              "type": "string"
+            }
+          },
+          "required": ["codeSystem","subsetUri"]
         }
       },
       "properties": {
@@ -326,6 +398,7 @@
             "NUMERIC",
             "STRING",
             "ENUMERATED",
+            "DEFINED",
             "DATE",
             "DATETIME",
             "TIME",
@@ -427,6 +500,22 @@
             "properties": {
               "permittedValues": {
                 "$ref": "#/definitions/valueDomain/definitions/permittedValues"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "type": { "const": "DEFINED" } }
+          },
+          "then": {
+            "required": ["definedPermittedValues"],
+            "properties": {
+              "definedPermittedValues": {
+                "$ref": "#/definitions/valueDomain/definitions/definedPermittedValues"
+              },
+              "valueDomainReference": {
+                "$ref": "#/definitions/valueDomain/definitions/valueDomainReference"
               }
             }
           }
@@ -627,6 +716,38 @@
       "if": {
         "properties": { "identification": { "properties": {
           "elementType": { "enum": [
+            "DEFINED_PERMISSIBLE_VALUE"
+          ] }
+        } } }
+      },
+      "then": {
+        "properties": {
+          "value": {
+            "type": "string"
+          },
+          "urn": {
+            "type": "string"
+          }
+        },
+        "oneOf": [
+          {
+            "required": [
+              "definitions",
+              "value"
+            ]
+          },
+          {
+            "required": [
+              "urn"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": { "identification": { "properties": {
+          "elementType": { "enum": [
             "DESCRIBED_VALUE_DOMAIN"
           ] }
         } } }
@@ -640,6 +761,19 @@
         "properties": { "identification": { "properties": {
           "elementType": { "enum": [
             "ENUMERATED_VALUE_DOMAIN"
+          ] }
+        } } }
+      },
+      "then": {
+        "required": ["definitions"],
+        "$ref": "#/definitions/valueDomain"
+      }
+    },
+    {
+      "if": {
+        "properties": { "identification": { "properties": {
+          "elementType": { "enum": [
+            "DEFINED_VALUE_DOMAIN"
           ] }
         } } }
       },

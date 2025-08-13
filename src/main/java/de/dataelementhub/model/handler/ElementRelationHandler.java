@@ -1,24 +1,25 @@
 package de.dataelementhub.model.handler;
 
-import static de.dataelementhub.dal.jooq.Tables.ELEMENT_RELATION;
-import static de.dataelementhub.dal.jooq.tables.Source.SOURCE;
-import static org.jooq.impl.DSL.trueCondition;
-
 import de.dataelementhub.dal.jooq.enums.RelationType;
 import de.dataelementhub.dal.jooq.tables.pojos.ElementRelation;
 import de.dataelementhub.dal.jooq.tables.pojos.Source;
 import de.dataelementhub.dal.jooq.tables.records.ElementRelationRecord;
 import de.dataelementhub.dal.jooq.tables.records.SourceRecord;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.lambda.tuple.Tuple3;
 import org.simpleflatmapper.jdbc.JdbcMapper;
 import org.simpleflatmapper.jdbc.JdbcMapperFactory;
 import org.simpleflatmapper.util.TypeReference;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import static de.dataelementhub.dal.jooq.Tables.ELEMENT_RELATION;
+import static de.dataelementhub.dal.jooq.tables.Source.SOURCE;
+import static org.jooq.impl.DSL.trueCondition;
 
 /**
  * Element Relation Handler.
@@ -95,6 +96,10 @@ public class ElementRelationHandler {
     Condition typeCondition = trueCondition();
     Condition urnCondition = trueCondition();
 
+    if (ctx == null) {
+      throw new IllegalArgumentException("DSLContext must not be null");
+    }
+
     if (relationTypes != null && !relationTypes.isEmpty()) {
       typeCondition = ELEMENT_RELATION.RELATION.in(relationTypes);
     }
@@ -123,11 +128,13 @@ public class ElementRelationHandler {
                 leftSourceTable.NAME,
                 leftSourceTable.PREFIX,
                 leftSourceTable.BASE_URL,
+                leftSourceTable.ORGANIZATION,
                 rightSourceTable.ID,
                 rightSourceTable.TYPE,
                 rightSourceTable.NAME,
                 rightSourceTable.PREFIX,
-                rightSourceTable.BASE_URL)
+                rightSourceTable.BASE_URL,
+                rightSourceTable.ORGANIZATION)
             .from(ELEMENT_RELATION)
             .leftJoin(leftSourceTable)
             .on(leftSourceTable.ID.eq(ELEMENT_RELATION.LEFT_SOURCE))
@@ -144,6 +151,7 @@ public class ElementRelationHandler {
         leftSource.setName(t3.v2().getName());
         leftSource.setPrefix(t3.v2().getPrefix());
         leftSource.setBaseUrl(t3.v2().getBaseUrl());
+        leftSource.setOrganization(t3.v2().getOrganization());
 
         Source rightSource = new Source();
         rightSource.setId(t3.v3().getId());
@@ -151,6 +159,7 @@ public class ElementRelationHandler {
         rightSource.setName(t3.v3().getName());
         rightSource.setPrefix(t3.v3().getPrefix());
         rightSource.setBaseUrl(t3.v3().getBaseUrl());
+        rightSource.setOrganization(t3.v3().getOrganization());
 
         de.dataelementhub.model.dto.ElementRelation elementRelation =
             new de.dataelementhub.model.dto.ElementRelation();

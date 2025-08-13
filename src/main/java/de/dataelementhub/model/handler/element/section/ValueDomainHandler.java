@@ -1,7 +1,5 @@
 package de.dataelementhub.model.handler.element.section;
 
-import static de.dataelementhub.dal.jooq.Routines.getValueDomainScopedIdentifierByDataelementUrn;
-
 import de.dataelementhub.dal.jooq.enums.AccessLevelType;
 import de.dataelementhub.dal.jooq.enums.ElementType;
 import de.dataelementhub.dal.jooq.enums.Status;
@@ -15,12 +13,12 @@ import de.dataelementhub.model.dto.element.section.ValueDomain;
 import de.dataelementhub.model.handler.AccessLevelHandler;
 import de.dataelementhub.model.handler.element.ElementHandler;
 import de.dataelementhub.model.handler.element.NamespaceHandler;
-import de.dataelementhub.model.handler.element.section.validation.DatetimeHandler;
-import de.dataelementhub.model.handler.element.section.validation.NumericHandler;
-import de.dataelementhub.model.handler.element.section.validation.PermittedValuesHandler;
-import de.dataelementhub.model.handler.element.section.validation.TextHandler;
-import java.util.UUID;
+import de.dataelementhub.model.handler.element.section.validation.*;
 import org.jooq.DSLContext;
+
+import java.util.UUID;
+
+import static de.dataelementhub.dal.jooq.Routines.getValueDomainScopedIdentifierByDataelementUrn;
 
 /**
  * ValueDomain Handler.
@@ -49,6 +47,7 @@ public class ValueDomainHandler extends ElementHandler {
     valueDomain
         .setConceptAssociations(ConceptAssociationHandler.get(ctx, element.getIdentification()));
 
+
     switch (valueDomain.getType()) {
       case ValueDomain.TYPE_DATE:
       case ValueDomain.TYPE_DATETIME:
@@ -63,6 +62,10 @@ public class ValueDomainHandler extends ElementHandler {
         break;
       case ValueDomain.TYPE_ENUMERATED:
         valueDomain.setPermittedValues(PermittedValuesHandler.get(ctx, userId, identification));
+        break;
+      case ValueDomain.TYPE_DEFINED:
+        valueDomain.setValueDomainReferenceDTO(ValueDomainReferencesHandler.getValueDomainReference(ctx, element.getIdentification()));
+        valueDomain.setDefinedPermittedValues(DefinedPermittedValuesHandler.get(ctx, userId, identification));
         break;
       default:
         break;
@@ -111,6 +114,9 @@ public class ValueDomainHandler extends ElementHandler {
       case ValueDomain.TYPE_ENUMERATED: {
         return PermittedValuesHandler.convert(valueDomain);
       }
+      case ValueDomain.TYPE_DEFINED:{
+        return DefinedPermittedValuesHandler.convert(valueDomain);
+      }
       default:
         throw new IllegalArgumentException("Unknown value domain type: " + valueDomain.getType());
     }
@@ -147,6 +153,12 @@ public class ValueDomainHandler extends ElementHandler {
       throw new IllegalArgumentException(
           "Can't create released enumerated value domain without permitted values.");
     }
+    if (valueDomain.getType().equals(ValueDomain.TYPE_DEFINED)
+            && valueDomain.getIdentification().getStatus() == Status.RELEASED && (
+            valueDomain.getDefinedPermittedValues() == null || valueDomain.getDefinedPermittedValues().isEmpty())) {
+      throw new IllegalArgumentException(
+              "Can't create released enumerated value domain without permitted values.");
+    }
 
     de.dataelementhub.dal.jooq.tables.pojos.Element element = convert(valueDomain);
 
@@ -170,11 +182,20 @@ public class ValueDomainHandler extends ElementHandler {
       ConceptAssociationHandler
           .save(ctx, valueDomain.getConceptAssociations(), userId, scopedIdentifier.getId());
     }
+    if (valueDomain.getValueDomainReferenceDTO() != null) {
+      ValueDomainReferencesHandler
+              .save(ctx, valueDomain.getValueDomainReferenceDTO(), userId, scopedIdentifier.getId());
+    }
 
     if (valueDomain.getPermittedValues() != null) {
       valueDomain.getPermittedValues().forEach(pv -> pv.setIdentification(null));
       PermittedValuesHandler
           .create(ctx, userId, valueDomain.getPermittedValues(), scopedIdentifier);
+    }
+    if (valueDomain.getDefinedPermittedValues() != null) {
+      valueDomain.getDefinedPermittedValues().forEach(pv -> pv.setIdentification(null));
+      DefinedPermittedValuesHandler
+              .create(ctx, userId, valueDomain.getDefinedPermittedValues(), scopedIdentifier);
     }
 
     return scopedIdentifier;
@@ -193,7 +214,11 @@ public class ValueDomainHandler extends ElementHandler {
           || valueDomain.getPermittedValues().isEmpty())) {
         throw new IllegalArgumentException("Can't release value domain without permitted values");
       }
-
+      if (valueDomain.getIdentification().getStatus() == Status.RELEASED && valueDomain.getType()
+              .equals(ValueDomain.TYPE_DEFINED) && (valueDomain.getDefinedPermittedValues() == null
+              || valueDomain.getDefinedPermittedValues().isEmpty())) {
+        throw new IllegalArgumentException("Can't release value domain without permitted values");
+      }
       delete(ctx, userId, valueDomain.getIdentification().getUrn());
       create(ctx, userId, valueDomain);
       return valueDomain.getIdentification();
