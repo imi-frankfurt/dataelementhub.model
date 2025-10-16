@@ -9,6 +9,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -27,16 +28,16 @@ public class SemlookpService {
         this.translationService = translationService;
     }
 
-    // Suche über alle Ontologien
-//    public List<Concept> searchAllOntologies(String query) {
-//        List<String> ontologies = getAllOntologyIds();
-//
-//        List<Concept> allResults = new ArrayList<>();
-//        for (String ontology : ontologies) {
-//            allResults.addAll(searchInOntology(query, ontology));
-//        }
-//        return allResults;
-//    }
+    // search in all Ontologies
+    public List<Concept> searchAllOntologies(String query) {
+        List<String> ontologies = getAllOntologyIds();
+
+        List<Concept> allResults = new ArrayList<>();
+        for (String ontology : ontologies) {
+            allResults.addAll(searchInOntology(query, ontology));
+        }
+        return allResults;
+    }
 
     // Search in a specific ontology
     public List<Concept> searchInOntology(String query, String ontology) {
@@ -47,7 +48,7 @@ public class SemlookpService {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        System.out.println("Übersetzter Begriff: " + translatedQuery);
+        System.out.println("Translated term: " + translatedQuery);
 
         String url = "https://semanticlookup.zbmed.de/ols/api/search?q=" + translatedQuery +
                 "&ontology=" + ontology + "&obsoletes=false";
