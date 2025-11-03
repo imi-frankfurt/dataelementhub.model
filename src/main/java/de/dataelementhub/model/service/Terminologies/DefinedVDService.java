@@ -82,7 +82,198 @@ public class DefinedVDService {
 
             List<Map<String, Object>> entries = (List<Map<String, Object>>) body.get("entry");
 
-            // Map<Name, Resource mit höchster Version>
+            // Map<Name, Resource with the highest version>
+            Map<String, Map<String, Object>> latestPerName = new HashMap<>();
+
+            for (Map<String, Object> entry : entries) {
+                Map<String, Object> resource = (Map<String, Object>) entry.get("resource");
+                if (resource == null) continue;
+
+                String name = (String) resource.get("name");
+                String version = (String) resource.get("version");
+
+                if (name == null || version == null) continue;
+
+                Map<String, Object> existing = latestPerName.get(name);
+                if (existing == null || compareVersionStrings(version, (String) existing.get("version")) > 0) {
+                    latestPerName.put(name, resource);
+                }
+            }
+
+            // Jetzt bauen wir ValueSetResponse pro Name
+            List<ValueSetResponse> responses = new ArrayList<>();
+
+            for (Map.Entry<String, Map<String, Object>> entry : latestPerName.entrySet()) {
+                Map<String, Object> resource = entry.getValue();
+                String version = (String) resource.get("version");
+                String subsetUri = (String) resource.get("url");
+                String id = (String) resource.get("id");
+
+                List<ValueSet> items = new ArrayList<>();
+                Map<String, Object> compose = (Map<String, Object>) resource.get("compose");
+                if (compose != null) {
+                    List<Map<String, Object>> includes = (List<Map<String, Object>>) compose.get("include");
+                    if (includes != null) {
+                        for (Map<String, Object> include : includes) {
+                            List<Map<String, Object>> concepts = (List<Map<String, Object>>) include.get("concept");
+                            if (concepts != null) {
+                                for (Map<String, Object> concept : concepts) {
+                                    String code = (String) concept.get("code");
+                                    String display = (String) concept.get("display");
+                                    items.add(new ValueSet(code, display));
+                                }
+                            }
+                        }
+                    }
+                }
+
+                responses.add(new ValueSetResponse(entry.getKey(), version, id, subsetUri, items));
+            }
+
+            return responses;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Collections.emptyList();
+        }
+    }
+    /**
+     * Search Snomed concepts FHIR ValueSet API using free text.
+     *
+     * @param query Text to search for
+     * @return List of Concept objects
+     */
+    public List<ValueSetResponse> snomedValueSet(String query) {
+        if (query == null || query.trim().isEmpty()) {
+            System.err.println("Query parameter is empty or null.");
+            return Collections.emptyList();
+        }
+
+        try {
+            HttpHeaders headers = createAuthHeaders();
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+
+            System.out.println("Begriff: " + query);
+            String translatedQuery = translationService.translateText(query, "en");
+            System.out.println("Übersetzter Begriff: " + translatedQuery);
+
+            String finalUrl = UriComponentsBuilder
+                    .fromHttpUrl("https://snowstorm-fhir.snomedtools.org/fhir/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs")
+                    .queryParam("filter", translatedQuery)
+              //      .queryParam("filter", translatedQuery) in case filter does not work use this
+                    .build()
+                    .toUriString();
+
+            System.out.println("Final URL: " + finalUrl);
+
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                    finalUrl,
+                    HttpMethod.GET,
+                    entity,
+                    new ParameterizedTypeReference<Map<String, Object>>() {}
+            );
+
+            Map<String, Object> body = response.getBody();
+            if (body == null || !body.containsKey("entry")) return Collections.emptyList();
+
+            List<Map<String, Object>> entries = (List<Map<String, Object>>) body.get("entry");
+
+            // Map<Name, Resource with the highest version>
+            Map<String, Map<String, Object>> latestPerName = new HashMap<>();
+
+            for (Map<String, Object> entry : entries) {
+                Map<String, Object> resource = (Map<String, Object>) entry.get("resource");
+                if (resource == null) continue;
+
+                String name = (String) resource.get("name");
+                String version = (String) resource.get("version");
+
+                if (name == null || version == null) continue;
+
+                Map<String, Object> existing = latestPerName.get(name);
+                if (existing == null || compareVersionStrings(version, (String) existing.get("version")) > 0) {
+                    latestPerName.put(name, resource);
+                }
+            }
+
+            // Jetzt bauen wir ValueSetResponse pro Name
+            List<ValueSetResponse> responses = new ArrayList<>();
+
+            for (Map.Entry<String, Map<String, Object>> entry : latestPerName.entrySet()) {
+                Map<String, Object> resource = entry.getValue();
+                String version = (String) resource.get("version");
+                String subsetUri = (String) resource.get("url");
+                String id = (String) resource.get("id");
+
+                List<ValueSet> items = new ArrayList<>();
+                Map<String, Object> compose = (Map<String, Object>) resource.get("compose");
+                if (compose != null) {
+                    List<Map<String, Object>> includes = (List<Map<String, Object>>) compose.get("include");
+                    if (includes != null) {
+                        for (Map<String, Object> include : includes) {
+                            List<Map<String, Object>> concepts = (List<Map<String, Object>>) include.get("concept");
+                            if (concepts != null) {
+                                for (Map<String, Object> concept : concepts) {
+                                    String code = (String) concept.get("code");
+                                    String display = (String) concept.get("display");
+                                    items.add(new ValueSet(code, display));
+                                }
+                            }
+                        }
+                    }
+                }
+
+                responses.add(new ValueSetResponse(entry.getKey(), version, id, subsetUri, items));
+            }
+
+            return responses;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Collections.emptyList();
+        }
+    }
+    /**
+     * Search concepts FHIR TS ValueSet API using free text.
+     *
+     * @param query Text to search for
+     * @return List of Concept objects
+     */
+    public List<ValueSetResponse> fhirValueSet(String query) {
+        if (query == null || query.trim().isEmpty()) {
+            System.err.println("Query parameter is empty or null.");
+            return Collections.emptyList();
+        }
+
+        try {
+            HttpHeaders headers = createAuthHeaders();
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+
+            System.out.println("Begriff: " + query);
+            String translatedQuery = translationService.translateText(query, "en");
+            System.out.println("Übersetzter Begriff: " + translatedQuery);
+
+            String finalUrl = UriComponentsBuilder
+                    .fromHttpUrl("https://tx.fhir.org/r4/ValueSet")
+                    .queryParam("name:in", translatedQuery)
+                    .build()
+                    .toUriString();
+
+            System.out.println("Final URL: " + finalUrl);
+
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                    finalUrl,
+                    HttpMethod.GET,
+                    entity,
+                    new ParameterizedTypeReference<Map<String, Object>>() {}
+            );
+
+            Map<String, Object> body = response.getBody();
+            if (body == null || !body.containsKey("entry")) return Collections.emptyList();
+
+            List<Map<String, Object>> entries = (List<Map<String, Object>>) body.get("entry");
+
+            // Map<Name, Resource with the highest version>
             Map<String, Map<String, Object>> latestPerName = new HashMap<>();
 
             for (Map<String, Object> entry : entries) {
