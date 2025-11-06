@@ -71,7 +71,7 @@ public class LoincService {
             System.out.println("Übersetzter Begriff: " + translatedQuery);
 
             String finalUrl = UriComponentsBuilder.fromHttpUrl(url)
-                    .queryParam("query", translatedQuery).build(false).toUriString();
+                    .queryParam("query", translatedQuery + " Status:(Active OR Trial OR Discouraged)").build(false).toUriString();
 
             System.out.println("Übersetzter Begriff plus url: " + finalUrl);
             ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
@@ -139,6 +139,11 @@ public class LoincService {
 
                 if (results != null) {
                     return results.stream()
+//                            // remove deprecated code
+//                            .filter(item -> {
+//                                String status = (String) item.get("STATUS");
+//                                return !"DEPRECATED".equalsIgnoreCase(status);
+//                            })
                             .filter(item -> code.equals(item.get("code")))
                             .map(item -> new LoincConcept(
                                     (String) item.get("LOINC_NUM"),
@@ -232,13 +237,13 @@ public class LoincService {
 
         return new LoincConcept(term, text, system,version);
     }
-
-    /**
-     * Search LOINC concepts by free text using the FHIR endpoint.
-     *
-     * @param searchText Text to search for
-     * @return List of LoincConcept objects
-     */
+//
+//    /**
+//     * Search LOINC concepts by free text using the FHIR endpoint.
+//     *
+//     * @param searchText Text to search for
+//     * @return List of LoincConcept objects
+//     */
 //    public List<LoincConcept> searchByText(String searchText) {
 //        String url = "https://fhir.loinc.org/ValueSet/$expand";
 //
