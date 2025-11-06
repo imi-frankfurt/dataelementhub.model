@@ -1,10 +1,10 @@
 package de.dataelementhub.model.dto.element.section.validation;
 
 import java.io.Serializable;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlSeeAlso;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
