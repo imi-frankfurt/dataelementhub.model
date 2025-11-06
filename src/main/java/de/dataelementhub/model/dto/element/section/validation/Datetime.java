@@ -3,7 +3,6 @@ package de.dataelementhub.model.dto.element.section.validation;
 import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-
 /**
  * Datetime Validation DTO.
  */

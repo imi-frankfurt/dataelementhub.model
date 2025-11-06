@@ -3,6 +3,9 @@ package de.dataelementhub.model.dto.importexport;
 import java.sql.Timestamp;
 import lombok.Data;
 
+/**
+ * Export DTO.
+ */
 @Data
 public class ImportDescription {
   private String id;

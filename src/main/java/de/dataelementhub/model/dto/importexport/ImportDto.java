@@ -1,10 +1,16 @@
 package de.dataelementhub.model.dto.importexport;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElementWrapper;
+import javax.xml.bind.annotation.XmlElement;
+import java.util.List;
 import lombok.Data;
 
-import javax.xml.bind.annotation.*;
-import java.util.List;
-
+/**
+ * Import DTO.
+ */
 @Data
 @XmlRootElement(name = "import", namespace = "http://schema.samply.de/StagedElement")
 @XmlAccessorType(XmlAccessType.FIELD)

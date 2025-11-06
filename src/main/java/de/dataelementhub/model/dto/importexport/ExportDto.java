@@ -1,9 +1,11 @@
 package de.dataelementhub.model.dto.importexport;
 
+import java.util.List;
 import lombok.Data;
 
-import java.util.List;
-
+/**
+ * Export DTO.
+ */
 @Data
 public class ExportDto {
   private String export;

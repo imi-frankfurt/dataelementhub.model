@@ -3,13 +3,12 @@ package de.dataelementhub.model.dto.element.section.validation;
 import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.eclipse.persistence.oxm.annotations.XmlDiscriminatorNode;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlSeeAlso;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-
+import org.eclipse.persistence.oxm.annotations.XmlDiscriminatorNode;
 
 /**
  * Numeric Validation DTO.
@@ -21,8 +20,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         property = "type" // matches the JSON property "type"
 )
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = NumericInteger.class, name = "INTEGER"),
-        @JsonSubTypes.Type(value = NumericFloat.class, name = "FLOAT")
+    @JsonSubTypes.Type(value = NumericInteger.class, name = "INTEGER"),
+    @JsonSubTypes.Type(value = NumericFloat.class, name = "FLOAT")
 })
 @Data
 @EqualsAndHashCode
