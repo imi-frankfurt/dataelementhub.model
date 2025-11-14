@@ -153,15 +153,14 @@ public class DefinedVDService {
             HttpHeaders headers = createAuthHeaders();
             HttpEntity<String> entity = new HttpEntity<>(headers);
 
-            System.out.println("Begriff: " + query);
             String translatedQuery = translationService.translateText(query, "en");
-            System.out.println("Übersetzter Begriff: " + translatedQuery);
+            System.out.println("translated query: " + translatedQuery);
 
             String finalUrl = UriComponentsBuilder
-                    .fromHttpUrl("https://snowstorm-fhir.snomedtools.org/fhir/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs")
+                    .fromHttpUrl("https://snowstorm-fhir.snomedtools.org/fhir/ValueSet/$expand")
+                    .queryParam("url", "http://snomed.info/sct?fhir_vs")
                     .queryParam("filter", translatedQuery)
-              //      .queryParam("filter", translatedQuery) in case filter does not work use this
-                    .build()
+                    .build(true)
                     .toUriString();
 
             System.out.println("Final URL: " + finalUrl);
@@ -174,59 +173,36 @@ public class DefinedVDService {
             );
 
             Map<String, Object> body = response.getBody();
-            if (body == null || !body.containsKey("entry")) return Collections.emptyList();
-
-            List<Map<String, Object>> entries = (List<Map<String, Object>>) body.get("entry");
-
-            // Map<Name, Resource with the highest version>
-            Map<String, Map<String, Object>> latestPerName = new HashMap<>();
-
-            for (Map<String, Object> entry : entries) {
-                Map<String, Object> resource = (Map<String, Object>) entry.get("resource");
-                if (resource == null) continue;
-
-                String name = (String) resource.get("name");
-                String version = (String) resource.get("version");
-
-                if (name == null || version == null) continue;
-
-                Map<String, Object> existing = latestPerName.get(name);
-                if (existing == null || compareVersionStrings(version, (String) existing.get("version")) > 0) {
-                    latestPerName.put(name, resource);
-                }
+            if (body == null || !"ValueSet".equals(body.get("resourceType"))) {
+                return Collections.emptyList();
             }
 
-            // Jetzt bauen wir ValueSetResponse pro Name
-            List<ValueSetResponse> responses = new ArrayList<>();
+            String name   = (String) body.get("name");
+            String url    = (String) body.get("url");
+            String id     = (String) body.get("id");
+            String ver    = (String) body.get("version");
 
-            for (Map.Entry<String, Map<String, Object>> entry : latestPerName.entrySet()) {
-                Map<String, Object> resource = entry.getValue();
-                String version = (String) resource.get("version");
-                String subsetUri = (String) resource.get("url");
-                String id = (String) resource.get("id");
+            Map<String, Object> expansion = (Map<String, Object>) body.get("expansion");
+            if (expansion == null) return Collections.emptyList();
 
-                List<ValueSet> items = new ArrayList<>();
-                Map<String, Object> compose = (Map<String, Object>) resource.get("compose");
-                if (compose != null) {
-                    List<Map<String, Object>> includes = (List<Map<String, Object>>) compose.get("include");
-                    if (includes != null) {
-                        for (Map<String, Object> include : includes) {
-                            List<Map<String, Object>> concepts = (List<Map<String, Object>>) include.get("concept");
-                            if (concepts != null) {
-                                for (Map<String, Object> concept : concepts) {
-                                    String code = (String) concept.get("code");
-                                    String display = (String) concept.get("display");
-                                    items.add(new ValueSet(code, display));
-                                }
-                            }
-                        }
-                    }
-                }
+            List<Map<String, Object>> contains = (List<Map<String, Object>>) expansion.get("contains");
+            if (contains == null) return Collections.emptyList();
 
-                responses.add(new ValueSetResponse(entry.getKey(), version, id, subsetUri, items));
+            List<ValueSet> items = new ArrayList<>();
+            for (Map<String, Object> c : contains) {
+                String code    = (String) c.get("code");
+                String display = (String) c.get("display");
+                items.add(new ValueSet(code, display));
             }
 
-            return responses;
+            ValueSetResponse vsr = new ValueSetResponse(
+                    name != null ? name : "SNOMED implicit VS",
+                    ver,
+                    id,
+                    url,
+                    items
+            );
+            return Arrays.asList(vsr);
 
         } catch (Exception e) {
             e.printStackTrace();

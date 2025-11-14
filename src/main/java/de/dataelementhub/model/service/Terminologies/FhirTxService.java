@@ -5,6 +5,7 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -39,28 +40,31 @@ public class FhirTxService {
             return Collections.emptyList();
         }
         try {
+            System.out.println("Begriff: " + query);
+            String translatedQuery = translationService.translateText(query, "en");
+            System.out.println("Übersetzter Begriff: " + translatedQuery);
+
             String urlVsSearch = UriComponentsBuilder
                     .fromHttpUrl("https://tx.fhir.org/r4/ValueSet")
-                    .queryParam("name:in", query.trim())
-                    .build(true).toUriString();
+                    .queryParam("name:in", translatedQuery.trim())
+                    .encode().toUriString();
 
             ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
                     urlVsSearch, HttpMethod.GET, null,
                     new ParameterizedTypeReference<Map<String, Object>>() {}
             );
-            System.out.println("Begriff: " + query);
-            String translatedQuery = translationService.translateText(query, "en");
-            System.out.println("Übersetzter Begriff: " + translatedQuery);
 
             Map<String, Object> bundle = response.getBody();
             if (bundle == null || !"Bundle".equals(bundle.get("resourceType"))) {
                 return Collections.emptyList();
             }
-            List<Map<String, Object>> entries = (List<Map<String, Object>>) bundle.getOrDefault("entry", List.of());
+
+            List<Map<String, Object>> entries =
+                    (List<Map<String, Object>>) bundle.getOrDefault("entry", Arrays.asList());
             if (entries.isEmpty()) return Collections.emptyList();
 
-            // 2) Für jedes ValueSet expandieren und Codes einsammeln
             List<Concept> all = new ArrayList<>();
+
             for (Map<String, Object> e : entries) {
                 Map<String, Object> vs = (Map<String, Object>) e.get("resource");
                 if (vs == null || !"ValueSet".equals(vs.get("resourceType"))) continue;
@@ -73,42 +77,50 @@ public class FhirTxService {
                     expandUrl = UriComponentsBuilder
                             .fromHttpUrl("https://tx.fhir.org/r4/ValueSet/$expand")
                             .queryParam("url", canonical)
-                            .queryParam("filter", query.trim()) // innerhalb des VS weiter filtern
+                            .queryParam("filter", translatedQuery.trim())
                             .queryParam("count", 50)
-                            .build(true).toUriString();
+                            .encode().toUriString();
                 } else if (!id.isEmpty()) {
                     expandUrl = UriComponentsBuilder
                             .fromHttpUrl("https://tx.fhir.org/r4/ValueSet/" + id + "/$expand")
-                            .queryParam("filter", query.trim())
+                            .queryParam("filter", translatedQuery.trim())
                             .queryParam("count", 50)
-                            .build(true).toUriString();
+                            .encode().toUriString();
                 } else {
                     continue;
                 }
 
-                ResponseEntity<Map<String, Object>> exp = restTemplate.exchange(
-                        expandUrl, HttpMethod.GET, null,
-                        new ParameterizedTypeReference<Map<String, Object>>() {}
-                );
-                Map<String, Object> vsExpanded = exp.getBody();
-                if (vsExpanded == null || !"ValueSet".equals(vsExpanded.get("resourceType"))) continue;
+                try {
+                    ResponseEntity<Map<String, Object>> exp = restTemplate.exchange(
+                            expandUrl, HttpMethod.GET, null,
+                            new ParameterizedTypeReference<Map<String, Object>>() {}
+                    );
 
-                Map<String, Object> expansion = (Map<String, Object>) vsExpanded.get("expansion");
-                if (expansion == null) continue;
+                    Map<String, Object> vsExpanded = exp.getBody();
+                    if (vsExpanded == null || !"ValueSet".equals(vsExpanded.get("resourceType"))) continue;
 
-                List<Map<String, Object>> contains = (List<Map<String, Object>>) expansion.get("contains");
-                if (contains == null) continue;
+                    Map<String, Object> expansion = (Map<String, Object>) vsExpanded.get("expansion");
+                    if (expansion == null) continue;
 
-                for (Map<String, Object> item : contains) {
-                    all.add(new Concept(
-                            safeStr(item.get("code")),     // term
-                            safeStr(item.get("display")),  // text
-                            safeStr(item.get("system")),   // system
-                            extractVersion(safeStr(item.get("version")))   // version
-                    ));
+                    List<Map<String, Object>> contains =
+                            (List<Map<String, Object>>) expansion.get("contains");
+                    if (contains == null) continue;
+
+                    for (Map<String, Object> item : contains) {
+                        all.add(new Concept(
+                                safeStr(item.get("code")),
+                                safeStr(item.get("display")),
+                                safeStr(item.get("system")),
+                                extractVersion(safeStr(item.get("version")))
+                        ));
+                    }
+                } catch (HttpClientErrorException e422) {
+                    System.err.println("Skipping ValueSet due to expand error: "
+                            + e422.getStatusCode());
+                    System.err.println("Expand URL: " + expandUrl);
                 }
             }
-            Map<String, String> map = new LinkedHashMap<>();
+
             return all.stream()
                     .filter(c -> !c.getTerm().isEmpty() && !c.getSystem().isEmpty())
                     .collect(Collectors.collectingAndThen(
@@ -120,11 +132,10 @@ public class FhirTxService {
                     ));
 
         } catch (Exception e) {
-                        System.err.println("Error during FHIR TX request: " + e.getMessage());
-                        e.printStackTrace();
+            System.err.println("Error during FHIR TX request: " + e.getMessage());
+            e.printStackTrace();
+            return Collections.emptyList();
         }
-
-                    return Collections.emptyList();
     }
 
 private static String safeStr(Object code) {
