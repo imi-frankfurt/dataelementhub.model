@@ -1,10 +1,5 @@
 package de.dataelementhub.model.handler.importhandler;
 
-import static de.dataelementhub.dal.jooq.Tables.IMPORT;
-import static de.dataelementhub.dal.jooq.Tables.SCOPED_IDENTIFIER;
-import static de.dataelementhub.dal.jooq.Tables.STAGING;
-import static org.jooq.impl.DSL.currentLocalDateTime;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.dataelementhub.dal.jooq.enums.ElementType;
@@ -24,13 +19,14 @@ import de.dataelementhub.model.handler.element.RecordHandler;
 import de.dataelementhub.model.handler.element.section.IdentificationHandler;
 import de.dataelementhub.model.handler.element.section.ValueDomainHandler;
 import de.dataelementhub.model.handler.element.section.validation.PermittedValueHandler;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.TimeZone;
 import org.jooq.DSLContext;
 import org.jooq.Result;
+
+import java.sql.Timestamp;
+import java.util.*;
+
+import static de.dataelementhub.dal.jooq.Tables.*;
+import static org.jooq.impl.DSL.currentLocalDateTime;
 
 /**
  * StagedElement Handler.
@@ -40,7 +36,7 @@ public class StagedElementHandler {
   /** Get stagedElement Members by ID. */
   public static List<de.dataelementhub.model.dto.listviews.StagedElement> getStagedElementMembers(
       DSLContext ctx, int importId, int userId, String stagedElementId) {
-    List<String> stagedElementMembersIds = List.of(ctx.select(STAGING.MEMBERS)
+    List<String> stagedElementMembersIds = Arrays.asList(ctx.select(STAGING.MEMBERS)
             .from(STAGING)
             .where(STAGING.IMPORT_ID.eq(importId))
             .and(STAGING.STAGED_ELEMENT_ID.eq(stagedElementId)).fetchOne().into(String.class)
@@ -139,6 +135,7 @@ public class StagedElementHandler {
         valueDomain.setSlots(stagedElement.getSlots());
         valueDomain.setType(stagedElement.getType());
         valueDomain.setText(stagedElement.getText());
+        valueDomain.setNumeric(stagedElement.getNumeric());
         valueDomain.setIdentification(identification);
         valueDomain.setConceptAssociations(stagedElement.getConceptAssociations());
         valueDomain.setDatetime(stagedElement.getDatetime());
