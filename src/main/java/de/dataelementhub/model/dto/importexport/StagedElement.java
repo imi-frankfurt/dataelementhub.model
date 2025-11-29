@@ -1,14 +1,21 @@
-package de.dataelementhub.model.dto.element;
+package de.dataelementhub.model.dto.importexport;
 
-import de.dataelementhub.model.dto.element.section.*;
+import de.dataelementhub.model.dto.element.section.ConceptAssociation;
+import de.dataelementhub.model.dto.element.section.Definition;
+import de.dataelementhub.model.dto.element.section.Identification;
+import de.dataelementhub.model.dto.element.section.Member;
+import de.dataelementhub.model.dto.element.section.Slot;
 import de.dataelementhub.model.dto.element.section.validation.Datetime;
 import de.dataelementhub.model.dto.element.section.validation.Numeric;
 import de.dataelementhub.model.dto.element.section.validation.PermittedValue;
 import de.dataelementhub.model.dto.element.section.validation.Text;
-import lombok.Data;
-
-import javax.xml.bind.annotation.*;
 import java.util.List;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
+import javax.xml.bind.annotation.XmlRootElement;
+import lombok.Data;
 
 /**
  * StagedElement DTO.
@@ -40,7 +47,6 @@ public class StagedElement {
   private String urn;
   private Text text;
   private String value;
-  @XmlElement(name = "Numeric")
   private Numeric numeric;
   private Datetime datetime;
   @XmlElementWrapper(name = "permittedValues")

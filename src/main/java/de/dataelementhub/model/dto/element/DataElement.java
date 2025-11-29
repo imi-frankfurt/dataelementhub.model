@@ -4,10 +4,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import de.dataelementhub.model.dto.element.section.ConceptAssociation;
 import de.dataelementhub.model.dto.element.section.ValueDomain;
-import java.io.Serializable;
-import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+
+import java.io.Serializable;
+import java.util.List;
 
 /**
  * Dataelement DTO.

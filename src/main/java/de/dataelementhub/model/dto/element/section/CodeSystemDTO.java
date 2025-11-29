@@ -2,16 +2,13 @@ package de.dataelementhub.model.dto.element.section;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-
-/**
- * Definition DTO.
- */
 @Data
+@NoArgsConstructor
 @EqualsAndHashCode
-public class Definition implements Serializable {
-  private String definition;
-  private String designation;
-  private String language;
+public class CodeSystemDTO implements Serializable {
+    private String version;
+    private Integer sourceId;
 }

@@ -1,12 +1,13 @@
 package de.dataelementhub.model.handler;
 
-import static de.dataelementhub.dal.jooq.Tables.SOURCE;
-
 import de.dataelementhub.dal.jooq.enums.SourceType;
 import de.dataelementhub.dal.jooq.tables.pojos.Source;
 import de.dataelementhub.dal.jooq.tables.records.SourceRecord;
-import java.util.List;
 import org.jooq.DSLContext;
+
+import java.util.List;
+
+import static de.dataelementhub.dal.jooq.Tables.SOURCE;
 
 /**
  * Source Handler.
@@ -22,6 +23,7 @@ public class SourceHandler {
         .and(SOURCE.PREFIX.eq("local"))
         .and(SOURCE.BASE_URL.eq("local"))
         .and(SOURCE.TYPE.eq(SourceType.DATAELEMENTHUB))
+        .and(SOURCE.ORGANIZATION.eq("DEHUB"))
         .fetchOneInto(Source.class);
   }
 

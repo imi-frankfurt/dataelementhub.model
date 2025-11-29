@@ -4,10 +4,10 @@ import de.dataelementhub.dal.jooq.Tables;
 import de.dataelementhub.dal.jooq.enums.ElementType;
 import de.dataelementhub.dal.jooq.tables.pojos.Element;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
-import de.dataelementhub.dal.jooq.tables.records.ValueDomainPermissibleValueRecord;
+import de.dataelementhub.dal.jooq.tables.records.ValueDomainDefinedPermissibleValueRecord;
 import de.dataelementhub.model.dto.element.section.Identification;
 import de.dataelementhub.model.dto.element.section.ValueDomain;
-import de.dataelementhub.model.dto.element.section.validation.PermittedValue;
+import de.dataelementhub.model.dto.element.section.validation.DefinedPermittedValue;
 import de.dataelementhub.model.handler.element.ElementHandler;
 import de.dataelementhub.model.handler.element.section.IdentificationHandler;
 import de.dataelementhub.model.handler.element.section.MemberHandler;
@@ -19,20 +19,20 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static de.dataelementhub.dal.jooq.Routines.getScopedIdentifierByUrn;
-import static de.dataelementhub.dal.jooq.tables.ValueDomainPermissibleValue.VALUE_DOMAIN_PERMISSIBLE_VALUE;
+import static de.dataelementhub.dal.jooq.tables.ValueDomainDefinedPermissibleValue.VALUE_DOMAIN_DEFINED_PERMISSIBLE_VALUE;
 
 /**
  * Permitted Values Handler.
  */
-public class PermittedValuesHandler {
+public class DefinedPermittedValuesHandler {
 
   /**
    * Convert a ValueDomain object of DataElementHub DAL to a List of Permitted Values object of
    * DataElementHub Model.
    */
-  public static List<PermittedValue> convert(Element valueDomain) {
-    List<PermittedValue> permittedValues = new ArrayList<>();
-    return permittedValues;
+  public static List<DefinedPermittedValue> convert(Element valueDomain) {
+    List<DefinedPermittedValue> definedPermittedValues = new ArrayList<>();
+    return definedPermittedValues;
   }
 
   /**
@@ -43,15 +43,16 @@ public class PermittedValuesHandler {
     domain.setDatatype(valueDomain.getType());
     domain.setFormat(valueDomain.getType());
     try {
-      domain.setMaximumCharacters(valueDomain.getPermittedValues().stream()
-          .map(pv -> pv.getValue().length())
+      domain.setMaximumCharacters(valueDomain.getDefinedPermittedValues().stream()
+          .map(dpv -> dpv.getValue().length())
           .max(Comparator.naturalOrder()).orElse(0));
     } catch (NullPointerException e) {
       // If the value domain contained URNs, a better way to calculate the max char value is needed.
       // TODO: Find that better way. For now...set it to 0
       domain.setMaximumCharacters(0);
     }
-   domain.setElementType(ElementType.ENUMERATED_VALUE_DOMAIN);
+
+    domain.setElementType(ElementType.DEFINED_VALUE_DOMAIN);
     return domain;
 
   }
@@ -60,22 +61,22 @@ public class PermittedValuesHandler {
    * Create new permitted values in the db.
    */
   public static void create(DSLContext ctx, int userId,
-      List<PermittedValue> permittedValues, ScopedIdentifier parentScopedIdentifier)
+      List<DefinedPermittedValue> definedPermittedValues, ScopedIdentifier parentScopedIdentifier)
       throws IllegalAccessException {
 
-    List<ScopedIdentifier> permittedValueIdentifierList = new ArrayList<>();
+    List<ScopedIdentifier> definedPermittedValueIdentifierList = new ArrayList<>();
     Identification parentIdentification =
         IdentificationHandler.convert(ctx, parentScopedIdentifier);
     Identification fallbackIdentification = new Identification();
     fallbackIdentification.setStatus(parentIdentification.getStatus());
     fallbackIdentification.setNamespaceId(parentIdentification.getNamespaceId());
     fallbackIdentification.setNamespaceUrn(parentIdentification.getNamespaceUrn());
-    fallbackIdentification.setElementType(ElementType.PERMISSIBLE_VALUE);
+    fallbackIdentification.setElementType(ElementType.DEFINED_PERMISSIBLE_VALUE);
 
-    for (PermittedValue permittedValue : permittedValues) {
+    for (DefinedPermittedValue definedPermittedValue : definedPermittedValues) {
       ScopedIdentifier scopedIdentifier;
-      if (permittedValue.getUrn() != null && !permittedValue.getUrn().isEmpty()) {
-        scopedIdentifier = IdentificationHandler.getScopedIdentifier(ctx, permittedValue.getUrn());
+      if (definedPermittedValue.getUrn() != null && !definedPermittedValue.getUrn().isEmpty()) {
+        scopedIdentifier = IdentificationHandler.getScopedIdentifier(ctx, definedPermittedValue.getUrn());
         // If the scoped identifier is in another namespace than the value domain, import the
         // permitted value to this namespace
         if (!scopedIdentifier.getNamespaceId().equals(parentIdentification.getNamespaceId())) {
@@ -84,59 +85,59 @@ public class PermittedValuesHandler {
           if (scopedIdentifier == null) {
             scopedIdentifier = ElementHandler
                 .importIntoParentNamespace(ctx, userId, parentScopedIdentifier.getNamespaceId(),
-                    permittedValue.getUrn());
+                        definedPermittedValue.getUrn());
           }
         }
       } else {
         // If the permitted value itself has no identification supplied, use the one from its parent
-        if (permittedValue.getIdentification() == null) {
-          permittedValue.setIdentification(fallbackIdentification);
+        if (definedPermittedValue.getIdentification() == null) {
+          definedPermittedValue.setIdentification(fallbackIdentification);
         }
-        scopedIdentifier = PermittedValueHandler.create(ctx, userId, permittedValue);
+        scopedIdentifier = DefinedPermittedValueHandler.create(ctx, userId, definedPermittedValue);
       }
-      permittedValueIdentifierList.add(scopedIdentifier);
+      definedPermittedValueIdentifierList.add(scopedIdentifier);
     }
-    createRelations(ctx, parentScopedIdentifier.getId(), permittedValueIdentifierList);
+    createRelations(ctx, parentScopedIdentifier.getId(), definedPermittedValueIdentifierList);
   }
 
   /**
    * Get a list of permitted values.
    */
-  public static List<PermittedValue> get(DSLContext ctx, int userId,
+  public static List<DefinedPermittedValue> get(DSLContext ctx, int userId,
       Identification valueDomainIdentification) {
 
-    List<PermittedValue> permittedValues = new ArrayList<>();
+    List<DefinedPermittedValue> definedPermittedValues = new ArrayList<>();
     ScopedIdentifier valueDomainIdentifier = ctx
         .selectQuery(getScopedIdentifierByUrn(valueDomainIdentification.getUrn()))
         .fetchOneInto(ScopedIdentifier.class);
 
-    List<Integer> permittedValueIds = ctx
-        .select(VALUE_DOMAIN_PERMISSIBLE_VALUE.PERMISSIBLE_VALUE_SCOPED_IDENTIFIER_ID)
-        .from(VALUE_DOMAIN_PERMISSIBLE_VALUE)
-        .where(VALUE_DOMAIN_PERMISSIBLE_VALUE.VALUE_DOMAIN_SCOPED_IDENTIFIER_ID
+    List<Integer> definedPermittedValueIds = ctx
+        .select(VALUE_DOMAIN_DEFINED_PERMISSIBLE_VALUE.DEFINED_PERMISSIBLE_VALUE_SCOPED_IDENTIFIER_ID)
+        .from(VALUE_DOMAIN_DEFINED_PERMISSIBLE_VALUE)
+        .where(VALUE_DOMAIN_DEFINED_PERMISSIBLE_VALUE.VALUE_DOMAIN_SCOPED_IDENTIFIER_ID
             .eq(valueDomainIdentifier.getId()))
         .fetchInto(Integer.class);
 
     List<de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier> scopedIdentifiers =
-        MemberHandler.getScopedIdentifiers(ctx, permittedValueIds);
+        MemberHandler.getScopedIdentifiers(ctx, definedPermittedValueIds);
 
-    scopedIdentifiers.forEach(si -> permittedValues.add(PermittedValueHandler
+    scopedIdentifiers.forEach(si -> definedPermittedValues.add(DefinedPermittedValueHandler
         .get(ctx, userId, IdentificationHandler.convert(ctx, si))));
 
-    return permittedValues;
+    return definedPermittedValues;
   }
 
   /**
    * Create relations between scoped identifiers.
    */
   public static void createRelations(DSLContext ctx, int valueDomainScopedIdentifierId,
-      List<ScopedIdentifier> permittedValuesScopedIdentifiers) {
+      List<ScopedIdentifier> definedPermittedValuesScopedIdentifiers) {
 
-    List<ValueDomainPermissibleValueRecord> recordList = permittedValuesScopedIdentifiers.stream()
-        .map(p -> {
-          ValueDomainPermissibleValueRecord record = ctx
-              .newRecord(Tables.VALUE_DOMAIN_PERMISSIBLE_VALUE);
-          record.setPermissibleValueScopedIdentifierId(p.getId());
+    List<ValueDomainDefinedPermissibleValueRecord> recordList = definedPermittedValuesScopedIdentifiers.stream()
+        .map(dp -> {
+          ValueDomainDefinedPermissibleValueRecord record = ctx
+              .newRecord(Tables.VALUE_DOMAIN_DEFINED_PERMISSIBLE_VALUE);
+          record.setDefinedPermissibleValueScopedIdentifierId(dp.getId());
           record.setValueDomainScopedIdentifierId(valueDomainScopedIdentifierId);
           return record;
         }).collect(Collectors.toList());

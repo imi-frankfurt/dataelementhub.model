@@ -1,8 +1,5 @@
 package de.dataelementhub.model.handler.element;
 
-import static de.dataelementhub.dal.jooq.Tables.ELEMENT;
-import static de.dataelementhub.dal.jooq.Tables.IDENTIFIED_ELEMENT;
-
 import de.dataelementhub.dal.jooq.enums.ElementType;
 import de.dataelementhub.dal.jooq.enums.Status;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
@@ -12,19 +9,18 @@ import de.dataelementhub.model.dto.element.Namespace;
 import de.dataelementhub.model.dto.element.section.Identification;
 import de.dataelementhub.model.dto.element.section.Member;
 import de.dataelementhub.model.dto.element.section.ValueDomain;
+import de.dataelementhub.model.dto.element.section.validation.DefinedPermittedValue;
 import de.dataelementhub.model.dto.element.section.validation.PermittedValue;
-import de.dataelementhub.model.handler.element.section.ConceptAssociationHandler;
-import de.dataelementhub.model.handler.element.section.DefinitionHandler;
-import de.dataelementhub.model.handler.element.section.IdentificationHandler;
-import de.dataelementhub.model.handler.element.section.MemberHandler;
-import de.dataelementhub.model.handler.element.section.SlotHandler;
-import de.dataelementhub.model.handler.element.section.ValueDomainHandler;
-import de.dataelementhub.model.handler.element.section.validation.PermittedValueHandler;
-import de.dataelementhub.model.handler.element.section.validation.PermittedValuesHandler;
+import de.dataelementhub.model.handler.element.section.*;
+import de.dataelementhub.model.handler.element.section.validation.*;
+import org.jooq.DSLContext;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import org.jooq.DSLContext;
+
+import static de.dataelementhub.dal.jooq.Tables.ELEMENT;
+import static de.dataelementhub.dal.jooq.Tables.IDENTIFIED_ELEMENT;
 
 /**
  * Element Handler.
@@ -61,9 +57,12 @@ public abstract class ElementHandler {
           return RecordHandler.get(ctx, userId, identification);
         case ENUMERATED_VALUE_DOMAIN:
         case DESCRIBED_VALUE_DOMAIN:
+        case DEFINED_VALUE_DOMAIN:
           return ValueDomainHandler.get(ctx, userId, identification);
         case PERMISSIBLE_VALUE:
           return PermittedValueHandler.get(ctx, userId, identification);
+        case DEFINED_PERMISSIBLE_VALUE:
+          return DefinedPermittedValueHandler.get(ctx, userId, identification);
         default:
           throw new IllegalArgumentException("Element Type is not supported");
       }
@@ -262,6 +261,24 @@ public abstract class ElementHandler {
       }
       PermittedValuesHandler.createRelations(ctx, targetScopedIdentifier.getId(),
           importedPermittedValueScopedIdentifiers);
+    }
+    // If it is a DEFINED value domain, also import defined permissible values
+    if (sourceScopedIdentifier.getElementType().equals(ElementType.DEFINED_VALUE_DOMAIN)) {
+      // Copy ValueDomainReference
+      ValueDomainReferencesHandler
+              .copyValueDomainReferences(ctx, userId, sourceScopedIdentifier.getId(),
+                      targetScopedIdentifier.getId());
+      ValueDomain valueDomain = ValueDomainHandler
+              .get(ctx, userId, IdentificationHandler.convert(ctx, sourceScopedIdentifier));
+      List<ScopedIdentifier> importedDefinedPermittedValueScopedIdentifiers = new ArrayList<>();
+
+      for (DefinedPermittedValue pv : valueDomain.getDefinedPermittedValues()) {
+        ScopedIdentifier importedScopedIdentifier = importIntoParentNamespace(ctx, userId,
+                targetNamespaceId, pv.getIdentification().getUrn());
+        importedDefinedPermittedValueScopedIdentifiers.add(importedScopedIdentifier);
+      }
+      DefinedPermittedValuesHandler.createRelations(ctx, targetScopedIdentifier.getId(),
+              importedDefinedPermittedValueScopedIdentifiers);
     }
 
     return targetScopedIdentifier;

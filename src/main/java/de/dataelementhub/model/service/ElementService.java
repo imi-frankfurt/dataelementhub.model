@@ -1,47 +1,31 @@
 package de.dataelementhub.model.service;
 
-import static de.dataelementhub.dal.jooq.Routines.getDefinitionByUrn;
-import static de.dataelementhub.dal.jooq.Routines.getSlotByUrn;
-import static de.dataelementhub.dal.jooq.Routines.getValueDomainScopedIdentifierByDataelementUrn;
-
 import de.dataelementhub.dal.jooq.enums.AccessLevelType;
 import de.dataelementhub.dal.jooq.enums.ElementType;
 import de.dataelementhub.dal.jooq.enums.Status;
 import de.dataelementhub.dal.jooq.tables.pojos.ScopedIdentifier;
 import de.dataelementhub.model.DaoUtil;
-import de.dataelementhub.model.dto.element.DataElement;
-import de.dataelementhub.model.dto.element.DataElementGroup;
-import de.dataelementhub.model.dto.element.Element;
-import de.dataelementhub.model.dto.element.Namespace;
 import de.dataelementhub.model.dto.element.Record;
-import de.dataelementhub.model.dto.element.section.ConceptAssociation;
-import de.dataelementhub.model.dto.element.section.Definition;
-import de.dataelementhub.model.dto.element.section.Identification;
-import de.dataelementhub.model.dto.element.section.Member;
-import de.dataelementhub.model.dto.element.section.Slot;
-import de.dataelementhub.model.dto.element.section.ValueDomain;
+import de.dataelementhub.model.dto.element.*;
+import de.dataelementhub.model.dto.element.section.*;
+import de.dataelementhub.model.dto.element.section.validation.DefinedPermittedValue;
 import de.dataelementhub.model.dto.element.section.validation.PermittedValue;
 import de.dataelementhub.model.dto.listviews.SimplifiedElementIdentification;
 import de.dataelementhub.model.handler.AccessLevelHandler;
 import de.dataelementhub.model.handler.ElementRelationHandler;
-import de.dataelementhub.model.handler.element.DataElementGroupHandler;
-import de.dataelementhub.model.handler.element.DataElementHandler;
-import de.dataelementhub.model.handler.element.ElementHandler;
-import de.dataelementhub.model.handler.element.ElementPathHandler;
-import de.dataelementhub.model.handler.element.NamespaceHandler;
-import de.dataelementhub.model.handler.element.RecordHandler;
-import de.dataelementhub.model.handler.element.section.ConceptAssociationHandler;
-import de.dataelementhub.model.handler.element.section.DefinitionHandler;
-import de.dataelementhub.model.handler.element.section.IdentificationHandler;
-import de.dataelementhub.model.handler.element.section.MemberHandler;
-import de.dataelementhub.model.handler.element.section.SlotHandler;
-import de.dataelementhub.model.handler.element.section.ValueDomainHandler;
+import de.dataelementhub.model.handler.element.*;
+import de.dataelementhub.model.handler.element.section.*;
+import de.dataelementhub.model.handler.element.section.validation.DefinedPermittedValueHandler;
 import de.dataelementhub.model.handler.element.section.validation.PermittedValueHandler;
+import de.dataelementhub.model.handler.element.section.validation.ValueDomainReferencesHandler;
+import org.jooq.DSLContext;
+import org.springframework.stereotype.Service;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import org.jooq.DSLContext;
-import org.springframework.stereotype.Service;
+
+import static de.dataelementhub.dal.jooq.Routines.*;
 
 /**
  * Element Service.
@@ -80,9 +64,12 @@ public class ElementService {
         return RecordHandler.create(ctx, userId, (Record) element);
       case ENUMERATED_VALUE_DOMAIN:
       case DESCRIBED_VALUE_DOMAIN:
+      case DEFINED_VALUE_DOMAIN:
         return ValueDomainHandler.create(ctx, userId, (ValueDomain) element);
       case PERMISSIBLE_VALUE:
         return PermittedValueHandler.create(ctx, userId, (PermittedValue) element);
+      case DEFINED_PERMISSIBLE_VALUE:
+        return DefinedPermittedValueHandler.create(ctx, userId, (DefinedPermittedValue) element);
       default:
         throw new IllegalArgumentException("Element Type is not supported");
     }
@@ -110,9 +97,12 @@ public class ElementService {
         return RecordHandler.get(ctx, userId, identification);
       case ENUMERATED_VALUE_DOMAIN:
       case DESCRIBED_VALUE_DOMAIN:
+      case DEFINED_VALUE_DOMAIN:
         return ValueDomainHandler.get(ctx, userId, identification);
       case PERMISSIBLE_VALUE:
         return PermittedValueHandler.get(ctx, userId, identification);
+      case DEFINED_PERMISSIBLE_VALUE:
+        return DefinedPermittedValueHandler.get(ctx, userId, identification);
       default:
         throw new IllegalArgumentException("Element Type is not supported");
     }
@@ -189,6 +179,17 @@ public class ElementService {
       return ConceptAssociationHandler.get(ctx, elementUrn);
     }
   }
+  /**
+   * Get the ValueDomainReference  of an Element by the elements urn.
+   */
+  public ValueDomainReferenceDTO readValueDomainReference(
+          DSLContext ctx, int userId, String elementUrn) {
+    if (!IdentificationHandler.isUrn(elementUrn)) {
+      throw new IllegalArgumentException("Not a URN: " + elementUrn);
+    } else {
+      return ValueDomainReferencesHandler.getValueDomainReference(ctx, elementUrn);
+    }
+  }
 
 
   /**
@@ -253,11 +254,15 @@ public class ElementService {
         return RecordHandler.update(ctx, userId, (Record) element, (Record) previousElement);
       case DESCRIBED_VALUE_DOMAIN:
       case ENUMERATED_VALUE_DOMAIN:
+      case DEFINED_VALUE_DOMAIN:
         return ValueDomainHandler.update(
             ctx, userId, (ValueDomain) element, (ValueDomain) previousElement);
       case PERMISSIBLE_VALUE:
         return PermittedValueHandler.update(
             ctx, userId, (PermittedValue) element, (PermittedValue) previousElement);
+      case DEFINED_PERMISSIBLE_VALUE:
+        return DefinedPermittedValueHandler.update(
+                ctx, userId, (DefinedPermittedValue) element, (DefinedPermittedValue) previousElement);
       default:
         throw new IllegalArgumentException("Element Type is not supported");
     }
