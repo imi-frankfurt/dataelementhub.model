@@ -10,7 +10,7 @@ import lombok.EqualsAndHashCode;
  * NumericInteger Validation DTO.
  */
 @Data
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = false)
 @XmlAccessorType(XmlAccessType.FIELD)
 @org.eclipse.persistence.oxm.annotations.XmlDiscriminatorValue("INTEGER")
 public class NumericInteger extends Numeric implements Serializable {
