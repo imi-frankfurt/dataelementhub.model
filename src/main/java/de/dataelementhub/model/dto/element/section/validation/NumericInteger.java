@@ -1,6 +1,8 @@
 package de.dataelementhub.model.dto.element.section.validation;
 
 import java.io.Serializable;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -8,7 +10,9 @@ import lombok.EqualsAndHashCode;
  * NumericInteger Validation DTO.
  */
 @Data
-@EqualsAndHashCode
+@EqualsAndHashCode(callSuper = false)
+@XmlAccessorType(XmlAccessType.FIELD)
+@org.eclipse.persistence.oxm.annotations.XmlDiscriminatorValue("INTEGER")
 public class NumericInteger extends Numeric implements Serializable {
 
   private Long minimum;

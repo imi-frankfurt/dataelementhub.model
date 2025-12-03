@@ -139,6 +139,7 @@ public class StagedElementHandler {
         valueDomain.setSlots(stagedElement.getSlots());
         valueDomain.setType(stagedElement.getType());
         valueDomain.setText(stagedElement.getText());
+        valueDomain.setNumeric(stagedElement.getNumeric());
         valueDomain.setIdentification(identification);
         valueDomain.setConceptAssociations(stagedElement.getConceptAssociations());
         valueDomain.setDatetime(stagedElement.getDatetime());
